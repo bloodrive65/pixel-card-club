@@ -7,7 +7,7 @@
 ## Run from source
 
 ```bash
-git clone https://github.com/<your-user>/pixel-card-club.git
+git clone https://github.com/bloodrive65/pixel-card-club.git
 cd pixel-card-club
 npm install
 npm start
@@ -44,7 +44,7 @@ For a zip instead, run `npm run dist:win-zip`.
 2. Commit, then tag and push:
    ```bash
    git tag v1.1.0
-   git push origin main --tags
+   git push origin master --tags
    ```
 3. A few minutes later, the release appears under **Releases** with the downloadable `.exe` files.
 
