@@ -99,7 +99,7 @@
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
       }
       G.text(pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
-      G.text('V1.4.3', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text('V1.5.0', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
       // your player badge (top left) opens the profile editor
@@ -226,7 +226,7 @@
       ui.modal = true;
       G.alpha(0.7, () => G.rect(0, 0, G.W, G.H, P.ink));
       ui.block(0, 0, G.W, G.H);
-      const w = 380, h = 230, x = G.W / 2 - w / 2, y = 60;
+      const w = 380, h = 256, x = G.W / 2 - w / 2, y = 52;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
       G.text('OPTIONS', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
       const S = G.settings; let changed = false;
@@ -245,6 +245,9 @@
       const deckOpts = [1, 2, 4, 6];
       const dk = ui.choice(deckOpts.map(String), Math.max(0, deckOpts.indexOf(S.bjDecks)), x + 150, yy, w - 168, 18, { modal: true, id: 'dk' });
       if (deckOpts[dk] !== S.bjDecks) { S.bjDecks = deckOpts[dk]; changed = true; }
+      yy += 26; row('WHEN YOU ARE OUT', yy);
+      const wo = ui.choice(['STOP', 'WATCH TO THE END'], S.watchOut ? 1 : 0, x + 150, yy, w - 168, 18, { modal: true, id: 'wo', font: 'small' });
+      if ((wo === 1) !== !!S.watchOut) { S.watchOut = wo === 1; changed = true; }
       yy += 26; row('RESET STATS', yy);
       if (ui.button('RESET CHIPS + WINS', x + 150, yy, w - 168, 18, { modal: true, theme: 'red', font: 'small' })) {
         ['bj_chips', 'bj_best', 'sol_won', 'sol_played', 'sol_best', 'fish_won', 'fish_played', 'records', 'bj_mates', 'war_won', 'war_played', 'c8_won', 'c8_played', 'spider_won', 'spider_played', 'spider_best1', 'spider_best2', 'spider_best4', 'poker_won', 'poker_played'].forEach((k) => G.store.set(k, null));

@@ -35,6 +35,18 @@ Press **CUSTOMIZE** (or **C**) on the main menu. Your choices are saved and used
 
 The live preview shows your table, deck and back together.
 
+## Watching after you are out
+
+Open **OPTIONS** (or **O**) on the main menu and set **WHEN YOU ARE OUT** to **WATCH TO THE END**. You get no reward for it; it is just a way to see how the game finishes.
+
+| Game | What happens when you are out |
+|---|---|
+| Texas Hold'em | The others keep playing hands at double pace until one player holds every chip. Your plate shows the place you finished. |
+| War | The others keep flipping on auto at speed x3 until one player holds every card. AUTO and SPEED still work. |
+| Blackjack | Needs at least one table-mate. When you run out of chips, the table-mates play up to 20 more hands with no rebuys. Whoever has the most chips at the end wins the table. Then you can take a fresh stack and sit back in. |
+
+Press **K** or click **SKIP TO RESULT** to stop watching. You go straight to the standings, ranked by chips or cards at that moment. Go Fish, Crazy Eights and the solitaire games never knock you out, so the setting does nothing there.
+
 ## The rulebook
 
 Press **RULEBOOK** (or **R**) on the main menu to open the in-game book. Click the right page or press **→** to turn forward, click the left page or press **←** to turn back, and use the coloured tabs on the right to jump to a chapter: START, DECK, BJ, POKER, SOL, SPDR, FISH, CRAZY, WAR, CLUB and REAL (the real-world rules each game is based on, with house rules). **Esc** closes the book and takes you back where you were.

@@ -36,6 +36,17 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.5.0
+
+- **Watch to the end** (Options > WHEN YOU ARE OUT): when you are knocked out, keep watching the Club finish the game and see who wins.
+  - Hold'em: the remaining players play on at double pace until one holds every chip.
+  - War: the rest flip on auto at speed x3 until one player holds every card.
+  - Blackjack: when you run out of chips, your table-mates play up to 20 more hands with no rebuys. The one with the most chips wins the table, then you can take a fresh stack and sit back in.
+  - **K** or **SKIP TO RESULT** jumps straight to the standings.
+- Floating payout text (+15, -25, PUSH, BUST) now stays in open felt, so it never drifts over a name plate or a result tag.
+- Crazy Eights: the suit picker explains that the next player must follow the suit you name, and shows how many of each suit you hold.
+- Hold'em: your plate shows your finishing place once you are out.
+
 ## What's new in 1.4.3
 
 - Blackjack: table-mate plates are a touch wider. Form hearts now sit next to the name, and the mood tag (HOT, COLD, ON FIRE, DOWN BAD and so on) moved down beside the chip count, so long names like CAPT FINN or GRANNY JO no longer collide with it. When there is no mood, the win/loss streak shows in that spot.
@@ -129,6 +140,7 @@ Full rules and strategy for every mode are in [**docs/HOW_TO_PLAY.md**](docs/HOW
 - **Scaling**: *Pixel perfect* scales the 640×360 image by whole numbers (2×, 3×, 4×…) for perfectly sharp pixels. *Fill window* stretches it to fit.
 - **Solitaire draw**: draw 1 or draw 3.
 - **Blackjack decks**: 1, 2, 4 or 6 decks in the shoe.
+- **When you are out**: *Stop* (default) ends the game the moment you are knocked out. *Watch to the end* lets the Club play on so you can see who wins. It works in Hold'em, War and Blackjack (with table-mates seated). You get nothing for it; it is just for fun. Press **K** or **SKIP TO RESULT** to jump to the final standings.
 - **Reset chips + wins**: clears saved stats, Club records and table-mates' chips.
 
 ## Using your own card art

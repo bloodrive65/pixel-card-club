@@ -46,7 +46,7 @@
       this.spare = deck; // 3 players: one card left over, set aside face down
       this.spare.forEach((c) => (c.hidden = true));
       this.battles = 0; this.wars = 0; this.phase = 'deal'; this.over = false; this.result = null;
-      this.auto = false; this.speed = 1; this.autoT = 0; this.banner = null; this.inWar = false;
+      this.auto = false; this.speed = 1; this.autoT = 0; this.spectate = false; this.skipReq = false; this.banner = null; this.inWar = false;
       G.audio.sfx('shuffle');
       this.addLog('Dealt ' + per + ' cards each' + (this.spare.length ? ' (one card set aside)' : '') + '. Ace is high.', P.cyan);
       this.addLog(this.onePass ? 'One pass: won cards are kept aside.' : 'Win all ' + per * this.players.length + ' cards to win.', P.silver);
@@ -112,7 +112,7 @@
         if (!w.human) this.say(wi, G.talk(w.ch, 'warWin', LINES));
         const loser = talkers.find((p) => p !== w);
         if (loser && Math.random() < 0.6) this.say(this.players.indexOf(loser), G.talk(loser.ch, 'warLose', LINES));
-        if (w.human) G.floatText('+' + n + ' CARDS', YOU_PILE.x + CW / 2, YOU_PILE.y - 8, P.lime);
+        if (w.human) G.floatText('+' + n + ' CARDS', YOU_PILE.x + CW / 2, YOU_PILE.y + CH / 2 + 4, P.lime, 'big', 14);
       } else if (talkers.length && Math.random() < 0.18) {
         const t = G.pick(talkers), ti = this.players.indexOf(t);
         if (t.streak >= 4) this.say(ti, G.talk(t.ch, 'hot', LINES));
@@ -143,7 +143,12 @@
           this.addLog((p.human ? 'You are' : p.name + ' is') + ' out of cards.', P.orange);
           if (!p.human) this.say(this.players.indexOf(p), G.talk(p.ch, 'out', LINES));
         }
-        if (this.players[0].out || this.active().length < 2) return this.endGame();
+        // optional watch mode (Options > WHEN YOU ARE OUT): the rest keep flipping until one player holds every card
+        if (this.players[0].out && !this.spectate && G.settings.watchOut && this.active().length >= 2) {
+          this.spectate = true; this.auto = true; this.autoT = 0.6; this.speed = Math.max(this.speed, 3);
+          this.addLog('Watching the rest of the game...', P.cyan);
+        }
+        if ((this.players[0].out && !this.spectate) || this.active().length < 2) return this.endGame();
       }
       this.phase = 'ready';
     },
@@ -190,6 +195,7 @@
       const me = this.players[0];
       const pp = YOU_PILE;
       const overPile = !ui.modal && !ui.blocked() && G.inRect(input.x, input.y, pp.x - 4, pp.y - 4, CW + 4, CH + 4);
+      if (this.phase === 'ready' && this.skipReq && !this.over) this.endGame();
       if (this.phase === 'ready' && !ui.modal) {
         if (overPile) ui.cursorHand = true;
         if ((overPile && input.pressed) || G.key(' ')) { input.pressed = false; delete input.keyPressed[' ']; this.flip(); }
@@ -245,17 +251,19 @@
     drawControls() {
       const y = 318;
       const can = this.phase === 'ready' && !this.over;
-      if (ui.button('FLIP', 196, y, 104, 22, { theme: 'gold', keyLabel: 'SPACE', enabled: can && !this.auto })) this.flip();
+      if (this.spectate) { if (ui.button(this.skipReq ? 'SKIPPING...' : 'SKIP TO RESULT', 196, y, 104, 22, { key: 'k', theme: 'gold', font: 'small' })) { if (can) this.endGame(); else this.skipReq = true; } }
+      else if (ui.button('FLIP', 196, y, 104, 22, { theme: 'gold', keyLabel: 'SPACE', enabled: can && !this.auto })) this.flip();
       if (ui.button(this.auto ? 'AUTO ON' : 'AUTO OFF', 306, y, 80, 22, { key: 'a', theme: this.auto ? 'green' : 'dark', font: 'small' })) { this.auto = !this.auto; this.autoT = 0; }
       const sp = [1, 3, 8];
       if (ui.button('SPEED X' + this.speed, 392, y, 72, 22, { key: 's', theme: 'blue', font: 'small' })) this.speed = sp[(sp.indexOf(this.speed) + 1) % sp.length];
       let s = '';
-      if (this.phase === 'ready' && !this.auto) s = 'CLICK YOUR DECK OR PRESS SPACE TO FLIP';
+      if (this.spectate && !this.over) s = 'YOU ARE OUT - WATCHING (' + this.active().length + ' LEFT)';
+      else if (this.phase === 'ready' && !this.auto) s = 'CLICK YOUR DECK OR PRESS SPACE TO FLIP';
       if (s) ui.tag(s, 330, 302, P.gold, P.ink);
     },
     drawResult() {
       const r = this.result;
-      const title = r.draw ? 'DRAW' : r.tie ? 'TIE GAME' : r.youWin ? 'YOU WIN THE WAR' : this.players[0].out && !this.onePass ? 'YOU ARE OUT' : 'GAME OVER';
+      const title = r.draw ? 'DRAW' : r.tie ? 'TIE GAME' : r.youWin ? 'YOU WIN THE WAR' : this.spectate && r.winners.length === 1 ? G.dn(r.winners[0]) + ' WINS THE WAR' : this.players[0].out && !this.onePass ? 'YOU ARE OUT' : 'GAME OVER';
       const lines = this.players.slice().sort((a, b) => this.count(b) - this.count(a)).map((p) => ({ text: G.dn(p) + '  ' + this.count(p) + ' CARDS' + (p.out ? '  (OUT)' : ''), color: r.winners.includes(p) ? P.lime : P.silver }));
       lines.push({ text: 'BATTLES ' + this.battles + '   WARS ' + this.wars, color: P.white });
       if (r.quote && r.quote.text) lines.push({ text: r.quote.p.name + ': "' + r.quote.text + '"', color: P.cyan });

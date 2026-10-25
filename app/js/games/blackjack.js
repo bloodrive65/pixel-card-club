@@ -7,6 +7,7 @@
   const CHIP_VALUES = [5, 25, 100, 500];
   const CHIP_COLORS = { 5: [P.red, P.white], 25: [P.green, P.white], 100: [P.navy, P.sky], 500: [P.plum, P.gold] };
   const START_CHIPS = 1000;
+  const WATCH_HANDS = 20; // watch mode: how many hands the table-mates play after you run dry
   // general table talk, mixed with each Club member's own lines
   const LINES = {
     hot: ['THREE IN A ROW!', 'IM ON A HEATER!', 'DONT STOP NOW!', 'KEEP EM COMING!'],
@@ -20,6 +21,7 @@
     comeback: ['FINALLY!', 'THERE IT IS!', 'THE COMEBACK STARTS NOW.', 'ABOUT TIME!'],
     cooled: ['ALL GOOD THINGS...', 'WELL, IT WAS FUN.', 'STREAK OVER. RATS.', 'THE TABLE TURNS.'],
     push: ['A PUSH. BORING.', 'EVEN STEVEN.', 'NOBODY WINS.'],
+    broke: ['I AM TAPPED OUT.', 'THAT IS ME DONE.', 'NOTHING LEFT TO BET.'],
     rebuy: ['BUYING BACK IN.', 'ANOTHER STACK, PLEASE.', 'I CAN STILL WIN THIS.'],
     brave: ['WHO CARES? HIT ME!', 'GO BIG!', 'RISK IT!', 'NO FEAR. HIT.'],
     timid: ['I... WILL STAND.', 'NOT RISKING IT.', 'STAYING PUT.', 'SAFE IS GOOD.'],
@@ -116,7 +118,7 @@
       this.lastBet = 25; this.paused = false;
       this.newShoe();
       this.resetRound(true);
-      this.setup = true; this.mates = []; this.bubbles = [];
+      this.setup = true; this.mates = []; this.bubbles = []; this.watch = null;
       const picks = (G.settings.bjPicks || ['rico', 'bubba']).slice(0, 2);
       while (picks.length < 2) picks.push(null);
       this.pick = { slots: [{ label: 'SEAT 1 - RIGHT OF YOU', color: P.lime }, { label: 'SEAT 2 - LEFT OF YOU', color: P.lime }], picks, focus: 0, seatY: 84 };
@@ -129,7 +131,7 @@
       G.settings.bjPicks = this.pick.picks.slice(); G.saveSettings();
       const bank = G.store.get('bj_mates', {}) || {};
       this.mates = view.picks.map((id, seat) => { const chips = bank[id] || START_CHIPS; return { id, ch: G.char(id), seat, chips, start: chips, cards: [], bet: 0, lastBet: 0, streak: 0, best: 0, worst: 0, hands: 0, result: null, done: false }; });
-      this.bubbles = []; this.setup = false;
+      this.bubbles = []; this.setup = false; this.watch = null;
       G.rollForms(this.mates.map((m) => Object.assign(m, { name: m.ch.name })));
       this.mates.forEach((m) => { const d = m.form - m.ch.skill; this.say(m, d > 0 ? G.pick(['FEELING SHARP TONIGHT.', 'I CAN SEE THE CARDS TONIGHT.']) : d < 0 ? G.pick(['NOT FEELING IT TONIGHT.', 'LONG DAY. GO EASY ON ME.']) : m.ch.quote.toUpperCase()); });
     },
@@ -232,7 +234,7 @@
     aiStep(m) {
       const t = handTotal(m.cards).total;
       const fx = this.seatX(m) + CW / 2;
-      if (t > 21) { m.done = true; m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y - 6, P.orange); this.say(m, G.say(m.ch, 'bust')); this.after(0.6, () => this.nextSeat()); return; }
+      if (t > 21) { m.done = true; m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y + 34, P.orange, 'big', 12); this.say(m, G.say(m.ch, 'bust')); this.after(0.6, () => this.nextSeat()); return; }
       if (t === 21) { m.done = true; this.say(m, isNatural(m.cards) ? 'BLACKJACK!' : '21!'); this.after(0.6, () => this.nextSeat()); return; }
       const act = this.aiDecide(m);
       const mm = m.moodMove; m.moodMove = null;
@@ -241,7 +243,7 @@
       else if (act === 'DOUBLE') {
         m.chips -= m.bet; m.bet *= 2; m.doubled = true; G.audio.sfx('chip'); talk('DOUBLE DOWN!');
         m.cards.push(this.draw1());
-        this.after(0.7, () => { m.done = true; if (handTotal(m.cards).total > 21) { m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y - 6, P.orange); this.say(m, G.say(m.ch, 'bust')); } this.after(0.5, () => this.nextSeat()); });
+        this.after(0.7, () => { m.done = true; if (handTotal(m.cards).total > 21) { m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y + 34, P.orange, 'big', 12); this.say(m, G.say(m.ch, 'bust')); } this.after(0.5, () => this.nextSeat()); });
       } else { m.done = true; talk('STAND.'); this.after(0.55, () => this.nextSeat()); }
     },
     // turn order around the table: seat 1 (right), you, seat 2 (left), then the dealer
@@ -293,11 +295,15 @@
       this.table.forEach((c, i) => { c.faceUp = false; G.place(c, DISCARD.x, DISCARD.y, 500 + i, false, i * 0.03); c._toDiscard = true; });
     },
     deal() {
-      if (this.bet < 5 || this.bet > this.chips) { G.audio.sfx('error'); this.msg = 'BET AT LEAST 5'; return; }
+      const W = this.watch && !this.watch.done;
+      if (!W && (this.bet < 5 || this.bet > this.chips)) { G.audio.sfx('error'); this.msg = 'BET AT LEAST 5'; return; }
       this.collect();
-      this.lastBet = this.bet;
-      this.chips -= this.bet;
-      this.hands = [{ cards: [], bet: this.bet, done: false, doubled: false, result: null, fromSplit: false }];
+      if (W) { this.watch.n++; this.hands = []; }
+      else {
+        this.lastBet = this.bet;
+        this.chips -= this.bet;
+        this.hands = [{ cards: [], bet: this.bet, done: false, doubled: false, result: null, fromSplit: false }];
+      }
       this.dealer = []; this.active = 0; this.phase = 'deal'; this.msg = ''; this.hint = null;
       if (this.shoe.length < this.shoeTotal * 0.25) {
         this.msg = 'SHUFFLING THE SHOE'; G.audio.sfx('shuffle');
@@ -307,11 +313,13 @@
       const bank = {};
       this.mates.forEach((m) => {
         m.cards = []; m.result = null; m.done = false; m.doubled = false;
+        if (m.out) { m.bet = 0; return; }
         const lastMult = m.mult || 1;
         m.bet = this.mateBet(m);
         let talk = null;
         m.cool = (m.cool || 0) - 1;
-        if (m.chips < m.bet) { m.chips = START_CHIPS; m.start = START_CHIPS; m.streak = 0; m.bet = this.mateBet(m); talk = this.line(m, 'rebuy'); }
+        if (W && m.chips < m.bet) m.bet = Math.floor(m.chips / 5) * 5; // no rebuys while you watch
+        else if (m.chips < m.bet) { m.chips = START_CHIPS; m.start = START_CHIPS; m.streak = 0; m.bet = this.mateBet(m); talk = this.line(m, 'rebuy'); }
         else if (m.cool <= 0 && m.lastBet && m.bet > m.lastBet) {
           // only talk about bet changes that come from their temper, not from a hunch wobble
           if (m.mult >= lastMult * 1.35 && Math.random() < 0.75) talk = this.line(m, this.risk(m) > 1 ? 'allin' : m.streak < 0 ? 'chase' : 'press', { bet: m.bet });
@@ -323,10 +331,10 @@
         m.chips -= m.bet;
         if (talk) this.say(m, talk);
       });
-      const m0 = this.mates.find((m) => m.seat === 0), m1 = this.mates.find((m) => m.seat === 1);
+      const m0 = this.mates.find((m) => m.seat === 0 && !m.out), m1 = this.mates.find((m) => m.seat === 1 && !m.out);
       for (let r = 0; r < 2; r++) {
         if (m0) this.after(0.2, () => m0.cards.push(this.draw1()));
-        this.after(0.2, () => h.cards.push(this.draw1()));
+        if (h) this.after(0.2, () => h.cards.push(this.draw1()));
         if (m1) this.after(0.2, () => m1.cards.push(this.draw1()));
         this.after(0.2, () => this.dealer.push(this.draw1(r === 0)));
       }
@@ -335,7 +343,7 @@
     afterDeal() {
       const up = this.dealer[0];
       const dealerBJ = isNatural(this.dealer);
-      const playerBJ = isNatural(this.hands[0].cards);
+      const playerBJ = !!this.hands[0] && isNatural(this.hands[0].cards);
       if (cardValue(up) >= 10 && !(playerBJ && !this.mates.length)) {
         this.msg = 'DEALER PEEKS...';
         this.after(0.6, () => {
@@ -350,9 +358,9 @@
     },
     startPlay() {
       this.order = [];
-      if (this.mates.some((m) => m.seat === 0)) this.order.push(this.mates.findIndex((m) => m.seat === 0));
-      this.order.push('you');
-      if (this.mates.some((m) => m.seat === 1)) this.order.push(this.mates.findIndex((m) => m.seat === 1));
+      if (this.mates.some((m) => m.seat === 0 && !m.out)) this.order.push(this.mates.findIndex((m) => m.seat === 0));
+      if (this.hands.length) this.order.push('you');
+      if (this.mates.some((m) => m.seat === 1 && !m.out)) this.order.push(this.mates.findIndex((m) => m.seat === 1));
       this.seatI = -1; this.nextSeat();
     },
     cur() { return this.hands[this.active]; },
@@ -388,7 +396,7 @@
     checkAuto() {
       const h = this.cur(); if (!h) return;
       const t = handTotal(h.cards).total;
-      if (t > 21) { h.done = true; h.result = 'bust'; G.audio.sfx('error'); G.floatText('BUST', this.handX(this.active) + CW / 2, PLAYER_Y - 6, P.orange); this.after(0.5, () => this.nextHand()); this.phase = 'wait'; }
+      if (t > 21) { h.done = true; h.result = 'bust'; G.audio.sfx('error'); G.floatText('BUST', this.handX(this.active) + CW / 2, PLAYER_Y + 34, P.orange, 'big', 12); this.after(0.5, () => this.nextHand()); this.phase = 'wait'; }
       else if (t === 21) { h.done = true; this.after(0.35, () => this.nextHand()); this.phase = 'wait'; }
     },
     nextHand() {
@@ -401,7 +409,7 @@
       this.after(0.3, () => { this.dealer[1].faceUp = true; });
       // the dealer only draws if someone still has a live hand (not bust, not a natural blackjack)
       const live = (cards, split) => handTotal(cards).total <= 21 && !(isNatural(cards) && !split);
-      const allBust = !this.hands.some((h) => live(h.cards, h.fromSplit)) && !this.mates.some((m) => live(m.cards, false));
+      const allBust = !this.hands.some((h) => live(h.cards, h.fromSplit)) && !this.mates.some((m) => m.cards.length && live(m.cards, false));
       const step = () => {
         const t = handTotal(this.dealer);
         if (!allBust && t.total < 17) { this.dealer.push(this.draw1()); this.after(0.55, step); }
@@ -429,7 +437,7 @@
         this.chips += pay; net += pay - h.bet;
         if (res === 'PUSH') pushes++; else if (pay > 0) wins++; else losses++;
         const fx = this.handX(i) + this.handW(h) / 2;
-        G.floatText(pay > h.bet ? '+' + (pay - h.bet) : pay === h.bet ? 'PUSH' : '-' + h.bet, fx, PLAYER_Y - 14, pay > h.bet ? P.lime : pay === h.bet ? P.white : P.orange);
+        G.floatText(pay > h.bet ? '+' + (pay - h.bet) : pay === h.bet ? 'PUSH' : '-' + h.bet, fx, PLAYER_Y + CH + 13, pay > h.bet ? P.lime : pay === h.bet ? P.white : P.orange, 'big', 7);
       });
       const bank = G.store.get('bj_mates', {}) || {};
       this.mates.forEach((m) => {
@@ -443,7 +451,7 @@
         else if (dt > 21 || pt > dt) { res = 'WIN'; pay = m.bet * 2; }
         else res = 'LOSE';
         pay = Math.floor(pay); m.result = res; m.chips += pay;
-        G.floatText(pay > m.bet ? '+' + (pay - m.bet) : pay === m.bet ? 'PUSH' : '-' + m.bet, this.seatX(m) + CW / 2, PLAYER_Y - 14, pay > m.bet ? P.lime : pay === m.bet ? P.white : P.orange, 'small');
+        G.floatText(pay > m.bet ? '+' + (pay - m.bet) : pay === m.bet ? 'PUSH' : '-' + m.bet, this.seatX(m) + 37, PLAYER_Y + CH + 13, pay > m.bet ? P.lime : pay === m.bet ? P.white : P.orange, 'big', 7);
         const quip = this.mateResult(m, res);
         if (quip) this.say(m, quip);
         bank[m.id] = m.chips;
@@ -458,9 +466,42 @@
       if (net < 0 && dt > 21) this.msg = 'YOU LOSE ' + -net;
       if (net < 0 && dt <= 21) this.msg = 'DEALER WINS ' + dt;
       G.audio.sfx(net > 0 ? 'win' : net < 0 ? 'lose' : 'click');
+      if (!this.hands.length) this.msg = '';
       G.store.set('bj_chips', this.chips);
       const best = G.store.get('bj_best', START_CHIPS); if (this.chips > best) G.store.set('bj_best', this.chips);
       this.bet = Math.min(this.lastBet, Math.floor(this.chips / 5) * 5);
+      if (this.watch && !this.watch.done) this.watchStep(dt);
+    },
+    // ---------- watch mode (Options > WHEN YOU ARE OUT) ----------
+    startWatch() {
+      this.watch = { n: 0, done: false };
+      this.after(1.4, () => { this.msg = 'WATCHING THE TABLE'; });
+      this.after(1.2, () => this.deal());
+    },
+    watchStep(dt) {
+      for (const m of this.mates) if (!m.out && m.chips < 5) { m.out = true; this.say(m, this.line(m, 'broke')); }
+      this.msg = dt > 21 ? 'DEALER BUSTS' : 'DEALER ' + (isNatural(this.dealer) ? 'BLACKJACK' : dt);
+      const left = this.mates.filter((m) => !m.out);
+      if (!left.length || this.watch.n >= WATCH_HANDS) this.after(1.8, () => this.endWatch());
+      else this.after(2.2, () => { if (this.watch && !this.watch.done) this.deal(); });
+    },
+    endWatch() {
+      if (!this.watch || this.watch.done) return;
+      this.q = []; this.qt = 0;
+      // refund anything still riding if you skip mid-hand
+      if (this.phase !== 'done') for (const m of this.mates) { m.chips += m.bet || 0; m.bet = 0; }
+      this.watch.done = true; this.phase = 'bet';
+      const ranked = this.mates.slice().sort((a, b) => b.chips - a.chips);
+      this.watch.ranked = ranked;
+      this.watch.champ = ranked[0] && ranked[0].chips > 0 && (!ranked[1] || ranked[0].chips !== ranked[1].chips) ? ranked[0] : null;
+      this.msg = '';
+      G.audio.sfx('win');
+    },
+    rejoin() {
+      // take a fresh stack; anyone who went broke while you watched buys back in too
+      this.chips = START_CHIPS; this.bet = 25; G.store.set('bj_chips', this.chips);
+      for (const m of this.mates) if (m.out || m.chips < 5) { m.out = false; m.chips = START_CHIPS; m.start = START_CHIPS; m.streak = 0; }
+      this.watch = null; this.msg = 'PLACE YOUR BET';
     },
     // ---------- layout ----------
     handW(h) { return CW + Math.max(0, h.cards.length - 1) * FAN; },
@@ -490,7 +531,7 @@
       ui.felt();
       this.drawTable();
       this.drawMates();
-      if (this.hands.length <= 2) G.youPlate(128, 264, 112, 'CHIPS ' + this.chips, P.lime, this.phase === 'play');
+      if (this.hands.length <= 2) G.youPlate(128, 264, 112, this.watch ? 'SITTING OUT' : 'CHIPS ' + this.chips, this.watch ? P.slate : P.lime, this.phase === 'play');
       G.drawCards(this.table);
       this.drawTotals();
       this.drawBubbles(dt);
@@ -506,9 +547,19 @@
       if (this.paused) {
         const act = ui.pauseMenu(this);
         if (act === 'resume') this.paused = false;
-        if (act === 'restart') { this.paused = false; this.chips = START_CHIPS; G.store.set('bj_chips', this.chips); this.table = []; this.discardCount = 0; this.stats = { won: 0, lost: 0, push: 0 }; this.lastBet = 25; this.newShoe(); this.resetRound(true); }
+        if (act === 'restart') { this.paused = false; this.watch = null; this.mates.forEach((m) => { m.out = false; }); this.chips = START_CHIPS; G.store.set('bj_chips', this.chips); this.table = []; this.discardCount = 0; this.stats = { won: 0, lost: 0, push: 0 }; this.lastBet = 25; this.newShoe(); this.resetRound(true); }
         if (act === 'menu') { this.paused = false; G.go(G.Menu); }
-      } else if (this.phase === 'bet' && this.chips < 5 && this.bet < 5) {
+      } else if (this.watch && this.watch.done) {
+        const w = this.watch, title = w.champ ? G.dn(w.champ) + ' WINS THE TABLE' : 'THE TABLE IS EVEN';
+        const lines = w.ranked.map((m) => { const d = m.chips - m.start; return { text: G.dn(m) + '  ' + m.chips + ' CHIPS  (' + (d >= 0 ? '+' : '') + d + ')' + (m.out ? '  BROKE' : ''), color: m === w.champ ? P.lime : P.silver }; });
+        lines.push({ text: 'YOU WATCHED ' + w.n + ' HAND' + (w.n === 1 ? '' : 'S') + '.', color: P.white });
+        lines.push({ text: 'Take a fresh stack of ' + START_CHIPS + ' chips and sit back in?', color: P.slate });
+        const act = ui.dialog(title, lines, [{ label: 'NEW STACK', act: 'reset', theme: 'green', key: 'Enter' }, { label: 'MENU', act: 'menu', theme: 'red' }], { w: 360, titleColor: P.gold });
+        if (act === 'reset') this.rejoin();
+        if (act === 'menu') G.go(G.Menu);
+      } else if ((this.phase === 'bet' || this.phase === 'done') && this.chips < 5 && !this.watch && G.settings.watchOut && this.mates.length && !this.q.length) {
+        this.startWatch();
+      } else if (this.phase === 'bet' && this.chips < 5 && this.bet < 5 && !this.watch) {
         const act = ui.dialog('OUT OF CHIPS', [{ text: 'The house always wins... this time.' }, { text: 'Take a fresh stack of ' + START_CHIPS + ' chips?', color: P.silver }], [{ label: 'NEW STACK', act: 'reset', theme: 'green', key: 'Enter' }, { label: 'MENU', act: 'menu', theme: 'red' }]);
         if (act === 'reset') { this.chips = START_CHIPS; this.bet = 25; G.store.set('bj_chips', this.chips); }
         if (act === 'menu') G.go(G.Menu);
@@ -548,9 +599,9 @@
         G.drawAvatar(m.id, x + 1, 141);
         G.text(m.ch.name, x + 29, 144, turn ? P.gold : P.white, 'small');
         G.stars(m.form, x + 91, 144);
-        G.text(String(m.chips), x + 29, 155, P.lime, 'small');
+        G.text(m.out ? 'BROKE' : String(m.chips), x + 29, 155, m.out ? P.orange : P.lime, 'small');
         const md = this.mood(m);
-        if (md) G.text(md.label, x + 111, 155, md.col, 'small', 'right');
+        if (md && !m.out) G.text(md.label, x + 111, 155, md.col, 'small', 'right');
         else if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 111, 155, m.streak > 0 ? P.lime : P.orange, 'small', 'right');
         const cx = x + 37;
         if (m.bet > 0 && this.phase !== 'bet') this.drawBetSpot(cx, PLAYER_Y + CH + 30, m.bet, turn);
@@ -624,6 +675,13 @@
       const y = 316;
       G.rect(0, y - 6, G.W, G.H - y + 6, P.ink); G.rect(0, y - 6, G.W, 1, P.dusk); G.rect(0, y - 7, G.W, 1, P.black);
       ui.block(0, y - 7, G.W, G.H - y + 7);
+      if (this.watch && !this.watch.done) {
+        const left = this.mates.filter((m) => !m.out).length;
+        G.text('YOU ARE OUT OF CHIPS - WATCHING THE TABLE', 14, y + 4, P.cyan, 'small');
+        G.text('HAND ' + Math.max(1, this.watch.n) + ' OF ' + WATCH_HANDS + '   ' + left + ' STILL PLAYING', 14, y + 15, P.silver, 'small');
+        if (ui.button('SKIP TO RESULT', 480, y, 148, 26, { key: 'k', theme: 'blue', font: 'small' })) this.endWatch();
+        return;
+      }
       if (this.phase === 'bet' || this.phase === 'done') {
         // chip buttons
         G.text('BET', 14, y + 10, P.silver, 'small');

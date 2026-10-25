@@ -346,16 +346,17 @@
       ui.modal = true;
       G.alpha(0.55, () => G.rect(0, 0, G.W, G.H, P.ink));
       ui.block(0, 0, G.W, G.H);
-      const w = 236, h = 98, x = G.W / 2 - w / 2, y = 120;
+      const w = 236, h = 112, x = G.W / 2 - w / 2, y = 116;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
       G.text('CRAZY EIGHT - NAME A SUIT', G.W / 2, y + 10, P.gold, 'big', 'center', 1, P.black);
+      G.text('THE NEXT PLAYER MUST FOLLOW THIS SUIT', G.W / 2, y + 24, P.silver, 'small', 'center');
       const me = this.players[0];
       for (let s = 0; s < 4; s++) {
-        const bx = x + 14 + s * 54, by = y + 28;
+        const bx = x + 14 + s * 54, by = y + 36;
         const n = me.hand.filter((c) => c.suit === s && c !== this.pending8).length;
         if (ui.button('', bx, by, 46, 40, { modal: true, theme: 'light', key: String(s + 1), id: 'suit' + s })) { const c = this.pending8; this.pending8 = null; this.play(0, c, s); return; }
         const ctx = G.ctx; ctx.save(); ctx.translate(bx + 16, by + 6); ctx.scale(2, 2); G.drawSuit(s, 0, 0, 'big', G.isRed(s) ? P.red : P.ink); ctx.restore();
-        G.text(s + 1 + ':' + n, bx + 23, by + 28, P.slate, 'small', 'center');
+        G.text('HOLD ' + n, bx + 19, by + 25, n ? P.ink : P.slate, 'small', 'center');
       }
       if (ui.button('CANCEL', G.W / 2 - 40, y + h - 24, 80, 16, { modal: true, theme: 'red', key: 'Escape', font: 'small', showKey: false })) this.pending8 = null;
     },

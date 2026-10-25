@@ -114,7 +114,7 @@
       ids.forEach((id) => { const ch = G.char(id); this.players.push({ name: ch.name, human: false, id, ch, chips: START, mood: 0 }); });
       this.players.forEach((p) => Object.assign(p, { hole: [], bet: 0, total: 0, folded: false, allin: false, out: false, place: 0 }));
       this.button = G.rand(this.players.length);
-      this.handNo = 0; this.over = false; this.result = null; this.showOdds = !!G.settings.pokerOdds; this.oddsCache = null;
+      this.handNo = 0; this.over = false; this.result = null; this.spectate = false; this.showOdds = !!G.settings.pokerOdds; this.oddsCache = null;
       this.resetTable();
       this.cards = [];
       this.board = []; this.burns = []; this.deck = [];
@@ -132,7 +132,7 @@
     blinds() { return LEVELS[this.rising ? Math.min(LEVELS.length - 1, Math.floor((this.handNo - 1) / HANDS_PER_LEVEL)) : 0]; },
     // ---------- a hand ----------
     newHand() {
-      if (this.alive().length < 2 || this.players[0].out) return this.endGame();
+      if (this.alive().length < 2 || (this.players[0].out && !this.spectate)) return this.endGame();
       this.handNo++;
       const [sb, bb] = this.blinds();
       if (this.rising && this.handNo > 1 && (this.handNo - 1) % HANDS_PER_LEVEL === 0 && LEVELS[Math.floor((this.handNo - 1) / HANDS_PER_LEVEL)]) this.addLog('Blinds go up to ' + sb + '/' + bb + '.', P.orange);
@@ -142,7 +142,7 @@
       this.cards = G.shuffle(G.makeDeck(1));
       this.cards.forEach((c) => { c.x = DECK.x; c.y = DECK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.hidden = false; c.lift = 0; });
       this.deck = this.cards.slice(); this.board = []; this.burns = []; this.street = 0; this.winners = []; this.potList = []; this.handDone = false;
-      this.oddsCache = null; this.speed = 1;
+      this.oddsCache = null; this.speed = this.spectate ? 2.2 : 1;
       const n = this.alive().length;
       // Wikipedia: heads-up, the dealer posts the small blind and acts first before the flop
       const sbP = n === 2 ? this.button : this.nextAlive(this.button);
@@ -352,8 +352,16 @@
         this.addLog((p.human ? 'You are' : p.name + ' is') + ' out in place ' + p.place + '.', P.orange);
         if (!p.human) this.say(this.players.indexOf(p), G.talk(p.ch, 'bust', LINES));
       });
-      if (this.alive().length < 2 || this.players[0].out) return this.after(busted.length ? 1.4 : 0.3, () => this.endGame());
+      // optional watch mode (Options > WHEN YOU ARE OUT): the Club plays on until someone takes every chip
+      if (this.players[0].out && !this.spectate && G.settings.watchOut && this.alive().length >= 2) { this.spectate = true; this.addLog('Watching the rest of the game...', P.cyan); }
+      if (this.alive().length < 2 || (this.players[0].out && !this.spectate)) return this.after(busted.length ? 1.4 : 0.3, () => this.endGame());
       this.after(busted.length ? 1.2 : 0.4, () => this.newHand());
+    },
+    skipWatch() {
+      // stop watching: return chips still in the pot, then rank the table by stacks
+      this.q = []; this.qt = 0;
+      for (const p of this.players) { p.chips += p.total || 0; p.total = 0; }
+      this.endGame();
     },
     endGame() {
       if (this.over) return;
@@ -520,7 +528,7 @@
       const me = this.players[0];
       if (!me) return;
       const turn = this.phase === 'you';
-      this.drawSeat(YOU, me, { turn, out: me.out || me.folded, line: me.folded ? 'FOLDED' : me.allin ? 'ALL IN' : 'YOUR STACK', lineColor: me.allin ? P.orange : P.silver, value: me.chips });
+      this.drawSeat(YOU, me, { turn, out: me.out || me.folded, line: me.out ? 'OUT - PLACE ' + me.place : me.folded ? 'FOLDED' : me.allin ? 'ALL IN' : 'YOUR STACK', lineColor: me.allin ? P.orange : P.silver, value: me.chips });
       if (this.button === 0) this.drawButton(YOU.x + YOU.w + 6, YOU.y + 8);
       if (me.bet > 0) { const w = ui.tag(String(me.bet), YOU_CARDS.x + 54, 214, P.gold, P.ink); this.drawChips(YOU_CARDS.x + 54 - w / 2 - 13, 215, me.bet); }
       else if (me.act === 'CHECK') ui.tag('CHECK', YOU_CARDS.x + 46, 214, P.silver, P.ink);
@@ -553,6 +561,11 @@
       const canRaise = my && me.canRaise && maxTo > this.curBet;
       if (my) this.raiseTo = G.clamp(this.raiseTo || minTo, minTo, maxTo);
       const step = this.bb || 20;
+      if (this.spectate && !this.over) {
+        if (ui.button('SKIP TO RESULT', G.W / 2 - 70, y, 140, 22, { key: 'k', theme: 'blue', font: 'small' })) this.skipWatch();
+        G.text('YOU ARE OUT - WATCHING THE CLUB PLAY IT OUT  (' + this.alive().length + ' LEFT)', G.W / 2, 342, P.cyan, 'small', 'center');
+        return;
+      }
       if (ui.button('FOLD', 10, y, 64, 22, { key: 'f', theme: 'red', enabled: my && toCall > 0 })) this.act(0, 'fold');
       const callLbl = toCall === 0 ? 'CHECK' : toCall >= me.chips ? 'ALL IN ' + me.chips : 'CALL ' + toCall;
       if (ui.button(callLbl, 80, y, 110, 22, { key: 'c', theme: 'green', enabled: my })) this.act(0, toCall ? 'call' : 'check');
@@ -578,7 +591,8 @@
       const r = this.result;
       const me = this.players[0];
       const title = r.youWin ? 'YOU WIN THE TABLE' : 'YOU FINISH ' + ['', '1ST', '2ND', '3RD', '4TH'][me.place];
-      const lines = this.players.slice().sort((a, b) => a.place - b.place).map((p) => ({ text: ['', '1ST', '2ND', '3RD', '4TH'][p.place] + '  ' + G.dn(p) + (p.out ? '' : '  ' + p.chips + ' CHIPS'), color: p.place === 1 ? P.lime : P.silver }));
+      const lines = this.players.slice().sort((a, b) => a.place - b.place).map((p) => ({ text: ['', '1ST', '2ND', '3RD', '4TH', '5TH', '6TH'][p.place] + '  ' + G.dn(p) + (p.out ? '' : '  ' + p.chips + ' CHIPS'), color: p.place === 1 ? P.lime : P.silver }));
+      if (this.spectate && r.champ) lines.unshift({ text: G.dn(r.champ) + ' WINS THE TABLE', color: P.gold });
       lines.push({ text: 'HANDS PLAYED ' + this.handNo, color: P.white });
       if (r.quote && r.quote.text) lines.push({ text: r.quote.p.name + ': "' + r.quote.text + '"', color: P.cyan });
       lines.push({ text: "HOLD'EM WINS: " + G.store.get('poker_won', 0) + ' OF ' + G.store.get('poker_played', 0), color: P.slate });

@@ -205,11 +205,12 @@
 
   // ---------- Tweened floating text (for payouts, etc.) ----------
   G.floaters = [];
-  G.floatText = (str, x, y, color = G.P.gold, f = 'big') => G.floaters.push({ str, x, y, color, f, t: 0 });
+  // rise = how many pixels the text drifts up; keep it inside clear felt so it never crosses a plate or panel
+  G.floatText = (str, x, y, color = G.P.gold, f = 'big', rise = 18) => G.floaters.push({ str, x, y, color, f, rise, t: 0 });
   G.drawFloaters = (dt) => {
     for (const fl of G.floaters) {
       fl.t += dt;
-      const yy = fl.y - Math.min(18, fl.t * 30);
+      const yy = fl.y - Math.min(fl.rise, fl.t * 30);
       if (fl.t < 1.6 && (fl.t < 1.2 || Math.floor(fl.t * 20) % 2 === 0)) G.text(fl.str, fl.x, yy, fl.color, fl.f, 'center', 1, G.P.ink);
     }
     G.floaters = G.floaters.filter((f) => f.t < 1.6);
