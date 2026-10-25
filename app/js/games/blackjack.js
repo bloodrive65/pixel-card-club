@@ -515,9 +515,9 @@
       }
     },
     drawTable() {
-      // felt printing
-      G.text('BLACKJACK PAYS 3 TO 2', G.W / 2, 122, P.felt4, 'big', 'center');
-      G.text('DEALER MUST HIT 16 AND STAND ON ALL 17S', G.W / 2, 135, P.felt4, 'small', 'center');
+      // felt printing (hidden once the dealer has cards so labels never sit on it)
+      if (!this.dealer.length) G.text('BLACKJACK PAYS 3 TO 2', G.W / 2, 122, P.felt4, 'big', 'center');
+      if (!this.dealer.length) G.text('DEALER MUST HIT 16 AND STAND ON ALL 17S', G.W / 2, 135, P.felt4, 'small', 'center');
       // shoe
       const remain = this.shoe.length / this.shoeTotal;
       G.panel(SHOE.x - 6, SHOE.y - 6, CW + 18, CH + 14, { fill: P.wood1, hi: P.wood3, lo: P.wood0 });

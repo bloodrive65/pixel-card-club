@@ -36,6 +36,11 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.4.2
+
+- War: your deck and its card count sit a little higher, so the "YOUR DECK" label no longer hides under the flip hint.
+- Blackjack: the "BLACKJACK PAYS 3 TO 2" table print fades away once cards are dealt, so the dealer total and result banners never sit on top of it.
+
 ## What's new in 1.4.1
 
 - Your speech bubble now pops up above your own seat plate instead of over your cards (Go Fish and Crazy Eights).

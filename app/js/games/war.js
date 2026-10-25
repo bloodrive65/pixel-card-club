@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
-  const YOU_PILE = { x: 196, y: 232 }, YOU_BAT = { x: 256, y: 232 }, YOU_WON = { x: 136, y: 232 };
+  const YOU_PILE = { x: 196, y: 224 }, YOU_BAT = { x: 256, y: 224 }, YOU_WON = { x: 136, y: 224 };
   const LOG = { x: 470, y: 134, w: 162, h: 168 };
   const BOARD = { x: 10, y: 134, w: 120, h: 168 };
   const val = (c) => (c.rank === 1 ? 14 : c.rank);

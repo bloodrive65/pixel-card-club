@@ -1,7 +1,7 @@
 {
   "name": "pixel-card-club",
   "productName": "Pixel Card Club",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A 16-bit pixel-art card game collection: Blackjack, Klondike Solitaire and Go Fish with computer opponents.",
   "main": "electron/main.js",
   "author": "bloodrive65",
