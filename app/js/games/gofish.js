@@ -50,6 +50,7 @@
       G.audio.sfx('shuffle');
       this.addLog('Dealt ' + per + ' cards each. You go first.', P.cyan);
       if (teams) this.addLog('Team Blue: you + ' + this.players[2].name + '. Ask only Team Red.', P.sky);
+      G.rollForms(this.players, (t) => this.addLog(t, P.silver));
       this.after(0.4 + d * 0.05, () => {
         this.players.forEach((p, i) => { if (!p.human && i) this.say(i, p.ch.quote.toUpperCase()); this.checkBooks(p); });
         this.startTurn();
@@ -75,7 +76,7 @@
     remember(fact, pi, rank, val) {
       for (const ai of this.players) {
         if (ai.human) continue;
-        const rec = ai.ch.fish.perfect ? 1 : RECALL[ai.ch.skill];
+        const rec = ai.ch.fish.perfect ? 1 : RECALL[ai.form];
         if (val && Math.random() > rec) continue;
         const key = pi + '_' + rank;
         const m = fact === 'has' ? ai.mem.has : ai.mem.lacks;
@@ -88,16 +89,16 @@
       const ranks = [...new Set(me.hand.map((c) => c.rank))];
       const opps = this.targets(pi);
       const count = (r) => me.hand.filter((c) => c.rank === r).length;
-      if (!ch.fish.perfect) for (const k in me.mem.has) if (Math.random() < FORGET[ch.skill]) delete me.mem.has[k];
-      if (ch.skill > 0) {
+      if (!ch.fish.perfect) for (const k in me.mem.has) if (Math.random() < FORGET[me.form]) delete me.mem.has[k];
+      if (me.form > 0) {
         const known = [];
         for (const r of ranks) for (const o of opps) if (me.mem.has[o + '_' + r]) known.push({ target: o, rank: r, w: count(r) });
         if (known.length) { known.sort((a, b) => b.w - a.w); return known[0]; }
       }
       let rank;
-      if (ch.fish.rank === 'most' && ch.skill > 0) { const best = Math.max(...ranks.map(count)); rank = G.pick(ranks.filter((r) => count(r) === best)); }
+      if (ch.fish.rank === 'most' && me.form > 0) { const best = Math.max(...ranks.map(count)); rank = G.pick(ranks.filter((r) => count(r) === best)); }
       else rank = G.pick(ranks);
-      let ts = ch.skill > 0 ? opps.filter((o) => !me.mem.lacks[o + '_' + rank]) : opps.slice();
+      let ts = me.form > 0 ? opps.filter((o) => !me.mem.lacks[o + '_' + rank]) : opps.slice();
       if (!ts.length) ts = opps.slice();
       const tg = ch.fish.target;
       if (tg === 'mostCards') { const m = Math.max(...ts.map((o) => this.players[o].hand.length)); ts = ts.filter((o) => this.players[o].hand.length === m); }
@@ -330,6 +331,7 @@
         G.drawMiniBook(b.rank, sp.x, sp.y - pop);
       }));
       this.drawOpponents();
+      G.youPlate(8, 312, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
       G.drawCards(this.cards, (c) => (this.selRank === c.rank && me.hand.includes(c) ? { highlight: P.gold } : null));
       this.drawLog();
       this.drawPrompt();
@@ -351,8 +353,8 @@
       const title = r.tie ? 'TIE GAME' : r.youWin ? (this.teamMode ? 'TEAM BLUE WINS' : 'YOU WIN') : this.teamMode ? 'TEAM RED WINS' : 'GAME OVER';
       let lines;
       if (this.teamMode) {
-        lines = [0, 1].map((t) => ({ text: TEAM_NAME[t] + ' (' + this.players.filter((p) => p.team === t).map((p) => p.name).join(' + ') + ')  ' + this.teamBooks(t) + ' BOOKS', color: TEAM_COL[t] }));
-      } else lines = this.players.slice().sort((a, b) => b.books.length - a.books.length).map((p) => ({ text: p.name + '  ' + p.books.length + ' BOOKS', color: r.winners.includes(p) ? P.lime : P.silver }));
+        lines = [0, 1].map((t) => ({ text: TEAM_NAME[t] + ' (' + this.players.filter((p) => p.team === t).map((p) => G.dn(p)).join(' + ') + ')  ' + this.teamBooks(t) + ' BOOKS', color: TEAM_COL[t] }));
+      } else lines = this.players.slice().sort((a, b) => b.books.length - a.books.length).map((p) => ({ text: G.dn(p) + '  ' + p.books.length + ' BOOKS', color: r.winners.includes(p) ? P.lime : P.silver }));
       if (r.quote) lines.push({ text: r.quote.p.name + ': "' + r.quote.text + '"', color: P.cyan });
       lines.push({ text: 'GO FISH WINS: ' + G.store.get('fish_won', 0) + ' OF ' + G.store.get('fish_played', 0), color: P.slate });
       const act = ui.dialog(title, lines, [{ label: 'PLAY AGAIN', act: 'again', theme: 'green', key: 'Enter' }, { label: 'SETUP', act: 'setup', theme: 'blue' }, { label: 'MENU', act: 'menu', theme: 'red' }], { w: 380, titleColor: r.youWin ? P.lime : r.tie ? P.gold : P.orange });
@@ -374,7 +376,7 @@
         G.drawAvatar(p.id, s.x + 2, s.y + 2);
         G.text(p.name, s.x + 30, s.y + 5, isTurn ? P.gold : P.white, 'big');
         G.text(p.hand.length + ' CARDS' + (this.teamMode ? (p.team === 0 ? '  PARTNER' : '  RIVAL') : ''), s.x + 30, s.y + 17, tcol || P.silver, 'small');
-        G.stars(p.ch.skill, s.x + s.w - 26, s.y + 6);
+        G.stars(p.form, s.x + s.w - 26, s.y + 6);
         G.text('BOOKS', s.x + s.w - 20, s.y + 17, P.silver, 'small', 'right');
         G.text(String(p.books.length), s.x + s.w - 6, s.y + 17, P.gold, 'small', 'right');
         if (canPick) {

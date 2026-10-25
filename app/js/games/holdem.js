@@ -121,6 +121,7 @@
       this.players.forEach((p) => { p.hole = []; });
       G.bump('poker_played');
       this.addLog('Sit-and-go: ' + this.players.length + ' players, ' + START + ' chips each.', P.cyan);
+      G.rollForms(this.players, (t) => this.addLog(t, P.silver));
       this.after(0.3, () => this.newHand());
     },
     alive() { return this.players.filter((p) => !p.out); },
@@ -375,7 +376,7 @@
     },
     // ---------- AI ----------
     aiAct(i) {
-      const p = this.players[i], ch = p.ch, sk = ch.skill;
+      const p = this.players[i], ch = p.ch, sk = p.form;
       let st = STYLE[ch.poker] || STYLE.shark;
       if (!st) st = STYLE.shark;
       if (ch.poker === 'wild') { if (!p.wild || p.wildHand !== this.handNo) { p.wild = G.pick([STYLE.shark, STYLE.lag, STYLE.rock, STYLE.station, STYLE.maniac]); p.wildHand = this.handNo; } st = p.wild; }
@@ -577,7 +578,7 @@
       const r = this.result;
       const me = this.players[0];
       const title = r.youWin ? 'YOU WIN THE TABLE' : 'YOU FINISH ' + ['', '1ST', '2ND', '3RD', '4TH'][me.place];
-      const lines = this.players.slice().sort((a, b) => a.place - b.place).map((p) => ({ text: ['', '1ST', '2ND', '3RD', '4TH'][p.place] + '  ' + p.name + (p.out ? '' : '  ' + p.chips + ' CHIPS'), color: p.place === 1 ? P.lime : P.silver }));
+      const lines = this.players.slice().sort((a, b) => a.place - b.place).map((p) => ({ text: ['', '1ST', '2ND', '3RD', '4TH'][p.place] + '  ' + G.dn(p) + (p.out ? '' : '  ' + p.chips + ' CHIPS'), color: p.place === 1 ? P.lime : P.silver }));
       lines.push({ text: 'HANDS PLAYED ' + this.handNo, color: P.white });
       if (r.quote && r.quote.text) lines.push({ text: r.quote.p.name + ': "' + r.quote.text + '"', color: P.cyan });
       lines.push({ text: "HOLD'EM WINS: " + G.store.get('poker_won', 0) + ' OF ' + G.store.get('poker_played', 0), color: P.slate });

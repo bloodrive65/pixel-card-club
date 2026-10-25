@@ -28,9 +28,18 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 |---|---|---|
 | ![War](docs/screenshots/war.png) | ![Customize](docs/screenshots/customize.png) | ![Western Deck](docs/screenshots/western_deck.png) |
 
+| Your profile |
+|---|
+| ![Profile editor](docs/screenshots/profile.png) |
+
 | The rulebook | The Club members | Choosing opponents |
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
+
+## What's new in 1.4
+
+- **Form is dealt each game**: Club members no longer show fixed hearts. Each game, every member at the table gets hearts for their form that game, rolled from their usual level, so a shark can have an off night and an easy player can get hot. The AI plays to its form.
+- **Your own profile**: press **P** (or click your badge on the main menu) to set your name and build your portrait: skin, hair, hat, facial hair, glasses, extras, shirt and backdrop. You now have a seat plate at every Club table.
 
 ## What's new in 1.3.1
 
@@ -50,7 +59,7 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 ## What's new in 1.1
 
 - **Rulebook**: press **R** on the main menu (or **Esc → How to Play** in any game). It's drawn as a leather book with chapter tabs, and pages turn with an animation.
-- **The Club**: 18 computer players, each with a pixel portrait, a skill level, a Go Fish habit, a Blackjack style and their own lines. Their win/loss record against you is saved.
+- **The Club**: 18 computer players, each with a pixel portrait, a usual skill level, a Go Fish habit, a Blackjack style and their own lines. Their win/loss record against you is saved.
 - **Go Fish teams (2v2)**: pick a partner and two rivals. Team books are counted together.
 - **Books on the table**: every completed Go Fish book is laid face up in front of the player who made it.
 - **Blackjack table-mates**: up to 2 Club members sit at the table and play their own hands.
@@ -79,7 +88,7 @@ Open `app/index.html` in any modern browser (Chrome, Edge, Firefox). No server o
 | Everywhere | **F11** | Toggle fullscreen (desktop app) |
 | Main menu | **← / →** or **Tab** | Switch between The Classics and More Games |
 | Main menu | **1–3** / **1–4** | Classics: Blackjack, Solitaire, Go Fish. More Games: Hold'em, Crazy Eights, War, Spider |
-| Main menu | **O / C** | Options / Customize |
+| Main menu | **O / C / P** | Options / Customize / Your profile |
 | Main menu | **R** | Open the rulebook |
 | Rulebook | **← / →**, click a page, **Esc** | Turn pages, close the book |
 | Blackjack | **T** | Choose table-mates (between rounds) |

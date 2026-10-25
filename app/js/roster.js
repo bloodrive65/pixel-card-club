@@ -84,13 +84,39 @@
     if (c.fish.perfect) return 'Remembers every card it hears';
     return ['Asks at random, forgets everything', 'Remembers some asks, slowly forgets', 'Remembers every ask, give and miss'][c.skill];
   };
+  // ---------- form: how sharp a member plays this particular game ----------
+  // A member's skill is only their usual level. Each game rolls their form for the night,
+  // so an easy player can have a sharp night and a shark can play a sloppy one.
+  const FORM_ODDS = [[0.6, 0.3, 0.1], [0.25, 0.5, 0.25], [0.1, 0.3, 0.6]];
+  G.rollForm = (ch) => {
+    const o = FORM_ODDS[ch.skill] || FORM_ODDS[1];
+    let r = Math.random();
+    for (let i = 0; i < 3; i++) { r -= o[i]; if (r < 0) return i; }
+    return ch.skill;
+  };
+  G.FORM_NAMES = ['OFF NIGHT', 'STEADY', 'SHARP'];
+  G.formNote = (p) => {
+    const d = p.form - p.ch.skill;
+    if (d > 0) return p.name + (d > 1 ? ' is red hot tonight.' : ' looks sharp tonight.');
+    if (d < 0) return p.name + (d < -1 ? ' looks lost tonight.' : ' seems off their game tonight.');
+    return null;
+  };
+  // roll form for every Club member at the table; log(text) gets the notable ones
+  G.rollForms = (players, log) => {
+    for (const p of players) {
+      if (p.human || !p.ch) continue;
+      p.form = G.rollForm(p.ch);
+      const n = G.formNote(p);
+      if (n && log) log(n);
+    }
+  };
   G.say = (c, kind) => (c.lines[kind] ? G.pick(c.lines[kind]) : null);
 
   // ---------- pixel portrait 24x24 ----------
   const cache = {};
   G.avatar = (id) => {
     if (cache[id]) return cache[id];
-    const c = id === 'you' ? { bg: P.teal, skin: SK.a, hair: ['short', P.orange], shirt: P.gold, acc: [] } : G.char(id);
+    const c = id === 'you' ? G.profileChar() : G.char(id);
     const [cv, x] = G.makeCanvas(24, 24);
     const r = (a, b, w, h, col) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
     const [hs, hc] = c.hair;
@@ -151,7 +177,63 @@
     cache[id] = cv;
     return cv;
   };
+  G.resetAvatar = (id) => { delete cache[id]; };
   G.drawAvatar = (id, x, y, scale = 1) => G.ctx.drawImage(G.avatar(id), Math.round(x), Math.round(y), 24 * scale, 24 * scale);
+
+  // ---------- the player's own profile: name and look ----------
+  const PAL = [P.ink, P.wood2, '#3a1a1a', P.wood1, P.gold, P.orange, P.silver, '#d8dde2', '#ff77c8', P.sky, P.lime, P.red];
+  const PAL_NAMES = ['BLACK', 'BROWN', 'DARK BROWN', 'CHESTNUT', 'BLOND', 'GINGER', 'GREY', 'WHITE', 'PINK', 'BLUE', 'GREEN', 'RED'];
+  const CLOTH = [P.gold, P.red, P.blue, P.navy, P.green, P.lime, P.orange, P.plum, '#ff77a8', P.teal, P.white, P.ink, P.slate, P.wood1];
+  const CLOTH_NAMES = ['GOLD', 'RED', 'BLUE', 'NAVY', 'GREEN', 'LIME', 'ORANGE', 'PLUM', 'PINK', 'TEAL', 'WHITE', 'BLACK', 'SLATE', 'LEATHER'];
+  const BGS = [P.teal, P.navy, P.plum, '#2b4a5a', '#5a3222', '#3a4a2a', '#7a2a40', P.dusk, '#1e2a3a', '#6e2b62'];
+  const BG_NAMES = ['TEAL', 'NAVY', 'PLUM', 'STEEL', 'RUST', 'OLIVE', 'WINE', 'DUSK', 'NIGHT', 'MAGENTA'];
+  G.PROFILE_OPTS = [
+    { key: 'skin', label: 'SKIN', items: [SK.a, SK.b, SK.c, SK.d, SK.e, '#ffe2c6', '#8fd694'], names: ['LIGHT', 'FAIR', 'TAN', 'BROWN', 'DARK', 'PALE', 'ALIEN'] },
+    { key: 'hair', label: 'HAIR', items: ['short', 'long', 'spiky', 'mohawk', 'bun', 'afro', 'slick', 'pony', 'bob', 'bald'] },
+    { key: 'hairCol', label: 'HAIR COLOUR', items: PAL, names: PAL_NAMES },
+    { key: 'hat', label: 'HAT', items: ['none', 'cap', 'cowboy', 'top', 'beanie', 'headband', 'visor', 'captain', 'beret'] },
+    { key: 'hatCol', label: 'HAT COLOUR', items: CLOTH, names: CLOTH_NAMES },
+    { key: 'face', label: 'FACIAL HAIR', items: ['none', 'mustache', 'beard'] },
+    { key: 'faceCol', label: 'BEARD COLOUR', items: PAL, names: PAL_NAMES },
+    { key: 'eyes', label: 'EYES', items: ['none', 'glasses', 'shades', 'monocle', 'eyepatch'] },
+    { key: 'extra', label: 'EXTRA', items: ['none', 'earring', 'freckles', 'rose'] },
+    { key: 'shirt', label: 'SHIRT', items: CLOTH, names: CLOTH_NAMES },
+    { key: 'bg', label: 'BACKDROP', items: BGS, names: BG_NAMES }
+  ];
+  const DEF_PROFILE = { name: '', skin: 0, hair: 0, hairCol: 5, hat: 0, hatCol: 0, face: 0, faceCol: 5, eyes: 0, extra: 0, shirt: 0, bg: 0 };
+  G.profile = () => {
+    const S = G.settings;
+    if (!S.profile) S.profile = Object.assign({}, DEF_PROFILE);
+    for (const k in DEF_PROFILE) if (S.profile[k] === undefined) S.profile[k] = DEF_PROFILE[k];
+    return S.profile;
+  };
+  G.playerName = () => (G.profile().name || 'YOU').toUpperCase();
+  // display name for a player object in any game
+  G.dn = (p) => (p && p.human ? G.playerName() : p ? p.name : '');
+  G.profileChar = () => {
+    const f = G.profile(), O = {}; G.PROFILE_OPTS.forEach((o) => (O[o.key] = o.items[(f[o.key] || 0) % o.items.length]));
+    const acc = [];
+    if (O.face !== 'none') acc.push(O.face + ':' + O.faceCol);
+    if (O.eyes !== 'none') acc.push(O.eyes);
+    if (O.extra !== 'none') acc.push(O.extra);
+    return { bg: O.bg, skin: O.skin, hair: [O.hair, O.hairCol], hat: O.hat === 'none' ? null : [O.hat, O.hatCol], shirt: O.shirt, acc };
+  };
+  G.randomProfile = () => {
+    const f = G.profile();
+    G.PROFILE_OPTS.forEach((o) => (f[o.key] = G.rand(o.items.length)));
+    if (Math.random() < 0.5) f.hat = 0;
+    if (Math.random() < 0.5) f.face = 0;
+    if (Math.random() < 0.5) f.eyes = 0;
+    if (Math.random() < 0.6) f.extra = 0;
+    G.resetAvatar('you');
+  };
+  // the player's name plate: avatar, name and an optional status line
+  G.youPlate = (x, y, w, line, lineColor, turn) => {
+    G.panel(x, y, w, 28, { fill: turn ? P.navy : P.ink, hi: turn ? P.gold : P.dusk, border: turn ? P.gold : P.black });
+    G.drawAvatar('you', x + 2, y + 2);
+    G.text(G.playerName(), x + 30, y + 5, turn ? P.gold : P.white, 'big');
+    if (line) G.text(line, x + 30, y + 17, lineColor || P.silver, 'small');
+  };
 
   // ---------- mini cards (books laid on the table) ----------
   let mini = {};
@@ -196,7 +278,6 @@
       if (id) G.drawAvatar(id, sx + 9, y + 6); else { G.rect(sx + 9, y + 6, 24, 24, P.dusk); G.text('?', sx + 21, y + 14, P.slate, 'big', 'center'); }
       G.text(slot.label, sx + 40, y + 7, slot.color || P.silver, 'small');
       G.text(id ? G.char(id).name : 'EMPTY - PICK BELOW', sx + 40, y + 19, id ? P.white : P.slate, id ? 'big' : 'small');
-      if (id) G.stars(G.char(id).skill, sx + sw - 26, y + 7);
       if (hover && !ui.modal) { ui.cursorHand = true; ui.hoverId = 'seat' + i; st.hoverChar = id || st.hoverChar; }
       if (hover && input.pressed && !ui.modal) { st.focus = i; input.pressed = false; G.audio.sfx('click'); }
     });
@@ -214,7 +295,6 @@
       G.drawAvatar(c.id, x + 5, y + 2, 2);
       G.rect(x + 1, y + th - 12, tw - 2, 11, seatIdx >= 0 ? border : P.dusk);
       G.text(c.name.length > 9 ? c.name.replace('THE ', '').replace('CAPT ', '') : c.name, x + tw / 2, y + th - 9, seatIdx >= 0 ? P.ink : P.white, 'small', 'center');
-      G.stars(c.skill, x + tw - 23, y + 3);
       if (seatIdx >= 0) { G.rect(x + 2, y + 2, 11, 11, border); G.text(String(seatIdx + 1), x + 8, y + 5, P.ink, 'small', 'center'); }
       ui.block(x, y, tw, th);
       if (hover && input.pressed) {
@@ -232,8 +312,7 @@
     G.panel(ix, iy, iw, 82, { fill: P.ink, hi: P.dusk });
     G.drawAvatar(show.id, ix + 8, iy + 8, 2);
     G.text(show.name, ix + 64, iy + 9, P.gold, 'big');
-    G.stars(show.skill, ix + 64 + G.textWidth(show.name, 'big') + 8, iy + 9);
-    G.text(G.SKILL_NAMES[show.skill], ix + 64 + G.textWidth(show.name, 'big') + 34, iy + 10, P.silver, 'small');
+    G.text('USUALLY ' + G.SKILL_NAMES[show.skill] + ' - FORM IS DEALT EACH GAME', ix + 64 + G.textWidth(show.name, 'big') + 8, iy + 10, P.silver, 'small');
     G.text('"' + show.quote.toUpperCase() + '"', ix + 64, iy + 21, P.cyan, 'small');
     G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 29, P.white, 'small');
     G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 37, P.white, 'small');

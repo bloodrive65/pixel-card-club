@@ -39,7 +39,7 @@
         { h2: 'SAVING' },
         { p: 'Your chips, wins, settings and your record against each Club member are saved for you.' },
         { h2: 'CUSTOMIZE' },
-        { p: 'Press C on the main menu to pick one of nine table colours, a card back, and the Classic or worn 1890s Western deck.' },
+        { p: 'C on the menu picks table colours, card backs and the Classic or worn 1890s Western deck. P sets your name and look.' },
         { tip: 'In a game, press ESC and pick HOW TO PLAY to jump to its chapter.' }],
       // 3 deck
       [{ h: 'THE DECK', ch: 'deck' },
@@ -181,7 +181,7 @@
         { h2: 'GAME MODES' },
         { table: [['FULL GAME', 'Play until one player has all the cards, or everyone else is out.'], ['ONE PASS', 'Go through the deck once. Most cards won takes the game.']], col: 62 }],
       // club
-      [{ h: 'THE CLUB MEMBERS', ch: 'club' }, { p: 'Hearts show skill. The numbers on the right are your wins and losses against them.' }, ...members(0).slice(0, 5)],
+      [{ h: 'THE CLUB MEMBERS', ch: 'club' }, { p: 'Hearts at the table show their form tonight. Numbers are your record.' }, ...members(0).slice(0, 5)],
       [...members(5).slice(0, 5)],
       [...members(10).slice(0, 4), { tip: 'Every member also has a temper. Watch their bets and table talk change as they win and lose.' }],
       [...members(14).slice(0, 4)],
@@ -228,7 +228,7 @@
     const fan = [[1, 0], [13, 1], [12, 2], [11, 3]];
     fan.forEach(([r, s], i) => G.ctx.drawImage(G.cardArt.faces[s + '_' + r], Math.round(cx - (CW + 3 * 26) / 2 + i * 26), y + 104 + Math.abs(i - 1.5) * 4));
     G.text('SEVEN CLASSIC CARD GAMES', cx, y + 186, INK, 'small', 'center');
-    G.text('EDITION 1.3', cx, y + 204, FAINT, 'small', 'center');
+    G.text('EDITION 1.4', cx, y + 204, FAINT, 'small', 'center');
     G.text('THIS BOOK BELONGS TO:', cx, y + 228, SUB, 'small', 'center');
     G.text('YOU', cx, y + 240, HEAD, 'big', 'center');
     return 250;
@@ -363,8 +363,7 @@
       G.rect(x - 1, y - 1, 26, 26, INK); G.ctx.drawImage(G.avatar(c.id), x, y);
       G.text(c.name, x + 31, y, INK, 'big');
       const nx = x + 31 + G.textWidth(c.name, 'big') + 6;
-      for (let i = 0; i < 3; i++) G.drawSuit(1, nx + i * 7, y + 1, 'small', i <= c.skill ? HEAD : PAPER_DD);
-      G.text(G.SKILL_NAMES[c.skill], nx + 24, y + 2, SUB, 'small');
+      G.text('USUALLY ' + G.SKILL_NAMES[c.skill], nx, y + 2, SUB, 'small');
       const rec = G.record(c.id);
       G.text(rec.w + '-' + rec.l, x + w, y + 2, FAINT, 'small', 'right');
       G.text('"' + c.quote.toUpperCase() + '"', x + 31, y + 10, SUB, 'small');

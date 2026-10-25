@@ -55,8 +55,8 @@
       G.panel(s.x, s.y, s.w, s.h, { fill: o.out ? '#11131d' : P.ink, hi, border: o.turn ? P.gold : P.black });
       G.alpha(o.out ? 0.45 : 1, () => {
         G.drawAvatar(p.id, s.x + 2, s.y + 2);
-        G.text(p.name, s.x + 30, s.y + 5, o.turn ? P.gold : P.white, 'big');
-        if (p.ch) G.stars(p.ch.skill, s.x + s.w - 26, s.y + 6);
+        G.text(G.dn(p), s.x + 30, s.y + 5, o.turn ? P.gold : P.white, 'big');
+        if (p.ch && p.form !== undefined) G.stars(p.form, s.x + s.w - 26, s.y + 6);
         if (o.line) G.text(o.line, s.x + 30, s.y + 17, o.lineColor || P.silver, 'small');
         if (o.value !== undefined) G.text(String(o.value), s.x + s.w - 6, s.y + 17, o.valueColor || P.gold, 'small', 'right');
       });

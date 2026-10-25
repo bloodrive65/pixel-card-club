@@ -130,7 +130,8 @@
       const bank = G.store.get('bj_mates', {}) || {};
       this.mates = view.picks.map((id, seat) => { const chips = bank[id] || START_CHIPS; return { id, ch: G.char(id), seat, chips, start: chips, cards: [], bet: 0, lastBet: 0, streak: 0, best: 0, worst: 0, hands: 0, result: null, done: false }; });
       this.bubbles = []; this.setup = false;
-      this.mates.forEach((m) => this.say(m, m.ch.quote.toUpperCase()));
+      G.rollForms(this.mates.map((m) => Object.assign(m, { name: m.ch.name })));
+      this.mates.forEach((m) => { const d = m.form - m.ch.skill; this.say(m, d > 0 ? G.pick(['FEELING SHARP TONIGHT.', 'I CAN SEE THE CARDS TONIGHT.']) : d < 0 ? G.pick(['NOT FEELING IT TONIGHT.', 'LONG DAY. GO EASY ON ME.']) : m.ch.quote.toUpperCase()); });
     },
     seatX(m) { return m.seat === 0 ? 520 : 16; },
     say(m, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.m !== m); this.bubbles.push({ m, text, t: 1.8 }); },
@@ -218,6 +219,9 @@
           if (t.total <= 11) { act = 'HIT'; break; }
           act = t.total <= 16 && Math.random() < (d >= 7 ? 0.65 : 0.35) + 0.15 * r ? 'HIT' : 'STAND';
       }
+      // tonight's form: a sharp night plays closer to perfect strategy, an off night makes mistakes
+      if (m.form === 2 && m.ch.bj !== 'basic' && Math.random() < 0.35) act = basicStrategy({ cards: m.cards }, up, canD, false);
+      if (m.form === 0 && !t.soft && t.total >= 12 && t.total <= 17 && Math.random() < 0.2) act = act === 'STAND' ? 'HIT' : 'STAND';
       // mood overrides on stiff hands (12-16): tilted members gamble, shaky members freeze
       const stiff = !t.soft && t.total >= 12 && t.total <= 16;
       if (stiff && r >= 2 && act === 'STAND' && Math.random() < 0.6) { m.moodMove = 'brave'; return 'HIT'; }
@@ -486,6 +490,7 @@
       ui.felt();
       this.drawTable();
       this.drawMates();
+      if (this.hands.length <= 2) G.youPlate(128, 264, 112, 'CHIPS ' + this.chips, P.lime, this.phase === 'play');
       G.drawCards(this.table);
       this.drawTotals();
       this.drawBubbles(dt);
@@ -545,7 +550,7 @@
         const md = this.mood(m);
         if (md) G.text(md.label, x + 80, 144, md.col, 'small', 'right');
         if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 56, 155, m.streak > 0 ? P.lime : P.orange, 'small');
-        G.stars(m.ch.skill, x + 82, 155);
+        G.stars(m.form, x + 82, 155);
         const cx = x + 37;
         if (m.bet > 0 && this.phase !== 'bet') this.drawBetSpot(cx, PLAYER_Y + CH + 30, m.bet, turn);
         else this.drawBetSpot(cx, PLAYER_Y + CH + 30, 0, false);

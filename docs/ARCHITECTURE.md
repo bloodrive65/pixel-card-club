@@ -39,6 +39,8 @@ The UI is **immediate mode**: `if (ui.button('HIT', x, y, w, h, { key: 'h' })) h
 
 ## The Club (`roster.js`)
 
+- **Form**: `skill` is only a member's usual level. `G.rollForm(ch)` rolls a 0–2 form from it (Easy 60/30/10, Normal 25/50/25, Hard 10/30/60) and `G.rollForms(players, log)` sets `p.form` on every seated member when a game starts. All AI code reads `p.form`, never `ch.skill`, and the seat panels draw `p.form` as hearts.
+- **Player profile**: `G.profile()` (saved in `settings.profile`) holds the player's name and look as indexes into `G.PROFILE_OPTS`. `G.profileChar()` turns it into a portrait spec, `G.avatar('you')` draws it, and `G.resetAvatar('you')` clears the cache after an edit. `G.playerName()` and `G.dn(p)` give display names; game logic keeps `name: 'YOU'` for grammar in the log. `G.youPlate()` draws the player's seat plate.
 - `G.ROSTER` is a list of 18 members. Each has an `id`, `name`, `skill` (0 Easy, 1 Normal, 2 Hard), `fish` habits (`rank`: `random` or `most`; `target`: `random`, `mostCards`, `leader` or `human`; optional `perfect`), a Blackjack style `bj` (`basic`, `cautious`, `reckless`, `dealer` or `hunch`), a bet size, a quote and table-talk `lines`.
 - **Portraits are generated in code.** `G.avatar(id)` builds a 24×24 canvas from the member's colours, hair, hat and accessories (glasses, shades, monocle, beard, eyepatch…), and caches it. `G.drawAvatar()` draws it at any whole-number scale.
 - `G.miniCard()` and `G.drawMiniBook()` draw the small 14×20 cards used for books on the table and in the rulebook.
@@ -92,7 +94,7 @@ Each computer player keeps a memory of facts it has *observed*:
 - `has[player_rank]`: that player asked for this rank, so they hold at least one.
 - `lacks[player_rank]`: that player just said "Go Fish" for this rank. This is forgotten as soon as they draw a new card.
 
-How much is heard and kept depends on the member's skill: Easy hears nothing, Normal hears 60% of facts and forgets 15% of its memory each turn, Hard hears 95% and never forgets, and BYTE (`perfect`) hears everything.
+How much is heard and kept depends on the member's form for this game (see below): Easy hears nothing, Normal hears 60% of facts and forgets 15% of its memory each turn, Hard hears 95% and never forgets, and BYTE (`perfect`) hears everything.
 
 On its turn a member first asks a player it *knows* holds one of its ranks. Otherwise it picks a rank (`random`, or the rank it holds `most` of), skips players known to lack it, and chooses a target by habit: `mostCards`, the `leader` (counting team books in teams mode), the `human`, or at random. A member that just had cards taken may hold a `grudge` against the taker.
 

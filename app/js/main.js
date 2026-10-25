@@ -24,7 +24,7 @@
   ];
   const Menu = (G.Menu = {
     enter() {
-      this.t = 0; this.options = false; this.custom = false;
+      this.t = 0; this.options = false; this.custom = false; this.profileOpen = false;
       if (!this.rain) {
         this.rain = [];
         const deck = G.shuffle(G.makeDeck(1));
@@ -33,7 +33,7 @@
     },
     frame(dt) {
       this.t += dt;
-      if (this.options || this.custom) ui.modal = true;
+      if (this.options || this.custom || this.profileOpen) ui.modal = true;
       ui.felt();
       // drifting cards behind the logo
       G.alpha(0.3, () => {
@@ -99,9 +99,73 @@
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
       }
       G.text(pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
-      G.text('V1.3.1', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text('V1.4', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
+      // your player badge (top left) opens the profile editor
+      if (!this.options && !this.custom && !this.profileOpen) {
+        const bx = 8, by = 8, bw = 132;
+        const hov = G.inRect(G.input.x, G.input.y, bx, by, bw, 30);
+        G.panel(bx, by, bw, 30, { fill: hov ? P.navy : P.ink, hi: hov ? P.gold : P.dusk, border: hov ? P.gold : P.black });
+        G.drawAvatar('you', bx + 3, by + 3);
+        G.text(G.playerName(), bx + 31, by + 6, hov ? P.gold : P.white, 'big');
+        G.text('EDIT PROFILE  P', bx + 31, by + 18, P.silver, 'small');
+        if (hov) { ui.cursorHand = true; ui.hoverId = 'badge'; }
+        if ((hov && G.input.pressed) || G.key('p')) { G.input.pressed = false; delete G.input.keyPressed.p; G.audio.sfx('click'); this.profileOpen = true; this.nameT = 0; }
+      }
+      if (this.profileOpen) this.drawProfile(dt);
+    },
+    // ---------- Profile: your name and look ----------
+    drawProfile(dt) {
+      ui.modal = true;
+      G.alpha(0.6, () => G.rect(0, 0, G.W, G.H, P.ink));
+      ui.block(0, 0, G.W, G.H);
+      const w = 520, h = 312, x = G.W / 2 - w / 2, y = 24;
+      G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
+      G.text('YOUR PROFILE', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
+      const f = G.profile();
+      let changed = false;
+      // name: type to edit (letters, numbers, space, dot, dash), backspace deletes
+      this.nameT = (this.nameT || 0) + dt;
+      for (const k in G.input.keyPressed) {
+        if (k === 'Backspace') { f.name = (f.name || '').slice(0, -1); changed = true; }
+        else if (k.length === 1 && /[a-z0-9 .\-]/.test(k) && (f.name || '').length < 10) { if (!(k === ' ' && !(f.name || '').length)) { f.name = (f.name || '') + k.toUpperCase(); changed = true; } }
+        else continue;
+        delete G.input.keyPressed[k];
+      }
+      // preview
+      const px = x + 18, py = y + 34;
+      G.rect(px - 2, py - 2, 124, 124, P.black);
+      G.drawAvatar('you', px, py, 5);
+      G.text('NAME - JUST TYPE', px, py + 130, P.silver, 'small');
+      G.rect(px - 2, py + 140, 124, 20, P.gold); G.rect(px - 1, py + 141, 122, 18, P.ink);
+      const nm = (f.name || '');
+      G.text(nm, px + 4, py + 146, P.white, 'big');
+      if (Math.floor(this.nameT * 2) % 2 === 0 && nm.length < 10) G.rect(px + 5 + G.textWidth(nm, 'big'), py + 145, 6, 9, P.gold);
+      if (!nm.length) G.text('SHOWS AS YOU', px + 64, py + 164, P.slate, 'small', 'center');
+      if (ui.button('RANDOM LOOK', px - 2, py + 174, 124, 18, { modal: true, theme: 'blue', id: 'prnd' })) { G.randomProfile(); changed = true; G.audio.sfx('chip'); }
+      G.text('AT THE TABLE', px, py + 202, P.silver, 'small');
+      G.youPlate(px - 2, py + 212, 124, 'YOUR STACK 1000', P.silver);
+      // option rows
+      const rx = x + 160, vw = w - 178;
+      G.PROFILE_OPTS.forEach((o, i) => {
+        const yy = y + 34 + i * 22;
+        const cur = (f[o.key] || 0) % o.items.length;
+        G.text(o.label, rx, yy + 6, P.silver, 'small');
+        const ax = rx + 96, aw = vw - 96;
+        G.rect(ax, yy, aw, 18, P.black); G.rect(ax + 1, yy + 1, aw - 2, 16, P.dusk);
+        if (ui.button('<', ax, yy, 18, 18, { modal: true, theme: 'dark', id: 'pl' + i })) { f[o.key] = (cur + o.items.length - 1) % o.items.length; changed = true; G.audio.sfx('click'); }
+        if (ui.button('>', ax + aw - 18, yy, 18, 18, { modal: true, theme: 'dark', id: 'pr' + i })) { f[o.key] = (cur + 1) % o.items.length; changed = true; G.audio.sfx('click'); }
+        const label = (o.names ? o.names[cur] : o.items[cur]).toUpperCase();
+        if (o.names) {
+          const tw = G.textWidth(label, 'small') + 14, sx = ax + aw / 2 - tw / 2;
+          G.rect(sx, yy + 5, 9, 8, P.black); G.rect(sx + 1, yy + 6, 7, 6, o.items[cur]);
+          G.text(label, sx + 14, yy + 6, P.white, 'small');
+        } else G.text(label, ax + aw / 2, yy + 6, P.white, 'small', 'center');
+        G.text((cur + 1) + '/' + o.items.length, ax + aw - 22, yy + 6, P.slate, 'small', 'right');
+      });
+      if (changed) { G.resetAvatar('you'); G.saveSettings(); }
+      if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) { f.name = (f.name || '').trim(); G.saveSettings(); this.profileOpen = false; }
     },
     // ---------- Customize: table colour and card back, with a live preview ----------
     drawCustomize() {

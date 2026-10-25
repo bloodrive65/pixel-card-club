@@ -39,6 +39,7 @@
       ids.forEach((id) => { const ch = G.char(id); this.players.push({ name: ch.name, human: false, id, ch, hand: [], score: 0 }); });
       this.dealer = this.players.length - 1; this.handNo = 0; this.over = false; this.result = null;
       this.resetTable();
+      G.rollForms(this.players, (t) => this.addLog(t, P.silver));
       G.bump('c8_played');
       this.newHand();
     },
@@ -151,7 +152,7 @@
       this.play(pi, choice.card, choice.suit);
     },
     aiChoose(pi, legal) {
-      const p = this.players[pi], sk = p.ch.skill;
+      const p = this.players[pi], sk = p.form;
       const count = (s, hand) => hand.filter((c) => c.suit === s && c.rank !== 8).length;
       const bestSuit = (hand) => { let b = 0, bn = -1; for (let s = 0; s < 4; s++) { const n = count(s, hand); if (n > bn || (n === bn && Math.random() < 0.5)) { bn = n; b = s; } } return b; };
       const eights = legal.filter((c) => c.rank === 8), plain = legal.filter((c) => c.rank !== 8);
@@ -293,6 +294,7 @@
       });
       if (overStock && this.canDraw()) G.outline(STOCK.x - 2, STOCK.y - 2, CW + 4, CH + 4, P.gold, 1);
       this.drawBoard();
+      G.youPlate(8, 312, 128, me.hand.length + ' CARDS' + (this.match ? '  ' + me.score + ' PTS' : ''), P.silver, this.turn === 0 && !this.handOver && !this.over);
       this.drawLog(LOG);
       this.drawControls();
       this.drawBubbles(dt);
@@ -323,7 +325,7 @@
       G.text(this.match ? 'POINTS - TO ' + TARGET : 'CARDS LEFT', x + 6, y + 5, P.gold, 'small');
       this.players.forEach((p, i) => {
         const yy = y + 18 + i * 14;
-        G.text(p.name.length > 10 ? p.name.replace('THE ', '').replace('CAPT ', '') : p.name, x + 6, yy, this.turn === i && !this.handOver ? P.gold : P.white, 'small');
+        G.text(G.dn(p).length > 10 ? G.dn(p).replace('THE ', '').replace('CAPT ', '') : G.dn(p), x + 6, yy, this.turn === i && !this.handOver ? P.gold : P.white, 'small');
         G.text(String(this.match ? p.score : p.hand.length), x + w - 6, yy, p.human ? P.gold : P.silver, 'small', 'right');
       });
       G.text('WINS ' + G.store.get('c8_won', 0) + '/' + G.store.get('c8_played', 0), x + 6, y + h + 4, P.felt4, 'small');
@@ -359,9 +361,9 @@
     },
     drawHandResult() {
       const r = this.handOver;
-      const lines = r.rows.filter((x) => x.p !== r.w).map((x) => ({ text: x.p.name + ' HELD ' + x.v + ' POINTS', color: P.silver }));
+      const lines = r.rows.filter((x) => x.p !== r.w).map((x) => ({ text: G.dn(x.p) + ' HELD ' + x.v + ' POINTS', color: P.silver }));
       lines.unshift({ text: (r.w.human ? 'YOU COLLECT ' : r.w.name + ' COLLECTS ') + r.gain + ' POINTS', color: r.w.human ? P.lime : P.gold, font: 'big' });
-      lines.push({ text: 'SCORES: ' + this.players.map((p) => p.name + ' ' + p.score).join('   '), color: P.white });
+      lines.push({ text: 'SCORES: ' + this.players.map((p) => G.dn(p) + ' ' + p.score).join('   '), color: P.white });
       const act = ui.dialog(r.blocked ? 'HAND BLOCKED' : (r.w.human ? 'YOU WIN THE HAND' : r.w.name + ' WINS THE HAND'), lines, [{ label: 'NEXT HAND', act: 'next', theme: 'green', key: 'Enter' }], { w: 400, titleColor: r.w.human ? P.lime : P.gold, y: 96 });
       if (act === 'next') { this.dealer = (this.dealer + 1) % this.players.length; this.newHand(); }
     },
@@ -369,8 +371,8 @@
       const r = this.result;
       const title = r.tie ? 'TIE MATCH' : r.youWin ? (this.match ? 'YOU WIN THE MATCH' : 'YOU WIN') : r.winners[0].name + ' WINS';
       const lines = this.match
-        ? this.players.slice().sort((a, b) => b.score - a.score).map((p) => ({ text: p.name + '  ' + p.score + ' POINTS', color: r.winners.includes(p) ? P.lime : P.silver }))
-        : this.players.map((p) => ({ text: p.name + '  ' + p.hand.length + ' CARDS LEFT', color: r.winners.includes(p) ? P.lime : P.silver }));
+        ? this.players.slice().sort((a, b) => b.score - a.score).map((p) => ({ text: G.dn(p) + '  ' + p.score + ' POINTS', color: r.winners.includes(p) ? P.lime : P.silver }))
+        : this.players.map((p) => ({ text: G.dn(p) + '  ' + p.hand.length + ' CARDS LEFT', color: r.winners.includes(p) ? P.lime : P.silver }));
       if (this.match) lines.push({ text: 'HANDS PLAYED ' + this.handNo, color: P.white });
       if (r.quote && r.quote.text) lines.push({ text: r.quote.p.name + ': "' + r.quote.text + '"', color: P.cyan });
       lines.push({ text: 'CRAZY EIGHTS WINS: ' + G.store.get('c8_won', 0) + ' OF ' + G.store.get('c8_played', 0), color: P.slate });

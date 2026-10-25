@@ -14,7 +14,16 @@ The menu has two pages. Click the arrows at the sides, the page dots, or press *
 - **The Classics**: **1** Blackjack, **2** Solitaire, **3** Go Fish.
 - **More Games**: **1** Texas Hold'em, **2** Crazy Eights, **3** War, **4** Spider.
 
-**O** Options, **C** Customize, **R** Rulebook, **F** Fullscreen (Q quits in the desktop app). When you leave a game, the menu returns to the page you came from.
+**O** Options, **C** Customize, **P** Your profile, **R** Rulebook, **F** Fullscreen (Q quits in the desktop app). When you leave a game, the menu returns to the page you came from.
+
+## Your profile
+
+Click your name badge in the top-left corner of the main menu, or press **P**, to edit your profile:
+
+- **Name**: just type (up to 10 letters, numbers, spaces, dots or dashes). Backspace deletes. Leave it empty to show as YOU.
+- **Look**: use the arrows to change skin tone, hair style and colour, hat and hat colour, facial hair (mustache or beard) and its colour, eyes (glasses, shades, monocle, eyepatch), an extra (earring, freckles, rose), shirt colour and backdrop. **RANDOM LOOK** rolls a new one.
+
+Your portrait and name appear on your seat at every Club table: Blackjack, Hold'em, Go Fish, Crazy Eights and War.
 
 ## Customize
 
@@ -260,9 +269,21 @@ Pure luck. Win all the cards. Play against 1–3 Club members.
 
 ## The Club
 
-The Club is 18 computer players. Each one has a portrait, a skill level (hearts: 1 Easy, 2 Normal, 3 Hard), a Go Fish habit, a Blackjack style, a poker style and their own table talk. Your win/loss record against each member is saved and shown in the picker and the rulebook.
+The Club is 18 computer players. Each one has a portrait, a usual skill level (Easy, Normal or Hard), a Go Fish habit, a Blackjack style, a poker style and their own table talk. Your win/loss record against each member is saved and shown in the picker and the rulebook.
 
-| Member | Skill | Go Fish | Blackjack |
+### Form: hearts are dealt each game
+
+A member's skill level is only how they usually play. When a game starts, each member at the table gets their **form** for that game, shown as hearts on their seat panel (1 heart = off night, 2 = steady, 3 = sharp). Usual skill sets the odds, but anything can happen:
+
+| Usually | 1 heart | 2 hearts | 3 hearts |
+|---|---|---|---|
+| Easy | 60% | 30% | 10% |
+| Normal | 25% | 50% | 25% |
+| Hard | 10% | 30% | 60% |
+
+The AI plays to its form, not its reputation. A Hard member on an off night forgets what was asked in Go Fish, throws away 8s in Crazy Eights and calls too loosely in Hold'em. An Easy member on a sharp night remembers asks and plays the odds. In Blackjack, a sharp table-mate plays closer to perfect strategy and an off-night table-mate sometimes hits or stands by mistake. The table talk tells you when someone is looking sharp or off their game. War is pure luck, so nobody gets hearts there. Hearts aren't shown in the picker: you find out when you sit down.
+
+| Member | Usually | Go Fish | Blackjack |
 |---|---|---|---|
 | LUCKY LOU | Easy | Random asks | Gut feeling |
 | MAVIS | Normal | Some memory, targets the biggest hand | By the book |

@@ -234,7 +234,7 @@
       this.players.forEach((p, i) => {
         const yy = y + 18 + i * 28;
         G.drawAvatar(p.id, x + 5, yy);
-        G.text(p.name.length > 9 ? p.name.replace('THE ', '').replace('CAPT ', '') : p.name, x + 33, yy + 2, p.out ? P.slate : P.white, 'small');
+        G.text(G.dn(p).length > 9 ? G.dn(p).replace('THE ', '').replace('CAPT ', '') : G.dn(p), x + 33, yy + 2, p.out ? P.slate : P.white, 'small');
         const n = this.count(p);
         G.rect(x + 33, yy + 13, w - 40, 6, P.dusk);
         G.rect(x + 33, yy + 13, Math.round((w - 40) * n / total), 6, p.human ? P.gold : P.sky);
@@ -256,7 +256,7 @@
     drawResult() {
       const r = this.result;
       const title = r.draw ? 'DRAW' : r.tie ? 'TIE GAME' : r.youWin ? 'YOU WIN THE WAR' : this.players[0].out && !this.onePass ? 'YOU ARE OUT' : 'GAME OVER';
-      const lines = this.players.slice().sort((a, b) => this.count(b) - this.count(a)).map((p) => ({ text: p.name + '  ' + this.count(p) + ' CARDS' + (p.out ? '  (OUT)' : ''), color: r.winners.includes(p) ? P.lime : P.silver }));
+      const lines = this.players.slice().sort((a, b) => this.count(b) - this.count(a)).map((p) => ({ text: G.dn(p) + '  ' + this.count(p) + ' CARDS' + (p.out ? '  (OUT)' : ''), color: r.winners.includes(p) ? P.lime : P.silver }));
       lines.push({ text: 'BATTLES ' + this.battles + '   WARS ' + this.wars, color: P.white });
       if (r.quote && r.quote.text) lines.push({ text: r.quote.p.name + ': "' + r.quote.text + '"', color: P.cyan });
       lines.push({ text: 'WAR WINS: ' + G.store.get('war_won', 0) + ' OF ' + G.store.get('war_played', 0), color: P.slate });
