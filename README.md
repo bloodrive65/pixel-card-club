@@ -19,8 +19,7 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has th
 1. Open the [**Releases**](../../releases) page.
 2. Download one of:
    - `PixelCardClub-x.y.z-portable.exe`: a single file. Double-click to play; no install needed.
-   - `Pixel Card Club Setup x.y.z.exe`: a normal installer with Start-menu and desktop shortcuts.
-   - `Pixel Card Club-x.y.z-win.zip`: unzip anywhere and run `Pixel Card Club.exe`.
+   - `Pixel.Card.Club.Setup.x.y.z.exe`: a normal installer with Start-menu and desktop shortcuts.
 3. Windows SmartScreen may warn about an unknown publisher, because the app isn't code-signed. Click **More info → Run anyway**.
 
 Your chips, wins, best scores and settings are saved automatically to `%APPDATA%\Pixel Card Club\save.json`.
