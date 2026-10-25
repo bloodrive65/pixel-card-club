@@ -18,6 +18,10 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has th
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.2
+
+- **Blackjack table-mates have moods.** Their bets rise and fall with their streak and stack, their play gets riskier or safer depending on their nerve, and they comment on it as the session goes ("THIS SUCKS." on a cold run, cheering on a hot one). Their panel shows their streak and mood.
+
 ## What's new in 1.1
 
 - **Rulebook**: press **R** on the main menu (or **Esc → How to Play** in any game). It's drawn as a leather book with chapter tabs, and pages turn with an animation.

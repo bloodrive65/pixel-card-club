@@ -7,6 +7,25 @@
   const CHIP_VALUES = [5, 25, 100, 500];
   const CHIP_COLORS = { 5: [P.red, P.white], 25: [P.green, P.white], 100: [P.navy, P.sky], 500: [P.plum, P.gold] };
   const START_CHIPS = 1000;
+  // general table talk, mixed with each Club member's own lines
+  const LINES = {
+    hot: ['THREE IN A ROW!', 'IM ON A HEATER!', 'DONT STOP NOW!', 'KEEP EM COMING!'],
+    cold: ['THIS SUCKS.', 'WHO SHUFFLED THIS?', 'CAN I GET ONE WIN?', 'BRUTAL.', 'I HATE THIS SHOE.'],
+    tilt: ['I AM NOT LEAVING DOWN!', 'THIS TABLE OWES ME.', 'THAT IS IT. NO MORE MR NICE.', 'UNBELIEVABLE.'],
+    allin: ['FORGET IT. {bet} CHIPS.', 'DOUBLE OR NOTHING! {bet}!', '{bet}. MY LUCK HAS TO TURN.'],
+    press: ['RAISING TO {bet}.', 'LETS MAKE IT {bet}.', 'BUMPING IT UP. {bet}.', '{bet}. FEELING IT.', 'RIDING IT. {bet}.'],
+    chase: ['{bet}. WINNING IT BACK.', 'UPPING IT TO {bet}. IT HAS TO TURN.', '{bet}. ONE GOOD HAND IS ALL I NEED.'],
+    reset: ['BACK TO {bet}. PHEW.', 'OKAY, RESET. {bet}.', 'BACK TO NORMAL. {bet}.'],
+    lower: ['DOWN TO {bet}. CAREFUL NOW.', 'JUST {bet} THIS TIME.', 'PULLING BACK. {bet}.', 'BABY STEPS. {bet}.'],
+    comeback: ['FINALLY!', 'THERE IT IS!', 'THE COMEBACK STARTS NOW.', 'ABOUT TIME!'],
+    cooled: ['ALL GOOD THINGS...', 'WELL, IT WAS FUN.', 'STREAK OVER. RATS.', 'THE TABLE TURNS.'],
+    push: ['A PUSH. BORING.', 'EVEN STEVEN.', 'NOBODY WINS.'],
+    rebuy: ['BUYING BACK IN.', 'ANOTHER STACK, PLEASE.', 'I CAN STILL WIN THIS.'],
+    brave: ['WHO CARES? HIT ME!', 'GO BIG!', 'RISK IT!', 'NO FEAR. HIT.'],
+    timid: ['I... WILL STAND.', 'NOT RISKING IT.', 'STAYING PUT.', 'SAFE IS GOOD.'],
+    cheer: ['NICE HAND!', 'SHOW OFF.', 'LUCKY YOU.', 'SHARE SOME OF THAT.'],
+    dealerBust: ['DEALER BUSTS!', 'HA! THE HOUSE CRACKS.', 'PAY UP, DEALER.']
+  };
 
   // ---------- helpers ----------
   const cardValue = (c) => (c.rank === 1 ? 11 : Math.min(10, c.rank));
@@ -109,31 +128,102 @@
       this.pick.picks.splice(0, n, ...view.picks);
       G.settings.bjPicks = this.pick.picks.slice(); G.saveSettings();
       const bank = G.store.get('bj_mates', {}) || {};
-      this.mates = view.picks.map((id, seat) => ({ id, ch: G.char(id), seat, chips: bank[id] || START_CHIPS, cards: [], bet: 0, result: null, done: false }));
+      this.mates = view.picks.map((id, seat) => { const chips = bank[id] || START_CHIPS; return { id, ch: G.char(id), seat, chips, start: chips, cards: [], bet: 0, lastBet: 0, streak: 0, best: 0, worst: 0, hands: 0, result: null, done: false }; });
       this.bubbles = []; this.setup = false;
       this.mates.forEach((m) => this.say(m, m.ch.quote.toUpperCase()));
     },
     seatX(m) { return m.seat === 0 ? 520 : 16; },
     say(m, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.m !== m); this.bubbles.push({ m, text, t: 1.8 }); },
+    // ---------- table-mate temper: mood, risk and betting change with the run of cards ----------
+    // mood comes from the current streak (+ wins, - losses) and how the stack compares with when they sat down
+    mood(m) {
+      const s = m.streak, n = m.ch.temper.nerve, ratio = m.chips / Math.max(1, m.start);
+      if (s >= 4) return { key: 'fire', label: 'ON FIRE', col: P.gold };
+      if (s >= 2) return { key: 'hot', label: 'HOT', col: P.lime };
+      if (s <= -3 && n === 'hothead') return { key: 'tilt', label: 'TILT', col: P.orange };
+      if (s <= -3 && n === 'jittery') return { key: 'shaky', label: 'SHAKY', col: P.sky };
+      if (s <= -2) return { key: 'cold', label: 'COLD', col: P.sky };
+      if (ratio >= 1.5) return { key: 'up', label: 'UP BIG', col: P.lime };
+      if (ratio <= 0.5) return { key: 'down', label: 'DOWN BAD', col: P.orange };
+      return null;
+    },
+    // risk shift for play decisions: + plays more dangerously, - more cautiously
+    risk(m) {
+      const s = m.streak, n = m.ch.temper.nerve;
+      if (n === 'hothead') return s <= -4 ? 2 : s <= -2 ? 1 : 0;
+      if (n === 'jittery') return s <= -4 ? -2 : s <= -2 ? -1 : 0;
+      if (n === 'confident') return s >= 4 ? 2 : s >= 2 ? 1 : s <= -3 ? -1 : 0;
+      return 0;
+    },
     mateBet(m) {
-      const b = { low: 10, mid: 25, high: 50 }[m.ch.bet] || 25;
-      return m.ch.bj === 'hunch' ? G.pick([5, 10, 25, 50]) : b;
+      const t = m.ch.temper, s = m.streak;
+      const round5 = (v) => Math.max(5, Math.round(v / 5) * 5);
+      let bet;
+      // a streak of 1 counts half, then each extra hand counts fully
+      const eff = s === 0 ? 0 : Math.abs(s) - 0.5;
+      if (t.kelly) { bet = round5(m.chips * t.kelly); m.mult = bet / 25; }
+      else {
+        const base = ({ low: 10, mid: 25, high: 50 }[m.ch.bet] || 25) * (m.ch.bj === 'hunch' ? G.pick([0.5, 1, 1, 2]) : 1);
+        let mult = s > 0 ? 1 + t.press * eff : s < 0 ? 1 + t.chase * eff : 1;
+        const ratio = m.chips / Math.max(1, m.start);
+        if (ratio >= 1.5) mult *= 1.25;                    // playing with house money
+        if (ratio <= 0.5 && t.chase <= 0) mult *= 0.6;     // protecting what is left
+        if (this.risk(m) > 1) mult *= 1.5;                 // full tilt
+        mult = Math.min(4, Math.max(0.4, mult));
+        m.mult = mult;
+        bet = round5(base * mult);
+      }
+      return Math.min(bet, 500);
+    },
+    // pick a line: the member's own lines for this kind, mixed with the general table pool
+    line(m, kind, vars) {
+      const own = m.ch.lines[kind] || [], pool = LINES[kind] || [];
+      const all = own.length && (!pool.length || Math.random() < 0.6) ? own : pool;
+      if (!all.length) return null;
+      let t = G.pick(all);
+      for (const k in vars || {}) t = t.replace('{' + k + '}', vars[k]);
+      return t;
+    },
+    // after each hand: update the streak and pick something to say about it
+    mateResult(m, res) {
+      const before = m.streak, won = res === 'WIN' || res === 'BLACKJACK', lost = res === 'LOSE' || res === 'BUST';
+      m.hands++;
+      if (won) m.streak = before > 0 ? before + 1 : 1;
+      else if (lost) m.streak = before < 0 ? before - 1 : -1;
+      m.best = Math.max(m.best, m.streak); m.worst = Math.min(m.worst, m.streak);
+      let kind = null;
+      if (won && before <= -3) kind = 'comeback';
+      else if (lost && before >= 3) kind = 'cooled';
+      else if (won && m.streak >= 3) kind = 'hot';
+      else if (lost && m.streak <= -3) kind = m.ch.temper.nerve === 'hothead' && m.streak <= -4 ? 'tilt' : 'cold';
+      else if (res === 'BLACKJACK') kind = 'win';
+      else if (won) kind = Math.random() < 0.6 ? 'win' : null;
+      else if (res === 'LOSE') kind = Math.random() < 0.6 ? 'lose' : null;
+      else if (res === 'PUSH') kind = Math.random() < 0.3 ? 'push' : null;
+      return kind ? this.line(m, kind) : null;
     },
     aiDecide(m) {
       const t = handTotal(m.cards), up = this.dealer[0];
       const d = up.rank === 1 ? 11 : Math.min(10, up.rank);
       const canD = m.cards.length === 2 && m.chips >= m.bet;
+      const r = this.risk(m);
+      let act;
       switch (m.ch.bj) {
-        case 'basic': return basicStrategy({ cards: m.cards }, up, canD, false);
-        case 'cautious': return t.total < 12 || (t.soft && t.total < 18) ? 'HIT' : 'STAND';
-        case 'reckless': if (canD && t.total >= 9 && t.total <= 11) return 'DOUBLE'; return t.total < 18 ? 'HIT' : 'STAND';
-        case 'dealer': return t.total < 17 ? 'HIT' : 'STAND';
+        case 'basic': act = basicStrategy({ cards: m.cards }, up, canD, false); break;
+        case 'cautious': act = t.total < 12 + Math.max(0, r) || (t.soft && t.total < 18) ? 'HIT' : 'STAND'; if (r > 0 && canD && t.total === 11) act = 'DOUBLE'; break;
+        case 'reckless': if (canD && t.total >= 9 - Math.max(0, r) && t.total <= 11) { act = 'DOUBLE'; break; } act = t.total < 18 + Math.min(0, r) ? 'HIT' : 'STAND'; break;
+        case 'dealer': act = t.total < 17 + Math.min(0, r) + (r > 1 ? 1 : 0) ? 'HIT' : 'STAND'; break;
         default: // hunch
-          if (canD && t.total === 11 && Math.random() < 0.5) return 'DOUBLE';
-          if (t.total <= 11) return 'HIT';
-          if (t.total <= 16) return Math.random() < (d >= 7 ? 0.65 : 0.35) ? 'HIT' : 'STAND';
-          return 'STAND';
+          if (canD && t.total === 11 && Math.random() < 0.5 + 0.2 * r) { act = 'DOUBLE'; break; }
+          if (t.total <= 11) { act = 'HIT'; break; }
+          act = t.total <= 16 && Math.random() < (d >= 7 ? 0.65 : 0.35) + 0.15 * r ? 'HIT' : 'STAND';
       }
+      // mood overrides on stiff hands (12-16): tilted members gamble, shaky members freeze
+      const stiff = !t.soft && t.total >= 12 && t.total <= 16;
+      if (stiff && r >= 2 && act === 'STAND' && Math.random() < 0.6) { m.moodMove = 'brave'; return 'HIT'; }
+      if (stiff && r <= -2 && act === 'HIT' && Math.random() < 0.6) { m.moodMove = 'timid'; return 'STAND'; }
+      if (r >= 1 && act === 'HIT' && canD && t.total >= 9 && t.total <= 11 && !t.soft && Math.random() < 0.5) { m.moodMove = 'brave'; return 'DOUBLE'; }
+      return act;
     },
     aiStep(m) {
       const t = handTotal(m.cards).total;
@@ -141,12 +231,14 @@
       if (t > 21) { m.done = true; m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y - 6, P.orange); this.say(m, G.say(m.ch, 'bust')); this.after(0.6, () => this.nextSeat()); return; }
       if (t === 21) { m.done = true; this.say(m, isNatural(m.cards) ? 'BLACKJACK!' : '21!'); this.after(0.6, () => this.nextSeat()); return; }
       const act = this.aiDecide(m);
-      if (act === 'HIT') { this.say(m, 'HIT ME.'); m.cards.push(this.draw1()); this.after(0.65, () => this.aiStep(m)); }
+      const mm = m.moodMove; m.moodMove = null;
+      const talk = (plain) => this.say(m, mm ? this.line(m, mm) || plain : plain);
+      if (act === 'HIT') { talk('HIT ME.'); m.cards.push(this.draw1()); this.after(0.65, () => this.aiStep(m)); }
       else if (act === 'DOUBLE') {
-        m.chips -= m.bet; m.bet *= 2; m.doubled = true; G.audio.sfx('chip'); this.say(m, 'DOUBLE DOWN!');
+        m.chips -= m.bet; m.bet *= 2; m.doubled = true; G.audio.sfx('chip'); talk('DOUBLE DOWN!');
         m.cards.push(this.draw1());
         this.after(0.7, () => { m.done = true; if (handTotal(m.cards).total > 21) { m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y - 6, P.orange); this.say(m, G.say(m.ch, 'bust')); } this.after(0.5, () => this.nextSeat()); });
-      } else { m.done = true; this.say(m, 'STAND.'); this.after(0.55, () => this.nextSeat()); }
+      } else { m.done = true; talk('STAND.'); this.after(0.55, () => this.nextSeat()); }
     },
     // turn order around the table: seat 1 (right), you, seat 2 (left), then the dealer
     nextSeat() {
@@ -211,9 +303,21 @@
       const bank = {};
       this.mates.forEach((m) => {
         m.cards = []; m.result = null; m.done = false; m.doubled = false;
+        const lastMult = m.mult || 1;
         m.bet = this.mateBet(m);
-        if (m.chips < m.bet) { m.chips = START_CHIPS; this.say(m, 'BUYING BACK IN.'); }
+        let talk = null;
+        m.cool = (m.cool || 0) - 1;
+        if (m.chips < m.bet) { m.chips = START_CHIPS; m.start = START_CHIPS; m.streak = 0; m.bet = this.mateBet(m); talk = this.line(m, 'rebuy'); }
+        else if (m.cool <= 0 && m.lastBet && m.bet > m.lastBet) {
+          // only talk about bet changes that come from their temper, not from a hunch wobble
+          if (m.mult >= lastMult * 1.35 && Math.random() < 0.75) talk = this.line(m, this.risk(m) > 1 ? 'allin' : m.streak < 0 ? 'chase' : 'press', { bet: m.bet });
+        } else if (m.cool <= 0 && m.lastBet && m.bet < m.lastBet && m.mult <= lastMult * 0.75 && Math.random() < 0.75) {
+          talk = this.line(m, m.streak > 0 ? 'reset' : 'lower', { bet: m.bet });
+        }
+        if (talk) m.cool = 2;
+        m.lastBet = m.bet;
         m.chips -= m.bet;
+        if (talk) this.say(m, talk);
       });
       const m0 = this.mates.find((m) => m.seat === 0), m1 = this.mates.find((m) => m.seat === 1);
       for (let r = 0; r < 2; r++) {
@@ -336,10 +440,15 @@
         else res = 'LOSE';
         pay = Math.floor(pay); m.result = res; m.chips += pay;
         G.floatText(pay > m.bet ? '+' + (pay - m.bet) : pay === m.bet ? 'PUSH' : '-' + m.bet, this.seatX(m) + CW / 2, PLAYER_Y - 14, pay > m.bet ? P.lime : pay === m.bet ? P.white : P.orange, 'small');
-        if (res === 'WIN' || res === 'BLACKJACK') this.say(m, G.say(m.ch, 'win')); else if (res === 'LOSE') this.say(m, G.say(m.ch, 'lose'));
+        const quip = this.mateResult(m, res);
+        if (quip) this.say(m, quip);
         bank[m.id] = m.chips;
       });
       if (this.mates.length) G.store.set('bj_mates', bank);
+      // the table reacts to the dealer busting, or to your blackjack, if nobody already had something to say
+      const quiet = this.mates.filter((m) => !this.bubbles.some((b) => b.m === m));
+      if (quiet.length && dt > 21 && Math.random() < 0.5) this.say(G.pick(quiet), G.pick(LINES.dealerBust));
+      else if (quiet.length && this.hands.some((h) => h.result === 'BLACKJACK') && Math.random() < 0.6) this.say(G.pick(quiet), G.pick(LINES.cheer));
       this.stats.won += wins; this.stats.lost += losses; this.stats.push += pushes;
       this.msg = net > 0 ? 'YOU WIN ' + net : net < 0 ? (dt > 21 ? 'DEALER BUSTS' : 'DEALER WINS') : 'PUSH';
       if (net < 0 && dt > 21) this.msg = 'YOU LOSE ' + -net;
@@ -433,6 +542,9 @@
         G.drawAvatar(m.id, x + 1, 141);
         G.text(m.ch.name, x + 29, 144, turn ? P.gold : P.white, 'small');
         G.text(String(m.chips), x + 29, 155, P.lime, 'small');
+        const md = this.mood(m);
+        if (md) G.text(md.label, x + 80, 144, md.col, 'small', 'right');
+        if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 56, 155, m.streak > 0 ? P.lime : P.orange, 'small');
         G.stars(m.ch.skill, x + 82, 155);
         const cx = x + 37;
         if (m.bet > 0 && this.phase !== 'bet') this.drawBetSpot(cx, PLAYER_Y + CH + 30, m.bet, turn);
@@ -461,7 +573,7 @@
       if (c === 0) { G.alpha(0.4, () => G.rosterPicker(view)); G.text('JUST YOU AND THE DEALER', 127, 128, P.gold, 'small', 'center'); }
       else { G.rosterPicker(view); st.picks.splice(0, view.picks.length, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar; }
       if (c > 0 && ui.button('RANDOM PICKS', 22, 180, 210, 18, { id: 'rnd', theme: 'dark' })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, v.picks.length, ...v.picks); }
-      G.wrap('Each member keeps their own chip stack and plays with their own style. Watch Bubba copy the dealer or Tank go wild.'.toUpperCase(), 210, 'small').forEach((l, i) => G.text(l, 22, 240 + i * 9, P.silver, 'small'));
+      G.wrap('Each member keeps their own chip stack. Their bets, mood and nerve shift with every win and loss. Watch Tank chase his losses or Nova press a hot streak.'.toUpperCase(), 210, 'small').forEach((l, i) => G.text(l, 22, 240 + i * 9, P.silver, 'small'));
       if (ui.button('TAKE A SEAT', 22, 294, 210, 22, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.startTable();
       if (ui.button('BACK', 22, 322, 210, 20, { theme: 'red', key: 'Escape', showKey: false })) G.go(G.Menu);
     },

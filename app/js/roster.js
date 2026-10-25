@@ -26,6 +26,53 @@
     { id: 'byte', name: 'BYTE', skill: 2, bg: '#1e2a3a', skin: SK.robot, hair: ['robot', P.silver], shirt: P.slate, acc: ['robot'], fish: { rank: 'most', target: 'mostCards', perfect: true }, bj: 'basic', bet: 'mid', quote: 'BEEP. MEMORY 100 PERCENT.', lines: { fish: ['QUERY DENIED. GO FISH.'], book: ['SET COMPLETE.'], win: ['VICTORY.EXE'], lose: ['ERROR 404: WIN'], bust: ['OVERFLOW!'] } }
   ];
   G.ROSTER = R;
+  // ---------- Blackjack temper: how each member bets and plays as the night goes on ----------
+  // press: bet grows this much per win in a streak. chase: bet grows (or shrinks if negative) per loss in a streak.
+  // nerve: steady (mood never changes play), hothead (losing makes them reckless), jittery (losing makes them timid),
+  //        confident (winning makes them bolder). kelly: bets a fixed share of the stack.
+  const TEMPER = {
+    lou: { press: 0.5, chase: 0.35, nerve: 'hothead', bets: 'Rides a hot streak, chases losses' },
+    mavis: { press: 0.25, chase: -0.2, nerve: 'jittery', bets: 'Small raises, pulls back fast' },
+    rico: { press: 0.5, chase: -0.15, nerve: 'steady', bets: 'Presses wins, trims losses' },
+    doc: { press: 0, chase: 0, nerve: 'steady', bets: 'Flat bets, every hand' },
+    pixie: { press: 0.5, chase: 0.5, nerve: 'hothead', bets: 'Up when winning, up when losing' },
+    tank: { press: 0.5, chase: 0.75, nerve: 'hothead', bets: 'Doubles down on bad luck' },
+    granny: { press: 0.2, chase: -0.25, nerve: 'steady', bets: 'Careful, shrinks bets when cold' },
+    ziggy: { press: 0.25, chase: 0.25, nerve: 'steady', bets: 'Drifts with the vibe' },
+    viper: { press: 1, chase: -0.25, nerve: 'steady', bets: 'Presses hard on a streak' },
+    bubba: { press: 0.25, chase: 0.25, nerve: 'hothead', bets: 'Gets stubborn when losing' },
+    finn: { press: 0.5, chase: 0.5, nerve: 'confident', bets: 'Bold on a streak, chases treasure' },
+    nova: { press: 0.5, chase: 0, nerve: 'confident', bets: 'Speeds up on a hot streak' },
+    duke: { press: 0.25, chase: 0.5, nerve: 'hothead', bets: 'Wounded pride raises the stakes' },
+    mimi: { press: 0.25, chase: -0.25, nerve: 'jittery', bets: 'Gets nervous after losses' },
+    sarge: { press: 0, chase: 0, nerve: 'steady', bets: 'Flat bets, by procedure' },
+    kai: { press: 0.1, chase: -0.3, nerve: 'jittery', bets: 'Steady, backs off when cold' },
+    rosa: { press: 0.5, chase: 0.25, nerve: 'confident', bets: 'Presses wins, never backs down' },
+    byte: { press: 0, chase: 0, nerve: 'steady', kelly: 0.03, bets: 'Bets 3 percent of its stack' }
+  };
+  // personal lines for streaks
+  const MOOD_LINES = {
+    lou: { hot: ['LADY LUCK LOVES ME!', 'CANT LOSE TONIGHT!'], cold: ['THIS SUCKS.', 'WHO JINXED ME?'] },
+    mavis: { hot: ['THE BOOK WORKS!'], cold: ['THIS IS MOST UNFAIR.', 'I NEED A TEA.'] },
+    rico: { hot: ['THE CARDS LOVE RICO.'], cold: ['THIS SHOE IS CURSED.'] },
+    doc: { hot: ['VARIANCE, IN MY FAVOUR.'], cold: ['A NEGATIVE SAMPLE. FINE.'] },
+    pixie: { hot: ['SPARKLE STREAK!'], cold: ['THIS SUCKS! BOOO!', 'UGH, NO FAIR!'] },
+    tank: { hot: ['UNSTOPPABLE!', 'FEED ME CHIPS!'], cold: ['THIS SUCKS.', 'I WILL BREAK THIS TABLE.'] },
+    granny: { hot: ['GRANNY IS ON A ROLL.'], cold: ['IN MY DAY CARDS WERE KINDER.'] },
+    ziggy: { hot: ['THE VIBES ARE IMMACULATE.'], cold: ['BAD VIBES, MAN.', 'THIS KINDA SUCKS, DUDE.'] },
+    viper: { hot: ['I SAW THIS COMING.'], cold: ['...THIS IS IRRITATING.'] },
+    bubba: { hot: ['HOT DIGGITY!'], cold: ['THIS DANG SHOE.', 'WELL THIS JUST STINKS.'] },
+    finn: { hot: ['FULL SAIL, LADS!'], cold: ['ROUGH SEAS, ROUGH SEAS.'] },
+    nova: { hot: ['NEW PB INCOMING!', 'ON PACE!'], cold: ['THIS RUN IS DEAD.', 'BAD RNG.'] },
+    duke: { hot: ['AS IS MY BIRTHRIGHT.'], cold: ['THIS IS BENEATH ME.', 'AN OUTRAGE.'] },
+    mimi: { hot: ['IM GOOD AT THIS?!'], cold: ['THIS SUCKS...', 'WHY DO I KEEP LOSING?'] },
+    sarge: { hot: ['OUTSTANDING!'], cold: ['EMBRACE THE SUCK.', 'THIS IS A CLUSTER.'] },
+    kai: { hot: ['RIDING THE WAVE.'], cold: ['NOT MY NIGHT.', 'OKAY, THIS SUCKS.'] },
+    rosa: { hot: ['MI RACHA!', 'KEEP THEM COMING.'], cold: ['QUE MALA SUERTE.'] },
+    byte: { hot: ['WIN STREAK DETECTED.'], cold: ['THIS OUTCOME SUCKS.EXE', 'RECALIBRATING.'] }
+  };
+  for (const c of R) { c.temper = TEMPER[c.id]; Object.assign(c.lines, MOOD_LINES[c.id]); }
+  G.NERVE = { steady: 'Plays the same win or lose', hothead: 'Gets reckless when losing', jittery: 'Gets timid when losing', confident: 'Gets bolder when winning' };
   G.char = (id) => R.find((c) => c.id === id) || R[0];
   G.SKILL_NAMES = ['EASY', 'NORMAL', 'HARD'];
   G.BJ_STYLE = { basic: 'Plays perfect basic strategy', cautious: 'Stands on 12 or more', reckless: 'Hits to 18, loves to double', dealer: 'Copies the dealer: hits to 17', hunch: 'Plays on gut feeling' };
@@ -182,10 +229,12 @@
     G.stars(show.skill, ix + 64 + G.textWidth(show.name, 'big') + 8, iy + 9);
     G.text(G.SKILL_NAMES[show.skill], ix + 64 + G.textWidth(show.name, 'big') + 34, iy + 10, P.silver, 'small');
     G.text('"' + show.quote.toUpperCase() + '"', ix + 64, iy + 23, P.cyan, 'small');
-    G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 37, P.white, 'small');
-    G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 49, P.white, 'small');
+    G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 32, P.white, 'small');
+    G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 41, P.white, 'small');
+    G.text('BETS: ' + show.temper.bets.toUpperCase(), ix + 64, iy + 50, P.white, 'small');
+    G.text('NERVE: ' + G.NERVE[show.temper.nerve].toUpperCase(), ix + 64, iy + 59, P.white, 'small');
     const rec = G.record(show.id);
-    G.text('YOUR RECORD VS ' + show.name + ':  ' + rec.w + ' W - ' + rec.l + ' L', ix + 64, iy + 63, P.silver, 'small');
+    G.text('YOUR RECORD VS ' + show.name + ':  ' + rec.w + ' W - ' + rec.l + ' L', ix + 64, iy + 71, P.silver, 'small');
   };
   // fill empty slots with random members not already picked
   G.fillRandom = (st, all) => {

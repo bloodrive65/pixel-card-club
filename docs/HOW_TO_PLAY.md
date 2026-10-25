@@ -20,6 +20,13 @@ Press **RULEBOOK** (or **R**) on the main menu to open the in-game book. Click t
 ### Table-mates
 Before the first round you can seat **none, 1 or 2 Club members** at the table (press **SEATS / T** between rounds to change them). Table-mates bet and play their own hands with their own chips, in their own style (see [The Club](#the-club)). They don't change your odds: everyone plays against the dealer, never against each other. Turn order is right seat, you, left seat, then the dealer. Their chip stacks are saved between sessions.
 
+### Mood, nerve and bets
+Table-mates don't play the same way all night. Each one tracks their **streak** (shown as W3 or L2 on their panel) and their stack compared with when they sat down, and that sets their **mood**: HOT, ON FIRE, COLD, TILT, SHAKY, UP BIG or DOWN BAD.
+
+- **Bets change with the run of cards.** Each member has a betting temper. Some **press** a winning streak, some **chase** losses with bigger bets, and some back off when cold. Players who are well up also bet more. BYTE always bets 3% of its stack.
+- **Nerve changes how they play.** Hotheads play more dangerously when losing (hitting stiff hands, doubling more). Jittery members get cautious and freeze on 12–16. Confident members get bolder on a hot streak. Steady members play the same win or lose.
+- **They talk about it.** Members announce big bet changes ("UPPING IT TO 90. IT HAS TO TURN."), complain on a cold run ("THIS SUCKS."), celebrate streaks and comebacks, and react when the dealer busts or you get a blackjack. Each member has their own lines mixed in with the general table talk.
+
 ### Goal
 Finish with a hand closer to **21** than the dealer's without going over.
 
@@ -174,6 +181,28 @@ The Club is 18 computer players. Each one has a portrait, a skill level (hearts:
 | **Perfect memory** (BYTE) | Remembers everything |
 
 Members who know a player holds a rank ask that player for it first. A member who just had cards taken may hold a grudge and go after whoever took them. The AI only uses what a person at the table could hear. It never looks at hidden hands.
+
+**Blackjack betting and nerve**
+| Member | Bets | Nerve |
+|---|---|---|
+| LUCKY LOU | Rides a hot streak, chases losses | Hothead |
+| MAVIS | Small raises, pulls back fast | Jittery |
+| RICO | Presses wins, trims losses | Steady |
+| DOC | Flat bets | Steady |
+| PIXIE | Up when winning, up when losing | Hothead |
+| TANK | Doubles down on bad luck | Hothead |
+| GRANNY JO | Careful, shrinks bets when cold | Steady |
+| ZIGGY | Drifts with the vibe | Steady |
+| VIPER | Presses hard on a streak | Steady |
+| BUBBA | Gets stubborn when losing | Hothead |
+| CAPT FINN | Bold on a streak, chases | Confident |
+| NOVA | Speeds up on a hot streak | Confident |
+| THE DUKE | Wounded pride raises the stakes | Hothead |
+| MIMI | Gets nervous after losses | Jittery |
+| SARGE | Flat bets, by procedure | Steady |
+| KAI | Steady, backs off when cold | Jittery |
+| ROSA | Presses wins, never backs down | Confident |
+| BYTE | 3% of its stack | Steady |
 
 **Blackjack styles**
 | Style | How it plays |

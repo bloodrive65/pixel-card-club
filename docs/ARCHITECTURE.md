@@ -51,6 +51,15 @@ The UI is **immediate mode**: `if (ui.button('HIT', x, y, w, h, { key: 'h' })) h
 - Turning a page squeezes the turning page horizontally with a cosine curve, then reveals the next spread, with a paper `page` sound.
 - `G.Rulebook.open(chapter, returnScene)` opens at a chapter. Each game sets `bookChapter`, so **Esc → How to Play** opens its own chapter.
 
+### Blackjack table-mate temper
+
+Each member's `temper` in `roster.js` has `press` (bet growth per win in a streak), `chase` (bet growth, or shrink if negative, per loss), a `nerve` (`steady`, `hothead`, `jittery` or `confident`) and an optional `kelly` share of the stack.
+
+- `mateResult()` updates `m.streak` after each hand and picks a line: comeback, cooled-off, hot, cold or tilt first, then the ordinary win/lose/push lines.
+- `mateBet()` sets the bet as base × multiplier. The multiplier comes from the streak (a streak of 1 counts half) and is adjusted when the stack is well up or down, then clamped to 0.4×–4×. Bet comments only fire when the multiplier really changes (not on a hunch wobble), with a two-hand cooldown.
+- `risk()` turns streak and nerve into a value from −2 to +2. `aiDecide()` shifts each style's thresholds by it, and at ±2 a stiff hand (hard 12–16) may be hit or stood on against the member's usual style (`moodMove`, with its own lines).
+- `mood()` gives the panel label. `LINES` in `blackjack.js` is the general table-talk pool, mixed with each member's own `hot` and `cold` lines.
+
 ## Turn timing
 
 Blackjack and Go Fish use a small **step queue** (`after(seconds, fn)` / `runQueue(dt)`). Dealing, dealer draws and AI turns are queued with short pauses, so you can follow what's happening, and the queue stops while the game is paused.

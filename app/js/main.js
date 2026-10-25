@@ -78,7 +78,7 @@
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
       }
       G.text('PICK A GAME WITH THE MOUSE OR PRESS 1  2  3', G.W / 2, 330, P.felt4, 'small', 'center');
-      G.text('V1.1', G.W - 8, G.H - 10, P.felt3, 'small', 'right');
+      G.text('V1.2', G.W - 8, G.H - 10, P.felt3, 'small', 'right');
       if (this.options) this.drawOptions();
     },
     drawOptions() {
