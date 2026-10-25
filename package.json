@@ -1,0 +1,30 @@
+{
+  "name": "pixel-card-club",
+  "productName": "Pixel Card Club",
+  "version": "1.0.0",
+  "description": "A 16-bit pixel-art card game collection: Blackjack, Klondike Solitaire and Go Fish with computer opponents.",
+  "main": "electron/main.js",
+  "author": "bloodrive65",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win portable nsis --x64",
+    "dist:win-zip": "electron-builder --win zip --x64",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.bloodrive65.pixelcardclub",
+    "productName": "Pixel Card Club",
+    "directories": { "output": "release", "buildResources": "build" },
+    "files": ["app/**/*", "electron/**/*", "package.json"],
+    "win": { "target": ["nsis", "portable"], "icon": "build/icon.png" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "shortcutName": "Pixel Card Club" },
+    "portable": { "artifactName": "PixelCardClub-${version}-portable.exe" },
+    "mac": { "target": "dmg", "icon": "build/icon.png" },
+    "linux": { "target": "AppImage", "icon": "build/icon.png" }
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}

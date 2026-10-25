@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Card Club</title>
+<link rel="icon" href="icon.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0c14; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; touch-action: none; outline: none; }
+</style>
+</head>
+<body>
+<canvas id="game" tabindex="0" aria-label="Pixel Card Club game"></canvas>
+<script src="js/font.js"></script>
+<script src="assets/cards/deck.js" onerror="this.remove()"></script>
+<script src="js/engine.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/games/blackjack.js"></script>
+<script src="js/games/solitaire.js"></script>
+<script src="js/games/gofish.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
