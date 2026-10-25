@@ -36,6 +36,10 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.4.3
+
+- Blackjack: table-mate plates are a touch wider. Form hearts now sit next to the name, and the mood tag (HOT, COLD, ON FIRE, DOWN BAD and so on) moved down beside the chip count, so long names like CAPT FINN or GRANNY JO no longer collide with it. When there is no mood, the win/loss streak shows in that spot.
+
 ## What's new in 1.4.2
 
 - War: your deck and its card count sit a little higher, so the "YOUR DECK" label no longer hides under the flip hint.

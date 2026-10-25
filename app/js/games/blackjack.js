@@ -543,14 +543,15 @@
     drawMates() {
       for (const m of this.mates) {
         const x = this.seatX(m), turn = this.aiTurn === m;
-        G.panel(x - 2, 138, 108, 30, { fill: turn ? P.navy : P.ink, hi: turn ? P.gold : P.dusk, border: turn ? P.gold : P.black });
+        // plate: name + form hearts on top, chips + mood (or streak) below
+        G.panel(x - 2, 138, 116, 30, { fill: turn ? P.navy : P.ink, hi: turn ? P.gold : P.dusk, border: turn ? P.gold : P.black });
         G.drawAvatar(m.id, x + 1, 141);
         G.text(m.ch.name, x + 29, 144, turn ? P.gold : P.white, 'small');
+        G.stars(m.form, x + 91, 144);
         G.text(String(m.chips), x + 29, 155, P.lime, 'small');
         const md = this.mood(m);
-        if (md) G.text(md.label, x + 80, 144, md.col, 'small', 'right');
-        if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 56, 155, m.streak > 0 ? P.lime : P.orange, 'small');
-        G.stars(m.form, x + 82, 155);
+        if (md) G.text(md.label, x + 111, 155, md.col, 'small', 'right');
+        else if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 111, 155, m.streak > 0 ? P.lime : P.orange, 'small', 'right');
         const cx = x + 37;
         if (m.bet > 0 && this.phase !== 'bet') this.drawBetSpot(cx, PLAYER_Y + CH + 30, m.bet, turn);
         else this.drawBetSpot(cx, PLAYER_Y + CH + 30, 0, false);
