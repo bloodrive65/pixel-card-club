@@ -68,7 +68,24 @@
 
   // ---------- Felt background (pre-rendered, dithered) ----------
   let felt = null;
-  ui.felt = () => {
+  // ---------- Table colours (Customize menu): five felt tones, darkest to lightest ----------
+  G.TABLES = [
+    { name: 'GREEN', f: ['#173f2b', '#1d4d34', '#235c3e', '#2c6e4a', '#3a8259'] },
+    { name: 'BLUE', f: ['#14284a', '#19325a', '#1f3d6d', '#284c84', '#3a62a0'] },
+    { name: 'RED', f: ['#4a1418', '#5a1a1f', '#6d2027', '#832a32', '#a03e46'] },
+    { name: 'BROWN', f: ['#3a2616', '#47301c', '#573a22', '#6a482b', '#86603e'] },
+    { name: 'ORANGE', f: ['#5a2a0c', '#6e3410', '#853f14', '#9c4e1c', '#bb6a32'] },
+    { name: 'PINK', f: ['#5a1e3e', '#6c244b', '#822b5a', '#99366c', '#b84f88'] },
+    { name: 'PURPLE', f: ['#2e1a4a', '#38205a', '#43276d', '#523184', '#6a46a6'] },
+    { name: 'TEAL', f: ['#0f3a3e', '#13474c', '#18575c', '#1f696f', '#2e878d'] },
+    { name: 'CHARCOAL', f: ['#15161c', '#1b1c24', '#22232d', '#2c2e3a', '#444858'] }
+  ];
+  G.applyTable = (i) => {
+    const t = G.TABLES[i] || G.TABLES[0];
+    t.f.forEach((c, k) => (P['felt' + k] = c));
+    felt = null;
+  };
+  ui.feltCanvas = () => {
     if (!felt) {
       const [c, x] = G.makeCanvas(G.W, G.H);
       x.fillStyle = P.felt2; x.fillRect(0, 0, G.W, G.H);
@@ -84,8 +101,9 @@
       }
       felt = c;
     }
-    G.ctx.drawImage(felt, 0, 0);
+    return felt;
   };
+  ui.felt = () => G.ctx.drawImage(ui.feltCanvas(), 0, 0);
 
   // ---------- HUD top bar ----------
   // stats: [{label, value, color}]

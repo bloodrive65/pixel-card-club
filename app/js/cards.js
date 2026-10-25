@@ -37,8 +37,8 @@
   };
 
   // Rounded card silhouette
-  function cardBase(x, fill, edge) {
-    x.fillStyle = P.ink;
+  function cardBase(x, fill, edge, line) {
+    x.fillStyle = line || P.ink;
     x.fillRect(2, 0, CW - 4, CH); x.fillRect(0, 2, CW, CH - 4); x.fillRect(1, 1, CW - 2, CH - 2);
     x.fillStyle = fill;
     x.fillRect(2, 1, CW - 4, CH - 2); x.fillRect(1, 2, CW - 2, CH - 4);
@@ -180,10 +180,26 @@
   // ---------- Custom art support (assets/cards/deck.js) ----------
   // A custom deck can supply a sprite sheet. See docs/CUSTOM_CARDS.md.
   G.cardArt = { faces: {}, backs: [], custom: false };
+  // shared drawing kit for other deck styles (js/western.js)
+  G._cardKit = { blit, BIG, SMALL, SUITS, PIPS, drawTextOn, cardBase };
+  // deck styles: each builds 52 faces and 4 backs. The Classic deck is drawn here.
+  const CLASSIC_INK = { paper: P.white, edge: '#d4dde6', line: P.ink, red: P.red, black: P.ink };
+  G.DECKS = [{ name: 'CLASSIC', ink: CLASSIC_INK, backs: BACKS, face: makeFace, back: makeBack }];
+  G.cardInk = CLASSIC_INK;
+  G.backNames = () => (G.DECKS[G.deckIndex || 0].backs || BACKS).map((b) => b.name);
   function buildDefault() {
-    for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) G.cardArt.faces[s + '_' + r] = makeFace(s, r);
-    G.cardArt.backs = BACKS.map(makeBack);
+    const i = G.clamp(G.settings.deck || 0, 0, G.DECKS.length - 1), d = G.DECKS[i];
+    G.deckIndex = i; G.cardInk = d.ink;
+    for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) G.cardArt.faces[s + '_' + r] = d.face(s, r);
+    G.cardArt.backs = d.backs.map((b, k) => d.back(b, k));
+    if (G.clearMiniCards) G.clearMiniCards();
   }
+  // switch deck style at run time (Customize menu). A custom sprite sheet always wins.
+  G.applyDeck = (i) => {
+    G.settings.deck = i;
+    if (G.cardArt.custom) return;
+    buildDefault();
+  };
   function tryCustom(done) {
     const cfg = window.CUSTOM_DECK;
     if (!cfg) return done();

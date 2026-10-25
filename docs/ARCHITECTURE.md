@@ -18,12 +18,13 @@ Pixel Card Club is plain JavaScript drawing onto an HTML5 `<canvas>`. It has no 
 ui.begin()  →  scene.frame(dt)  →  ui.end()  →  clear one-frame input flags
 ```
 
-A **scene** is any object with `enter()` and `frame(dt)`: `G.Menu`, `G.Blackjack`, `G.Solitaire`, `G.GoFish` or `G.Rulebook`. `G.go(scene)` switches between them, and `G.resume(scene)` returns to a game without restarting it (used when the rulebook closes).
+A **scene** is any object with `enter()` and `frame(dt)`: `G.Menu`, `G.Blackjack`, `G.Holdem`, `G.Solitaire`, `G.Spider`, `G.GoFish`, `G.Crazy8`, `G.War` or `G.Rulebook`. `G.go(scene)` switches between them, and `G.resume(scene)` returns to a game without restarting it (used when the rulebook closes).
 
 ## Cards (`cards.js`)
 
 - A card is a plain object: `{ id, suit, rank, faceUp, x, y, tx, ty, z, delay, flip }`.
 - **The card art is generated in code** at startup: pips laid out on a grid, J/Q/K portraits drawn pixel by pixel, and four patterned backs. Each card face is cached as a 44×62 offscreen canvas. A custom sprite sheet can replace it (see CUSTOM_CARDS.md).
+- **Deck styles** live in `G.DECKS`. Each entry has `face(suit, rank)`, `back(spec, i)`, four back specs and an `ink` palette that the mini cards also use. `G.applyDeck(i)` rebuilds every face and back at run time, so the Customize menu can switch decks without restarting. `western.js` adds the Western Deck: it draws clean cards in a sepia palette and then ages them in a pixel pass (`weather()`): darker edges and bottom, coffee-ring and blot stains, foxing spots, a crease, about 10% of ink pixels faded, nicks punched into the outline and dog-eared corners. A seeded random generator gives every card the same wear each time.
 - **Animation uses targets.** Every frame, a game's `layout()` sets each card's *target* `(tx, ty, z, faceUp)` from the current game state. `G.updateCards()` eases the real `(x, y)` toward the target and plays a horizontal-squash flip whenever `faceUp` changes. `delay` staggers deals. Game logic never animates anything directly; it only changes state.
 - `G.drawCards()` sorts by `z`, then draws moving and dragged cards on top.
 
@@ -60,9 +61,17 @@ Each member's `temper` in `roster.js` has `press` (bet growth per win in a strea
 - `risk()` turns streak and nerve into a value from −2 to +2. `aiDecide()` shifts each style's thresholds by it, and at ±2 a stiff hand (hard 12–16) may be hit or stood on against the member's usual style (`moodMove`, with its own lines).
 - `mood()` gives the panel label. `LINES` in `blackjack.js` is the general table-talk pool, mixed with each member's own `hot` and `cold` lines.
 
+## Table themes
+
+`G.TABLES` in `ui.js` holds nine felt palettes of five tones each. `G.applyTable(i)` writes them into `P.felt0`–`P.felt4` and clears the cached felt texture, so every screen that uses those colours follows the chosen table.
+
+## Shared table kit (`table.js`)
+
+Hold'em, Crazy Eights and War share `G.TableKit`, mixed into each game: the step queue, the table-talk log, speech bubbles, seat panels, opponent slots, the pause-menu helper, and the setup screen (1–3 opponents, one game option, the Club picker and random picks). `G.talk()` mixes a member's own lines with generic ones and fills placeholders such as `{amt}`.
+
 ## Turn timing
 
-Blackjack and Go Fish use a small **step queue** (`after(seconds, fn)` / `runQueue(dt)`). Dealing, dealer draws and AI turns are queued with short pauses, so you can follow what's happening, and the queue stops while the game is paused.
+Blackjack, Go Fish, Hold'em, Crazy Eights and War use a small **step queue** (`after(seconds, fn)` / `runQueue(dt)`). Dealing, dealer draws and AI turns are queued with short pauses, so you can follow what's happening, and the queue stops while the game is paused.
 
 ## The games
 
@@ -70,6 +79,10 @@ Blackjack and Go Fish use a small **step queue** (`after(seconds, fn)` / `runQue
 |---|---|
 | `blackjack.js` | `handTotal()` (soft/hard Aces), `basicStrategy()` (the HINT advisor: multi-deck, dealer stands on soft 17, double after split), shoe and reshuffle, split hands, payouts, dealer AI (hit < 17). Table-mates: setup screen, `startPlay()` → `nextSeat()` (right seat, you, left seat, dealer), `aiDecide()` per style. The dealer only draws if some hand is still live. |
 | `solitaire.js` | Piles (`stock`, `waste`, `found[4]`, `tab[7]`), `legal()` and `canTab()`/`canFound()`, drag and drop with best-overlap drop target, click-to-move `bestDest()`, snapshot-based unlimited undo, `findHint()`, auto-finish, Windows-style scoring, bouncing-card win screen |
+| `holdem.js` | Sit-and-go with rising or fixed blinds, heads-up blind rules, minimum raises and short all-ins (`act()`), `advance()` / `endRound()` / `nextStreet()`, burn cards, all-in runouts, side pots built from each player's total contribution (`showdown()`), odd chips left of the button. `G.pokerEval()` scores the best 5 of 7 cards; `G.pokerEquity()` runs a Monte Carlo simulation used by the AI and the odds helper. AI styles (shark, lag, rock, station, maniac, wild) adjust looseness, aggression, bluffing and calling, and the member's nerve shifts them after big pots. |
+| `spider.js` | Two decks re-suited for 1, 2 or 4 suits, the 54-card deal, `movableFrom()` (same-suit runs), `checkRun()` to remove K–A runs, deal row only when no column is empty, snapshot undo, ranked hints, Windows scoring |
+| `crazy8.js` | Deal (7 for two players, else 5), starter 8 buried, `legal()`, wild 8 suit picker, draw/reshuffle/pass/blocked hands, scoring and match to 100. AI: easy random, normal holds 8s and plays its longest suit, hard tracks suits each player couldn't follow |
+| `war.js` | Even deal (17 each plus a spare for three players), battles and multi-player wars, the last-card rule, won cards returned in random order, one-pass mode, auto-flip and speed |
 | `gofish.js` | Setup screen (free-for-all or teams), turn flow (`startTurn` → `ask` → give or go fish → `checkBooks` → `nextTurn`), `targets()` (teams may only ask the other team), books flying to the table, `poolTeams()`, the AI memory model below, table-talk log, speech bubbles |
 
 ### Go Fish AI
@@ -96,7 +109,7 @@ Seats are `[you, rival, partner, rival]`, so turns alternate between teams. `tar
 - **Desktop app:** `electron/preload.js` exposes `window.cardclubNative`, which reads and writes `save.json` in the app's user-data folder (`%APPDATA%\Pixel Card Club\` on Windows).
 - **Browser:** values are kept in memory for the session.
 
-Saved data: settings (including chosen opponents and teams), Blackjack chips and best stack, table-mates' chips (`bj_mates`), Solitaire games played, won and best score, Go Fish games played and won, and each Club member's record against you (`records`).
+Saved data: settings (including chosen opponents and teams, table colour, deck and card back), Blackjack chips and best stack, table-mates' chips (`bj_mates`), Solitaire games played, won and best score, Spider wins and best score per suit count, Go Fish, Crazy Eights, War and Hold'em games played and won, and each Club member's record against you (`records`).
 
 ## Sound
 

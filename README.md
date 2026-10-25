@@ -1,12 +1,16 @@
 # Pixel Card Club
 
-A 16-bit pixel-art card game collection for Windows (and the browser). It has three classic games, each with its own HUD, animated cards and chiptune sound effects. A club of **18 computer players** fills the empty seats, and an in-game **rulebook** that you page through like a real book teaches every game.
+A 16-bit pixel-art card game collection for Windows (and the browser). It has seven classic games, each with its own HUD, animated cards and chiptune sound effects. A club of **18 computer players** fills the empty seats, and an in-game **rulebook** that you page through like a real book teaches every game.
 
 | Game | Mode | Highlights |
 |---|---|---|
 | **Blackjack** | You vs the dealer, plus up to 2 Club table-mates | Hit, stand, double, split, 3:2 blackjacks, a 1–6 deck shoe, and a basic-strategy **advisor** |
+| **Texas Hold'em** | No-limit sit-and-go vs 1–3 Club members | Rising or fixed blinds, side pots, an optional **odds helper**, and six AI poker styles (shark, LAG, rock, calling station, maniac, wild) |
 | **Solitaire** | Klondike, solo | Draw 1 or 3, drag and drop or click-to-move, unlimited undo, hints, auto-finish, classic bouncing-card win screen |
+| **Spider Solitaire** | Two decks, solo | 1, 2 or 4 suits, undo, hints, Windows-style scoring |
 | **Go Fish** | Free-for-all vs 1–3 Club members, or **2v2 teams** with a partner you pick | Books are laid face up on the table, AI players that **remember** what others ask for, speech bubbles and a table-talk log |
+| **Crazy Eights** | vs 1–3 Club members | Wild 8s with a suit picker, one hand or a match to 100 points, AI that tracks which suits you can't follow |
+| **War** | vs 1–3 Club members | Multi-player wars, full game or one pass through the deck, auto-flip at up to 8× speed |
 
 ![Main menu](docs/screenshots/menu.png)
 
@@ -14,9 +18,24 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has th
 |---|---|---|
 | ![Blackjack](docs/screenshots/blackjack.png) | ![Solitaire](docs/screenshots/solitaire.png) | ![Go Fish](docs/screenshots/gofish.png) |
 
+| Texas Hold'em | Spider | Crazy Eights |
+|---|---|---|
+| ![Texas Hold'em](docs/screenshots/holdem.png) | ![Spider](docs/screenshots/spider.png) | ![Crazy Eights](docs/screenshots/crazy8.png) |
+
+| War (Western Deck, brown table) | Customize menu | Western Deck |
+|---|---|---|
+| ![War](docs/screenshots/war.png) | ![Customize](docs/screenshots/customize.png) | ![Western Deck](docs/screenshots/western_deck.png) |
+
 | The rulebook | The Club members | Choosing opponents |
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
+
+## What's new in 1.3
+
+- **Four new games**: Texas Hold'em, Spider Solitaire, Crazy Eights and War, each with its own HUD and Club opponents.
+- **Customize menu** (press **C**): nine table colours (Green, Blue, Red, Brown, Orange, Pink, Purple, Teal, Charcoal), card backs and a choice of deck.
+- **The Western Deck**: a worn 1890s deck with yellowed stock, coffee stains, faded ink and nicked corners. The court cards are an outlaw, a saloon queen and a cattle baron in wanted-poster frames, and the backs have a sheriff-star medallion.
+- **Bigger rulebook**: new chapters for every new game, poker styles for every Club member, and a sources section listing the published rules each game is based on.
 
 ## What's new in 1.2
 
@@ -52,22 +71,31 @@ Open `app/index.html` in any modern browser (Chrome, Edge, Firefox). No server o
 | Everywhere | **Mouse** | Everything is clickable |
 | Everywhere | **Esc** | Pause menu: Resume, How to Play, New Game, Main Menu |
 | Everywhere | **F11** | Toggle fullscreen (desktop app) |
-| Main menu | **1 / 2 / 3** | Start Blackjack / Solitaire / Go Fish |
-| Main menu | **O** | Options |
+| Main menu | **1–7** | Blackjack, Hold'em, Go Fish, Crazy Eights, War, Solitaire, Spider |
+| Main menu | **O / C** | Options / Customize |
 | Main menu | **R** | Open the rulebook |
 | Rulebook | **← / →**, click a page, **Esc** | Turn pages, close the book |
 | Blackjack | **T** | Choose table-mates (between rounds) |
 | Blackjack | **1–4**, **C**, **A**, **Space** | Add 5/25/100/500 chips, clear the bet, all in, deal |
 | Blackjack | **H S D P ?** | Hit, Stand, Double, Split, Hint |
+| Hold'em | **F C R A O**, **− / +** | Fold, Check/Call, Bet/Raise, All in, Odds helper; change the raise size |
 | Solitaire | **N Z H A** | New deal, Undo, Hint, Auto-finish |
+| Spider | **N Z H D** | New deal, Undo, Hint, Deal a row |
+| Crazy Eights | **D**, **P**, **1–4** | Draw, Pass, pick a suit after an 8 |
+| War | **Space A S** | Flip, Auto-flip, Speed |
 | Go Fish | **Left click / right click** | Choose a card, then a player / cancel the selection |
 
 Full rules and strategy for every mode are in [**docs/HOW_TO_PLAY.md**](docs/HOW_TO_PLAY.md). The same rules are in the in-game rulebook. The published rules each game is based on, and where Pixel Card Club differs, are listed in [**docs/RULES_SOURCES.md**](docs/RULES_SOURCES.md).
 
+## Customize
+
+- **Table colour**: nine felt colours, used on every table and menu.
+- **Deck**: Classic or Western.
+- **Card back**: four per deck (Classic: Crimson, Cobalt, Forest, Royal. Western: Oxblood, Prussian, Sage, Tobacco).
+
 ## Options
 
 - **Sound**: on or off. All sounds are generated live, so there are no audio files.
-- **Card back**: Crimson, Cobalt, Forest or Royal.
 - **Scaling**: *Pixel perfect* scales the 640×360 image by whole numbers (2×, 3×, 4×…) for perfectly sharp pixels. *Fill window* stretches it to fit.
 - **Solitaire draw**: draw 1 or draw 3.
 - **Blackjack decks**: 1, 2, 4 or 6 decks in the shoe.
@@ -93,12 +121,15 @@ Full details, including automatic GitHub releases, are in [**docs/BUILDING.md**]
 app/                  the game itself (plain HTML5 canvas + JavaScript, no frameworks)
   index.html
   js/engine.js        canvas scaling, input, bitmap text, chiptune audio, save storage
-  js/cards.js         card model, procedural pixel card art, card animation
+  js/cards.js         card model, procedural pixel card art, deck styles, card animation
+  js/western.js       the weathered 1890s Western Deck
   js/ui.js            buttons, HUD bar, dialogs, pause and rules menus, felt table
   js/roster.js        the 18 Club members, pixel portraits, mini book cards, opponent picker
+  js/table.js         shared kit for Hold'em, Crazy Eights and War (seats, talk, setup screen)
   js/rulebook.js      the in-game page-turning rulebook
-  js/games/*.js       blackjack.js, solitaire.js, gofish.js
-  js/main.js          main menu, options, scene manager, game loop
+  js/games/*.js       blackjack.js, holdem.js, solitaire.js, spider.js,
+                      gofish.js, crazy8.js, war.js
+  js/main.js          main menu, options, customize menu, scene manager, game loop
   assets/cards/       optional custom card sprite sheet (see docs/CUSTOM_CARDS.md)
 electron/             desktop wrapper (window, fullscreen, save file)
 docs/                 documentation and screenshots
@@ -109,4 +140,5 @@ docs/                 documentation and screenshots
 
 - Code: MIT License (see [LICENSE](LICENSE)).
 - Fonts: [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) by CodeMan38 and [Silkscreen](https://fonts.google.com/specimen/Silkscreen) by Jason Kottke, both under the SIL Open Font License 1.1. They're baked into `app/js/font.js` as bitmap data.
+- The Western Deck's look was inspired by [Nikoichu's Pixel Cards Premium](https://nikoichu.itch.io/pixel-cards-premium); all of its art is drawn in code and no assets are copied.
 - Palette based on [Sweetie 16](https://lospec.com/palette-list/sweetie-16) by GrafxKid.

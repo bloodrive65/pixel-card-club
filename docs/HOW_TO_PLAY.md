@@ -3,13 +3,27 @@
 Every game shares the same layout:
 
 - **Top bar (HUD)**: the **MENU** button (or **Esc**) on the left, the game name, and live stats on the right (chips, score, time, books…).
-- **The table**: the green felt where cards are dealt, moved and flipped.
+- **The table**: the felt (green by default, or any colour from Customize) where cards are dealt, moved and flipped.
 - **Controls**: buttons along the bottom or side. Each shows its keyboard shortcut in the corner.
 - **Pause menu (Esc)**: Resume, **How to Play** (opens the rulebook at that game's chapter), New Game, Main Menu.
 
+## Main menu keys
+
+**1** Blackjack, **2** Texas Hold'em, **3** Go Fish, **4** Crazy Eights, **5** War, **6** Solitaire, **7** Spider. **O** Options, **C** Customize, **R** Rulebook, **F** Fullscreen.
+
+## Customize
+
+Press **CUSTOMIZE** (or **C**) on the main menu. Your choices are saved and used in every game.
+
+- **Table colour**: Green (default), Blue, Red, Brown, Orange, Pink, Purple, Teal or Charcoal.
+- **Deck**: **Classic** (crisp white cards with royal court cards) or **Western**, a worn 1890s deck with yellowed card stock, coffee stains, faded ink, nicked corners and creases. Its court cards are frontier characters in wanted-poster frames: an outlaw Jack in a bandana, a saloon Queen in a plumed hat and a cattle-baron King with a handlebar moustache. The Ace of Spades carries an 1890 maker's stamp.
+- **Card back**: four backs for each deck. Classic: Crimson, Cobalt, Forest, Royal. Western: Oxblood, Prussian, Sage, Tobacco, each with a sheriff-star medallion.
+
+The live preview shows your table, deck and back together.
+
 ## The rulebook
 
-Press **RULEBOOK** (or **R**) on the main menu to open the in-game book. Click the right page or press **→** to turn forward, click the left page or press **←** to turn back, and use the coloured tabs on the right to jump to a chapter: START, DECK, BJ, SOL, FISH, CLUB and REAL (the real-world rules each game is based on). **Esc** closes the book and takes you back where you were.
+Press **RULEBOOK** (or **R**) on the main menu to open the in-game book. Click the right page or press **→** to turn forward, click the left page or press **←** to turn back, and use the coloured tabs on the right to jump to a chapter: START, DECK, BJ, POKER, SOL, SPDR, FISH, CRAZY, WAR, CLUB and REAL (the real-world rules each game is based on, with house rules). **Esc** closes the book and takes you back where you were.
 
 ---
 
@@ -65,6 +79,45 @@ The **shoe** (top right) holds 1–6 decks (set in Options). It's reshuffled aut
 
 ---
 
+## Texas Hold'em
+
+No-limit Texas Hold'em as a **sit-and-go** against 1 to 3 Club members. Everyone starts with 1000 chips. Lose them all and you're out; the last player with chips wins.
+
+### Setup
+
+Pick 1–3 opponents and the blinds: **RISING** (10/20, going up every 10 hands to 500/1000) or **FIXED 10/20**.
+
+### A hand
+
+1. The two players left of the button post the **small blind** and **big blind**. With two players, the button posts the small blind and acts first before the flop.
+2. Everyone gets two face-down **hole cards**. Betting starts left of the big blind.
+3. **Flop**: three shared cards, then a betting round. **Turn**: a fourth card and a betting round. **River**: a fifth card and the last betting round. A card is burned before each.
+4. **Showdown**: the best five-card hand from your two cards plus the five on the board wins. If everyone else folds, you win without showing.
+
+### Betting controls
+
+| Button | Key | Action |
+|---|---|---|
+| FOLD | F | Give up the hand |
+| CHECK / CALL | C | Check when nothing is owed, otherwise match the bet |
+| − / + | | Change the raise size |
+| BET / RAISE TO | R | Bet or raise to the amount shown |
+| MIN, 1/2 POT, POT | | Quick sizes |
+| ALL IN | A | Bet every chip |
+| ODDS | O | Toggle the odds helper (your chance to win vs the share of the pot you need to call) |
+
+No-limit rules: a raise must be at least as big as the last bet or raise; an all-in that is too small to be a full raise does not reopen the betting; an all-in player can only win what they matched, and the rest goes to a **side pot**. Ties split the pot, and an odd chip goes to the first winner left of the button.
+
+### Hand rankings (best to worst)
+
+Royal flush, straight flush, four of a kind, full house, flush, straight, three of a kind, two pair, one pair, high card. Suits never break ties. 5-4-3-2-A is the lowest straight, and straights don't wrap around (Q-K-A-2-3 is not a straight).
+
+### How the Club plays poker
+
+Each member has a poker style: **Shark** (tight and aggressive, reads pot odds), **LAG** (loose and aggressive), **Rock** (only strong hands), **Station** (calls almost anything), **Maniac** (raises and bluffs all the time) or **Wild** (changes gear every hand). They estimate their hand's strength by simulating the rest of the deal, and their nerve changes how they play after big wins and losses: hotheads go **ON TILT**, jittery players get **RATTLED**, and winners get **ON A HEATER**.
+
+---
+
 ## Solitaire (Klondike)
 
 **A solo puzzle.** Sort the whole deck into four suit piles.
@@ -103,6 +156,27 @@ The **shoe** (top right) holds 1–6 decks (set in Options). It's reshuffled aut
 | Time bonus on a win (over 30 s) | 700,000 ÷ seconds |
 
 Win and the cards bounce across the screen, just like the original. Click to continue.
+
+---
+
+## Spider Solitaire
+
+Two decks, ten columns. Build eight complete runs from King down to Ace in a single suit; each finished run leaves the table.
+
+- **Deal**: 54 cards, six in each of the first four columns and five in the other six, with only the top card face up. The other 50 cards are the stock.
+- **Suits** (chosen in the side panel for the next game): **1 suit** (all spades), **2 suits** (spades and hearts) or **4 suits**.
+- **Moving**: any card can go on a card one rank higher, in any suit. A group of cards can only move together if it's one suit and in order. Any card or run can go in an empty column.
+- **Deal row** (D): one card onto every column. Every column needs at least one card first.
+
+| Key | Action |
+|---|---|
+| Drag or click | Move a card or run (click picks the best spot) |
+| Z | Undo |
+| H | Hint (press again for the next one) |
+| D | Deal a row |
+| N | New game |
+
+**Scoring** (Windows style): start at 500, −1 for every move, deal and undo, +100 for every finished run.
 
 ---
 
@@ -147,9 +221,41 @@ If your hand runs empty you draw a card. Once the pond is empty, a player with n
 
 ---
 
+## Crazy Eights
+
+Be the first to play all your cards. Play against 1–3 Club members.
+
+- **Deal**: 7 cards each with two players, 5 each with three or four. One card starts the play pile; if it's an 8 it's buried in the stock.
+- **Your turn**: play a card that matches the top card's **suit or rank**. **8s are wild**: play one any time and name the next suit (click a suit or press 1–4).
+- **Can't play?** Click the stock or press **D** to draw until you can. You may also draw when you could play. When the stock runs out, the play pile (except the top card) is shuffled into a new stock. **PASS** appears only when you can't play and nothing is left to draw.
+- **Scoring**: the first player out collects points for the cards left in every other hand: 8 = 50, K/Q/J/10 = 10, Ace = 1, other cards = face value.
+- **Modes**: **ONE HAND**, or **MATCH TO 100** (play hands until someone reaches 100 points).
+- If nobody can play and nothing can be drawn, the hand is blocked and the lowest hand wins it.
+
+Easy members play at random. Normal members save their 8s and play their longest suit. Hard members also remember which suits each player couldn't follow and dump high cards when someone is about to go out.
+
+---
+
+## War
+
+Pure luck. Win all the cards. Play against 1–3 Club members.
+
+- **Deal**: the deck is split evenly: 26 each for two players, 17 for three (one card set aside), 13 for four.
+- **Battle**: everyone flips their top card. The highest takes them all. Aces are high.
+- **War**: if the top cards tie, the tied players each put one card face down and one face up; the highest new card takes the whole pile. With three or four players, everyone joins the war. If you run out during a war, your last card stays face up and counts for you.
+- **Modes**: **FULL GAME** (until one player has everything) or **ONE PASS** (go through the deck once; most cards won wins).
+
+| Control | Action |
+|---|---|
+| FLIP (Space, or click your deck) | Flip the next card |
+| AUTO (A) | Flip automatically |
+| SPEED (S) | ×1, ×3 or ×8 |
+
+---
+
 ## The Club
 
-The Club is 18 computer players. Each one has a portrait, a skill level (hearts: 1 Easy, 2 Normal, 3 Hard), a Go Fish habit, a Blackjack style and their own table talk. Your win/loss record against each member is saved and shown in the picker and the rulebook.
+The Club is 18 computer players. Each one has a portrait, a skill level (hearts: 1 Easy, 2 Normal, 3 Hard), a Go Fish habit, a Blackjack style, a poker style and their own table talk. Your win/loss record against each member is saved and shown in the picker and the rulebook.
 
 | Member | Skill | Go Fish | Blackjack |
 |---|---|---|---|
@@ -171,6 +277,16 @@ The Club is 18 computer players. Each one has a portrait, a skill level (hearts:
 | KAI | Normal | Some memory, targets the biggest hand | Cautious |
 | ROSA | Hard | Sharp memory, likes to ask you | By the book |
 | BYTE | Hard | Perfect memory | By the book |
+
+**Poker styles**
+| Style | Members |
+|---|---|
+| Shark | RICO, DOC, VIPER, BYTE |
+| LAG | NOVA, ROSA |
+| Rock | MAVIS, GRANNY JO, THE DUKE, SARGE |
+| Station | ZIGGY, BUBBA, KAI |
+| Maniac | PIXIE, TANK, CAPT FINN |
+| Wild | LUCKY LOU, MIMI |
 
 **Go Fish memory**
 | Level | How it plays |

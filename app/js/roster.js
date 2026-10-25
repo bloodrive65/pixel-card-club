@@ -71,7 +71,11 @@
     rosa: { hot: ['MI RACHA!', 'KEEP THEM COMING.'], cold: ['QUE MALA SUERTE.'] },
     byte: { hot: ['WIN STREAK DETECTED.'], cold: ['THIS OUTCOME SUCKS.EXE', 'RECALIBRATING.'] }
   };
-  for (const c of R) { c.temper = TEMPER[c.id]; Object.assign(c.lines, MOOD_LINES[c.id]); }
+  // Texas Hold'em style: shark (tight-aggressive), lag (loose-aggressive), rock (tight-passive),
+  // station (calls too much), maniac (raises everything), wild (changes every hand)
+  const POKER = { lou: 'wild', mavis: 'rock', rico: 'shark', doc: 'shark', pixie: 'maniac', tank: 'maniac', granny: 'rock', ziggy: 'station', viper: 'shark', bubba: 'station', finn: 'maniac', nova: 'lag', duke: 'rock', mimi: 'wild', sarge: 'rock', kai: 'station', rosa: 'lag', byte: 'shark' };
+  G.POKER_STYLE = { shark: 'Tight and aggressive, reads pot odds', lag: 'Plays many hands, bets them hard', rock: 'Only plays strong hands', station: 'Calls almost anything', maniac: 'Raises and bluffs constantly', wild: 'Changes gear every hand' };
+  for (const c of R) { c.temper = TEMPER[c.id]; c.poker = POKER[c.id]; Object.assign(c.lines, MOOD_LINES[c.id]); }
   G.NERVE = { steady: 'Plays the same win or lose', hothead: 'Gets reckless when losing', jittery: 'Gets timid when losing', confident: 'Gets bolder when winning' };
   G.char = (id) => R.find((c) => c.id === id) || R[0];
   G.SKILL_NAMES = ['EASY', 'NORMAL', 'HARD'];
@@ -150,14 +154,16 @@
   G.drawAvatar = (id, x, y, scale = 1) => G.ctx.drawImage(G.avatar(id), Math.round(x), Math.round(y), 24 * scale, 24 * scale);
 
   // ---------- mini cards (books laid on the table) ----------
-  const mini = {};
+  let mini = {};
+  G.clearMiniCards = () => { mini = {}; };
   G.miniCard = (rank, suit) => {
     const k = rank + '_' + suit; if (mini[k]) return mini[k];
+    const ink = G.cardInk || { paper: P.white, edge: '#d4dde6', line: P.ink, red: P.red, black: P.ink };
     const [c, x] = G.makeCanvas(14, 20);
-    x.fillStyle = P.ink; x.fillRect(1, 0, 12, 20); x.fillRect(0, 1, 14, 18);
-    x.fillStyle = P.white; x.fillRect(1, 1, 12, 18);
-    x.fillStyle = '#d4dde6'; x.fillRect(1, 18, 12, 1);
-    const col = G.isRed(suit) ? P.red : P.ink;
+    x.fillStyle = ink.line; x.fillRect(1, 0, 12, 20); x.fillRect(0, 1, 14, 18);
+    x.fillStyle = ink.paper; x.fillRect(1, 1, 12, 18);
+    x.fillStyle = ink.edge; x.fillRect(1, 18, 12, 1);
+    const col = G.isRed(suit) ? ink.red : ink.black;
     G.withCtx(x, () => { G.text(G.RANK_LABEL[rank], 3, 3, col, 'small'); G.drawSuit(suit, 5, 11, 'small', col); });
     mini[k] = c; return c;
   };
@@ -228,11 +234,12 @@
     G.text(show.name, ix + 64, iy + 9, P.gold, 'big');
     G.stars(show.skill, ix + 64 + G.textWidth(show.name, 'big') + 8, iy + 9);
     G.text(G.SKILL_NAMES[show.skill], ix + 64 + G.textWidth(show.name, 'big') + 34, iy + 10, P.silver, 'small');
-    G.text('"' + show.quote.toUpperCase() + '"', ix + 64, iy + 23, P.cyan, 'small');
-    G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 32, P.white, 'small');
-    G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 41, P.white, 'small');
-    G.text('BETS: ' + show.temper.bets.toUpperCase(), ix + 64, iy + 50, P.white, 'small');
-    G.text('NERVE: ' + G.NERVE[show.temper.nerve].toUpperCase(), ix + 64, iy + 59, P.white, 'small');
+    G.text('"' + show.quote.toUpperCase() + '"', ix + 64, iy + 21, P.cyan, 'small');
+    G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 29, P.white, 'small');
+    G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 37, P.white, 'small');
+    G.text('POKER: ' + G.POKER_STYLE[show.poker].toUpperCase(), ix + 64, iy + 45, P.white, 'small');
+    G.text('BETS: ' + show.temper.bets.toUpperCase(), ix + 64, iy + 53, P.white, 'small');
+    G.text('NERVE: ' + G.NERVE[show.temper.nerve].toUpperCase(), ix + 64, iy + 61, P.white, 'small');
     const rec = G.record(show.id);
     G.text('YOUR RECORD VS ' + show.name + ':  ' + rec.w + ' W - ' + rec.l + ' L', ix + 64, iy + 71, P.silver, 'small');
   };
