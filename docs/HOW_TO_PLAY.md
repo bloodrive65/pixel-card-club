@@ -9,7 +9,12 @@ Every game shares the same layout:
 
 ## Main menu keys
 
-**1** Blackjack, **2** Texas Hold'em, **3** Go Fish, **4** Crazy Eights, **5** War, **6** Solitaire, **7** Spider. **O** Options, **C** Customize, **R** Rulebook, **F** Fullscreen.
+The menu has two pages. Click the arrows at the sides, the page dots, or press **← / →** or **Tab** to switch.
+
+- **The Classics**: **1** Blackjack, **2** Solitaire, **3** Go Fish.
+- **More Games**: **1** Texas Hold'em, **2** Crazy Eights, **3** War, **4** Spider.
+
+**O** Options, **C** Customize, **R** Rulebook, **F** Fullscreen (Q quits in the desktop app). When you leave a game, the menu returns to the page you came from.
 
 ## Customize
 

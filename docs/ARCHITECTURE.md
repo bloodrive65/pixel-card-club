@@ -119,4 +119,4 @@ All sound effects are synthesized live with the Web Audio API in `engine.js` (`G
 
 1. Create `app/js/games/mygame.js` defining `G.MyGame = { title, rules: [...], enter() {...}, frame(dt) {...} }`.
 2. Use `G.makeDeck()`, `G.place()`, `G.updateCards()`, `G.drawCards()`, `ui.topBar()` and `ui.pauseMenu(this)` just like the existing games.
-3. Add a `<script>` tag in `index.html` and an entry to the `GAMES` list in `main.js`.
+3. Add a `<script>` tag in `index.html` and an entry to one of the `PAGES` in `main.js` (the main menu has two pages: The Classics and More Games, each tile with its own page-local number key).

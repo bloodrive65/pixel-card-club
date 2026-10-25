@@ -12,7 +12,9 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 | **Crazy Eights** | vs 1–3 Club members | Wild 8s with a suit picker, one hand or a match to 100 points, AI that tracks which suits you can't follow |
 | **War** | vs 1–3 Club members | Multi-player wars, full game or one pass through the deck, auto-flip at up to 8× speed |
 
-![Main menu](docs/screenshots/menu.png)
+| The Classics | More Games |
+|---|---|
+| ![Main menu, The Classics](docs/screenshots/menu.png) | ![Main menu, More Games](docs/screenshots/menu_more.png) |
 
 | Blackjack | Solitaire | Go Fish |
 |---|---|---|
@@ -29,6 +31,10 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 | The rulebook | The Club members | Choosing opponents |
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
+
+## What's new in 1.3.1
+
+- **Two-page main menu**: the three classics (Blackjack, Solitaire, Go Fish) are back on the first page with the 1.2 layout, and the newer games are on a second page.
 
 ## What's new in 1.3
 
@@ -71,7 +77,8 @@ Open `app/index.html` in any modern browser (Chrome, Edge, Firefox). No server o
 | Everywhere | **Mouse** | Everything is clickable |
 | Everywhere | **Esc** | Pause menu: Resume, How to Play, New Game, Main Menu |
 | Everywhere | **F11** | Toggle fullscreen (desktop app) |
-| Main menu | **1–7** | Blackjack, Hold'em, Go Fish, Crazy Eights, War, Solitaire, Spider |
+| Main menu | **← / →** or **Tab** | Switch between The Classics and More Games |
+| Main menu | **1–3** / **1–4** | Classics: Blackjack, Solitaire, Go Fish. More Games: Hold'em, Crazy Eights, War, Spider |
 | Main menu | **O / C** | Options / Customize |
 | Main menu | **R** | Open the rulebook |
 | Rulebook | **← / →**, click a page, **Esc** | Turn pages, close the book |

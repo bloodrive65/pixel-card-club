@@ -8,20 +8,20 @@
   G.go = (s) => { G.scene = s; G.floaters = []; if (s.enter) s.enter(); };
 
   // ---------- Title / main menu ----------
-  const GAMES = [
-    { key: '1', name: 'BLACKJACK', blurb: ['BEAT THE DEALER TO 21', 'UP TO 2 TABLE-MATES'], scene: () => G.Blackjack, icon: [[1, 0], [13, 1]] },
-    { key: '2', name: "HOLD'EM", blurb: ['NO-LIMIT SIT-AND-GO', 'VS 1-3 CLUB PLAYERS'], scene: () => G.Holdem, icon: [[1, 2], [1, 3], [12, 0]] },
-    { key: '3', name: 'GO FISH', blurb: ['FREE-FOR-ALL OR 2V2', 'LAY DOWN YOUR BOOKS'], scene: () => G.GoFish, icon: [[7, 2], [7, 3], [7, 0]] },
-    { key: '4', name: 'CRAZY EIGHTS', blurb: ['MATCH SUIT OR RANK', 'EIGHTS ARE WILD'], scene: () => G.Crazy8, icon: [[8, 1], [8, 0], [8, 2]] },
-    { key: '5', name: 'WAR', blurb: ['FLIP, BATTLE, GO TO WAR', 'AUTO-PLAY AND SPEED UP'], scene: () => G.War, icon: [[1, 0], [1, 1]] },
-    { key: '6', name: 'SOLITAIRE', blurb: ['CLASSIC KLONDIKE', 'DRAW 1 OR DRAW 3'], scene: () => G.Solitaire, icon: [[13, 3], [12, 1], [11, 0]] },
-    { key: '7', name: 'SPIDER', blurb: ['TWO DECKS, TEN COLUMNS', '1, 2 OR 4 SUITS'], scene: () => G.Spider, icon: [[13, 0], [12, 0], [11, 0]] }
+  // Two menu pages: the three classics (as in 1.2), then the newer games.
+  const PAGES = [
+    { name: 'THE CLASSICS', tw: 180, gap: 16, games: [
+      { key: '1', name: 'BLACKJACK', blurb: ['Beat the dealer to 21.', 'Hit, stand, double, split.', 'Up to 2 Club table-mates.'], scene: () => G.Blackjack, theme: 'red', icon: [[1, 1], [13, 0]] },
+      { key: '2', name: 'SOLITAIRE', blurb: ['Classic Klondike.', 'Draw 1 or draw 3.', 'Undo, hints, auto-finish.'], scene: () => G.Solitaire, theme: 'gold', icon: [[13, 3], [12, 1], [11, 0]] },
+      { key: '3', name: 'GO FISH', blurb: ['Free-for-all or 2v2 teams.', '18 Club members to face.', 'Lay your books down.'], scene: () => G.GoFish, theme: 'blue', icon: [[7, 2], [7, 3], [7, 0]] }
+    ] },
+    { name: 'MORE GAMES', tw: 136, gap: 10, games: [
+      { key: '1', name: "HOLD'EM", blurb: ['No-limit poker.', 'Sit-and-go vs', '1-3 Club players.'], scene: () => G.Holdem, theme: 'red', icon: [[1, 2], [1, 3], [12, 0]] },
+      { key: '2', name: 'CRAZY 8S', blurb: ['Match suit or rank.', 'Eights are wild.', 'Match to 100.'], scene: () => G.Crazy8, theme: 'gold', icon: [[8, 1], [8, 0], [8, 2]] },
+      { key: '3', name: 'WAR', blurb: ['Flip and battle.', 'Ties go to war.', 'Auto-play, speed up.'], scene: () => G.War, theme: 'blue', icon: [[1, 0], [1, 1]] },
+      { key: '4', name: 'SPIDER', blurb: ['Two decks,', 'ten columns.', '1, 2 or 4 suits.'], scene: () => G.Spider, theme: 'gold', icon: [[13, 0], [12, 0], [11, 0]] }
+    ] }
   ];
-  const TW = 148, TH = 96;
-  const tileXY = (i) => {
-    if (i < 4) return [Math.round(G.W / 2 - (4 * TW + 3 * 8) / 2) + i * (TW + 8), 88];
-    return [Math.round(G.W / 2 - (3 * TW + 2 * 8) / 2) + (i - 4) * (TW + 8), 192];
-  };
   const Menu = (G.Menu = {
     enter() {
       this.t = 0; this.options = false; this.custom = false;
@@ -46,38 +46,50 @@
       });
       // logo
       const bob = Math.round(Math.sin(this.t * 2) * 2);
-      G.text('PIXEL', G.W / 2, 12 + bob, P.ink, 'big', 'center', 3);
-      G.text('PIXEL', G.W / 2, 10 + bob, P.white, 'big', 'center', 3);
-      G.text('CARD CLUB', G.W / 2 + 2, 38 + bob, P.black, 'big', 'center', 4);
-      G.text('CARD CLUB', G.W / 2, 36 + bob, P.gold, 'big', 'center', 4);
-      G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(0, 36 + bob + 14, G.W, 14); G.ctx.clip();
-      G.text('CARD CLUB', G.W / 2, 36 + bob, '#e8a33a', 'big', 'center', 4);
+      G.text('PIXEL', G.W / 2, 26 + bob, P.ink, 'big', 'center', 3);
+      G.text('PIXEL', G.W / 2, 24 + bob, P.white, 'big', 'center', 3);
+      G.text('CARD CLUB', G.W / 2 + 2, 56 + bob, P.black, 'big', 'center', 4);
+      G.text('CARD CLUB', G.W / 2, 54 + bob, P.gold, 'big', 'center', 4);
+      G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(0, 54 + bob + 14, G.W, 14); G.ctx.clip();
+      G.text('CARD CLUB', G.W / 2, 54 + bob, '#e8a33a', 'big', 'center', 4);
       G.ctx.restore();
-      [0, 1, 2, 3].forEach((s, i) => G.drawSuit(s, G.W / 2 - 34 + i * 18, 73, 'big', s === 1 || s === 2 ? P.red : P.ink));
-      [0, 1, 2, 3].forEach((s, i) => G.drawSuit(s, G.W / 2 - 34 + i * 18, 72, 'big', s === 1 || s === 2 ? P.orange : P.white));
+      [0, 1, 2, 3].forEach((s, i) => G.drawSuit(s, G.W / 2 - 34 + i * 18, 92, 'big', s === 1 || s === 2 ? P.red : P.ink));
+      [0, 1, 2, 3].forEach((s, i) => G.drawSuit(s, G.W / 2 - 34 + i * 18, 91, 'big', s === 1 || s === 2 ? P.orange : P.white));
 
-      // game tiles: 4 table games on top, then War and the two solitaires
-      GAMES.forEach((g, i) => {
-        const [x, y0] = tileXY(i);
-        const hover = !ui.modal && G.inRect(G.input.x, G.input.y, x, y0, TW, TH);
+      // game tiles for the current page
+      const pg = PAGES[this.page || 0], th = 170, y0 = 112;
+      const x0 = Math.round(G.W / 2 - (pg.tw * pg.games.length + pg.gap * (pg.games.length - 1)) / 2);
+      this.slide = Math.max(0, (this.slide || 0) - dt * 6);
+      const off = Math.round(this.slide * this.slide * 40 * (this.slideDir || 1));
+      pg.games.forEach((g, i) => {
+        const tw = pg.tw, x = x0 + i * (tw + pg.gap) + off;
+        const hover = !ui.modal && G.inRect(G.input.x, G.input.y, x, y0, tw, th);
         const y = y0 - (hover ? 2 : 0);
-        G.panel(x, y, TW, TH, { fill: hover ? P.navy : P.ink, hi: hover ? P.gold : P.dusk, border: hover ? P.gold : P.black });
-        ui.block(x, y0, TW, TH);
-        const n = g.icon.length, iw = 28 + (n - 1) * 16;
+        G.panel(x, y, tw, th, { fill: hover ? P.navy : P.ink, hi: hover ? P.gold : P.dusk, border: hover ? P.gold : P.black });
+        const n = g.icon.length;
         g.icon.forEach(([r, s], k) => {
-          const cx = x + TW / 2 - iw / 2 + k * 16, cy = y + 8 + Math.abs(k - (n - 1) / 2) * 2;
-          G.alpha(0.35, () => G.rect(cx + 2, cy + 2, 27, 39, P.black));
-          G.ctx.drawImage(G.miniCard(r, s), Math.round(cx), Math.round(cy), 28, 40);
+          const img = G.cardArt.faces[s + '_' + r];
+          const cx = x + tw / 2 - (CW + (n - 1) * 18) / 2 + k * 18, cy = y + 10 + Math.abs(k - (n - 1) / 2) * 3;
+          G.alpha(0.35, () => G.rect(cx + 2, cy + 2, CW - 1, CH - 2, P.black));
+          G.ctx.drawImage(img, Math.round(cx), Math.round(cy));
         });
-        G.text(g.name, x + TW / 2, y + 54, hover ? P.white : P.gold, 'big', 'center', 1, P.black);
-        g.blurb.forEach((b, k) => G.text(b, x + TW / 2, y + 68 + k * 9, P.silver, 'small', 'center'));
-        G.rect(x + TW - 15, y + 4, 11, 11, hover ? P.gold : P.dusk);
-        G.text(g.key, x + TW - 9, y + 7, hover ? P.ink : P.silver, 'small', 'center');
-        if (hover) { ui.cursorHand = true; ui.hoverId = 'tile' + i; }
-        if ((hover && G.input.pressed) || (!ui.modal && G.key(g.key))) { G.input.pressed = false; delete G.input.keyPressed[g.key]; G.audio.sfx('click'); G.go(g.scene()); }
+        G.text(g.name, x + tw / 2, y + 82, P.gold, 'big', 'center', 1, P.black);
+        g.blurb.forEach((b, k) => G.text(b.toUpperCase(), x + tw / 2, y + 98 + k * 10, P.silver, 'small', 'center'));
+        if (ui.button('PLAY', x + 14, y + th - 32, tw - 28, 22, { key: g.key, theme: g.theme, id: 'play' + this.page + i })) G.go(g.scene());
+        if (hover && G.input.pressed && !ui.blocked()) { G.audio.sfx('click'); G.go(g.scene()); }
+      });
+      // page arrows and dots
+      const turn = (d) => { const np = Math.max(0, Math.min(PAGES.length - 1, (this.page || 0) + d)); if (np !== (this.page || 0)) { this.page = np; this.slide = 1; this.slideDir = d; G.audio.sfx('flip'); } };
+      if ((this.page || 0) > 0 && ui.button('<', 6, y0 + th / 2 - 20, 20, 40, { key: 'ArrowLeft', theme: 'dark', id: 'pgL', showKey: false })) turn(-1);
+      if ((this.page || 0) < PAGES.length - 1 && ui.button('>', G.W - 26, y0 + th / 2 - 20, 20, 40, { key: 'ArrowRight', theme: 'dark', id: 'pgR', showKey: false })) turn(1);
+      if (!ui.modal && G.key('Tab')) { delete G.input.keyPressed.Tab; turn((this.page || 0) < PAGES.length - 1 ? 1 : -1); }
+      PAGES.forEach((p, i) => {
+        const dx = G.W / 2 - (PAGES.length * 14) / 2 + i * 14 + 3;
+        G.rect(dx, y0 + th + 6, 8, 8, i === (this.page || 0) ? P.gold : P.felt1);
+        if (!ui.modal && G.inRect(G.input.x, G.input.y, dx - 3, y0 + th + 3, 14, 14) && G.input.pressed) { G.input.pressed = false; turn(i - (this.page || 0)); }
       });
       // footer buttons
-      const fy = 302, bw = 120, gap = 8, fx = G.W / 2 - (bw * 4 + gap * 3) / 2;
+      const fy = 300, bw = 120, gap = 8, fx = G.W / 2 - (bw * 4 + gap * 3) / 2;
       if (ui.button('OPTIONS', fx, fy, bw, 20, { key: 'o', theme: 'dark' })) this.options = true;
       if (ui.button('CUSTOMIZE', fx + (bw + gap), fy, bw, 20, { key: 'c', theme: 'gold' })) this.custom = true;
       if (ui.button('RULEBOOK', fx + (bw + gap) * 2, fy, bw, 20, { key: 'r', theme: 'blue' })) G.Rulebook.open('contents', G.Menu);
@@ -86,8 +98,8 @@
         if (quitEnabled) window.cardclubNative.quit();
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
       }
-      G.text('PICK A GAME WITH THE MOUSE OR PRESS 1 - 7', G.W / 2, 334, P.felt4, 'small', 'center');
-      G.text('V1.3', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text(pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
+      G.text('V1.3.1', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
     },
