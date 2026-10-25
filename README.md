@@ -36,6 +36,11 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.4.1
+
+- Your speech bubble now pops up above your own seat plate instead of over your cards (Go Fish and Crazy Eights).
+- Every speech bubble, yours and the Club members', stays on screen about a second longer.
+
 ## What's new in 1.4
 
 - **Form is dealt each game**: Club members no longer show fixed hearts. Each game, every member at the table gets hearts for their form that game, rolled from their usual level, so a shark can have an off night and an easy player can get hot. The AI plays to its form.

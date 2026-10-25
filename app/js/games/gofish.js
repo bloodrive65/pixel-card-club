@@ -65,7 +65,7 @@
       if (!this.q.length) this.qt = 0;
     },
     addLog(text, color = P.white) { this.log.push({ text, color }); if (this.log.length > 40) this.log.shift(); },
-    say(pi, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.pi !== pi); this.bubbles.push({ pi, text, t: 1.7 }); },
+    say(pi, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.pi !== pi); this.bubbles.push({ pi, text, t: 2.7 }); },
     sortHand() { this.players[0].hand.sort((a, b) => a.rank - b.rank || a.suit - b.suit); },
     cur() { return this.players[this.turn]; },
     totalBooks() { return this.players.reduce((a, p) => a + p.books.length, 0); },
@@ -408,7 +408,7 @@
     drawBubbles(dt) {
       for (const b of this.bubbles) {
         b.t -= dt;
-        if (b.pi === 0) ui.bubble(b.text, 200, 246);
+        if (b.pi === 0) ui.bubble(b.text, 72, 294);
         else { const s = this.oppSlot(b.pi); ui.bubble(b.text, s.x + s.w / 2, s.y + 82, true); }
       }
       this.bubbles = this.bubbles.filter((b) => b.t > 0);

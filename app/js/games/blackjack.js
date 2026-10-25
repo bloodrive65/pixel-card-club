@@ -134,7 +134,7 @@
       this.mates.forEach((m) => { const d = m.form - m.ch.skill; this.say(m, d > 0 ? G.pick(['FEELING SHARP TONIGHT.', 'I CAN SEE THE CARDS TONIGHT.']) : d < 0 ? G.pick(['NOT FEELING IT TONIGHT.', 'LONG DAY. GO EASY ON ME.']) : m.ch.quote.toUpperCase()); });
     },
     seatX(m) { return m.seat === 0 ? 520 : 16; },
-    say(m, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.m !== m); this.bubbles.push({ m, text, t: 1.8 }); },
+    say(m, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.m !== m); this.bubbles.push({ m, text, t: 2.8 }); },
     // ---------- table-mate temper: mood, risk and betting change with the run of cards ----------
     // mood comes from the current streak (+ wins, - losses) and how the stack compares with when they sat down
     mood(m) {

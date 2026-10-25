@@ -297,7 +297,7 @@
       G.youPlate(8, 312, 128, me.hand.length + ' CARDS' + (this.match ? '  ' + me.score + ' PTS' : ''), P.silver, this.turn === 0 && !this.handOver && !this.over);
       this.drawLog(LOG);
       this.drawControls();
-      this.drawBubbles(dt);
+      this.drawBubbles(dt, [72, 294]);
       G.drawFloaters(dt);
       const stats = this.match
         ? [{ label: 'HAND', value: this.handNo }, { label: 'TARGET', value: TARGET }, { label: 'YOUR POINTS', value: me.score, color: P.gold }]

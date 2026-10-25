@@ -25,7 +25,7 @@
     },
     resetTable() { this.q = []; this.qt = 0; this.log = []; this.bubbles = []; },
     addLog(text, color = P.white) { this.log.push({ text, color }); if (this.log.length > 40) this.log.shift(); },
-    say(pi, text, t = 1.8) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.pi !== pi); this.bubbles.push({ pi, text: String(text).toUpperCase(), t }); },
+    say(pi, text, t = 2.8) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.pi !== pi); this.bubbles.push({ pi, text: String(text).toUpperCase(), t }); },
     // ---------- layout ----------
     oppSlot(i) {
       const n = this.players.length - 1, w = 190;
