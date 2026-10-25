@@ -145,7 +145,7 @@
     G.text('PAUSED', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
     let act = null;
     if (ui.button('RESUME', x + 20, y + 30, w - 40, 20, { key: 'Escape', modal: true, theme: 'green', showKey: false })) act = 'resume';
-    if (ui.button('HOW TO PLAY', x + 20, y + 54, w - 40, 20, { modal: true, theme: 'blue' })) scene._showRules = true;
+    if (ui.button('HOW TO PLAY', x + 20, y + 54, w - 40, 20, { modal: true, theme: 'blue' })) { if (G.Rulebook) G.Rulebook.open(scene.bookChapter, scene); else scene._showRules = true; }
     if (ui.button('NEW GAME', x + 20, y + 78, w - 40, 20, { modal: true, theme: 'gold' })) act = 'restart';
     if (ui.button('MAIN MENU', x + 20, y + 102, w - 40, 20, { modal: true, theme: 'red' })) act = 'menu';
     return act;

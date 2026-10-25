@@ -1,18 +1,31 @@
 # Pixel Card Club
 
-A 16-bit pixel-art card game collection for Windows (and the browser). It has three classic games, each with its own HUD, animated cards, chiptune sound effects and computer opponents where needed.
+A 16-bit pixel-art card game collection for Windows (and the browser). It has three classic games, each with its own HUD, animated cards and chiptune sound effects. A club of **18 computer players** fills the empty seats, and an in-game **rulebook** that you page through like a real book teaches every game.
 
 | Game | Mode | Highlights |
 |---|---|---|
-| **Blackjack** | You vs the dealer | Hit, stand, double, split, 3:2 blackjacks, a 1–6 deck shoe, and a basic-strategy **advisor** |
+| **Blackjack** | You vs the dealer, plus up to 2 Club table-mates | Hit, stand, double, split, 3:2 blackjacks, a 1–6 deck shoe, and a basic-strategy **advisor** |
 | **Solitaire** | Klondike, solo | Draw 1 or 3, drag and drop or click-to-move, unlimited undo, hints, auto-finish, classic bouncing-card win screen |
-| **Go Fish** | You vs 1–3 AI players | Easy / Normal / Hard AI that **remembers** what other players ask for, speech bubbles and a table-talk log |
+| **Go Fish** | Free-for-all vs 1–3 Club members, or **2v2 teams** with a partner you pick | Books are laid face up on the table, AI players that **remember** what others ask for, speech bubbles and a table-talk log |
 
 ![Main menu](docs/screenshots/menu.png)
 
 | Blackjack | Solitaire | Go Fish |
 |---|---|---|
 | ![Blackjack](docs/screenshots/blackjack.png) | ![Solitaire](docs/screenshots/solitaire.png) | ![Go Fish](docs/screenshots/gofish.png) |
+
+| The rulebook | The Club members | Choosing opponents |
+|---|---|---|
+| ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
+
+## What's new in 1.1
+
+- **Rulebook**: press **R** on the main menu (or **Esc → How to Play** in any game). It's drawn as a leather book with chapter tabs, and pages turn with an animation.
+- **The Club**: 18 computer players, each with a pixel portrait, a skill level, a Go Fish habit, a Blackjack style and their own lines. Their win/loss record against you is saved.
+- **Go Fish teams (2v2)**: pick a partner and two rivals. Team books are counted together.
+- **Books on the table**: every completed Go Fish book is laid face up in front of the player who made it.
+- **Blackjack table-mates**: up to 2 Club members sit at the table and play their own hands.
+- Solitaire fixes: the hint outline on the stock is centred, and it clears as soon as you start dragging.
 
 ## Download and play (Windows)
 
@@ -37,12 +50,15 @@ Open `app/index.html` in any modern browser (Chrome, Edge, Firefox). No server o
 | Everywhere | **F11** | Toggle fullscreen (desktop app) |
 | Main menu | **1 / 2 / 3** | Start Blackjack / Solitaire / Go Fish |
 | Main menu | **O** | Options |
+| Main menu | **R** | Open the rulebook |
+| Rulebook | **← / →**, click a page, **Esc** | Turn pages, close the book |
+| Blackjack | **T** | Choose table-mates (between rounds) |
 | Blackjack | **1–4**, **C**, **A**, **Space** | Add 5/25/100/500 chips, clear the bet, all in, deal |
 | Blackjack | **H S D P ?** | Hit, Stand, Double, Split, Hint |
 | Solitaire | **N Z H A** | New deal, Undo, Hint, Auto-finish |
 | Go Fish | **Left click / right click** | Choose a card, then a player / cancel the selection |
 
-Full rules and strategy for every mode are in [**docs/HOW_TO_PLAY.md**](docs/HOW_TO_PLAY.md). The same rules are also available in-game from **Esc → How to Play**.
+Full rules and strategy for every mode are in [**docs/HOW_TO_PLAY.md**](docs/HOW_TO_PLAY.md). The same rules are in the in-game rulebook. The published rules each game is based on, and where Pixel Card Club differs, are listed in [**docs/RULES_SOURCES.md**](docs/RULES_SOURCES.md).
 
 ## Options
 
@@ -51,7 +67,7 @@ Full rules and strategy for every mode are in [**docs/HOW_TO_PLAY.md**](docs/HOW
 - **Scaling**: *Pixel perfect* scales the 640×360 image by whole numbers (2×, 3×, 4×…) for perfectly sharp pixels. *Fill window* stretches it to fit.
 - **Solitaire draw**: draw 1 or draw 3.
 - **Blackjack decks**: 1, 2, 4 or 6 decks in the shoe.
-- **Reset chips + wins**: clears saved stats.
+- **Reset chips + wins**: clears saved stats, Club records and table-mates' chips.
 
 ## Using your own card art
 
@@ -75,6 +91,8 @@ app/                  the game itself (plain HTML5 canvas + JavaScript, no frame
   js/engine.js        canvas scaling, input, bitmap text, chiptune audio, save storage
   js/cards.js         card model, procedural pixel card art, card animation
   js/ui.js            buttons, HUD bar, dialogs, pause and rules menus, felt table
+  js/roster.js        the 18 Club members, pixel portraits, mini book cards, opponent picker
+  js/rulebook.js      the in-game page-turning rulebook
   js/games/*.js       blackjack.js, solitaire.js, gofish.js
   js/main.js          main menu, options, scene manager, game loop
   assets/cards/       optional custom card sprite sheet (see docs/CUSTOM_CARDS.md)

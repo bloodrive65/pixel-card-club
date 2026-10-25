@@ -5,13 +5,20 @@ Every game shares the same layout:
 - **Top bar (HUD)**: the **MENU** button (or **Esc**) on the left, the game name, and live stats on the right (chips, score, time, books…).
 - **The table**: the green felt where cards are dealt, moved and flipped.
 - **Controls**: buttons along the bottom or side. Each shows its keyboard shortcut in the corner.
-- **Pause menu (Esc)**: Resume, **How to Play** (these rules in-game), New Game, Main Menu.
+- **Pause menu (Esc)**: Resume, **How to Play** (opens the rulebook at that game's chapter), New Game, Main Menu.
+
+## The rulebook
+
+Press **RULEBOOK** (or **R**) on the main menu to open the in-game book. Click the right page or press **→** to turn forward, click the left page or press **←** to turn back, and use the coloured tabs on the right to jump to a chapter: START, DECK, BJ, SOL, FISH, CLUB and REAL (the real-world rules each game is based on). **Esc** closes the book and takes you back where you were.
 
 ---
 
 ## Blackjack
 
 **You vs the dealer.** The dealer's moves are fixed by casino rules, so the challenge is your own decisions.
+
+### Table-mates
+Before the first round you can seat **none, 1 or 2 Club members** at the table (press **SEATS / T** between rounds to change them). Table-mates bet and play their own hands with their own chips, in their own style (see [The Club](#the-club)). They don't change your odds: everyone plays against the dealer, never against each other. Turn order is right seat, you, left seat, then the dealer. Their chip stacks are saved between sessions.
 
 ### Goal
 Finish with a hand closer to **21** than the dealer's without going over.
@@ -94,10 +101,10 @@ Win and the cards bounce across the screen, just like the original. Click to con
 
 ## Go Fish
 
-**You vs 1–3 computer players.** Choose the number of opponents and their skill on the setup screen.
+Play **free-for-all** against 1–3 Club members, or **teams 2v2** with a partner. Pick the mode and players on the setup screen: click a seat, then click a Club member in the grid (or press **RANDOM** to fill the empty seats).
 
 ### Goal
-Collect the most **books**. A book is all four cards of one rank (four 7s, four Queens…). Books are laid down automatically as soon as you have all four.
+Collect the most **books**. A book is all four cards of one rank (four 7s, four Queens…). As soon as a player holds all four, the book is laid **face up on the table** in front of them, so everyone can see the score.
 
 ### Setup
 - 2–3 players: 7 cards each. 4 players: 5 cards each.
@@ -106,25 +113,75 @@ Collect the most **books**. A book is all four cards of one rank (four 7s, four 
 
 ### Your turn
 1. **Click a card** in your hand to ask for that rank. You can only ask for ranks you already hold.
-2. With more than one opponent, **click the player** you want to ask (their panel flashes). **Right-click** cancels.
-3. **If they have any**, they hand over *all* of them and you **go again**.
-4. **If not**, they say **"GO FISH!"** and you draw from the pond. If you happen to draw the rank you asked for, you go again ("FISHED MY WISH!"). Otherwise your turn ends.
+2. With more than one player you could ask, **click the player** (their panel flashes). **Right-click** cancels.
+3. **If they have any**, they hand over all of them and you **go again**.
+4. **If not**, they say **"GO FISH!"** and you draw from the pond. If you draw the rank you asked for, you go again ("FISHED MY WISH!"). Otherwise your turn ends.
+5. **Laying down a book also earns another turn.**
 
-If your hand runs empty you draw a card. Once the pond is empty, a player with no cards sits out. The game ends when all **13 books** are made.
+If your hand runs empty you draw a card. Once the pond is empty, a player with no cards sits out. The game ends when all **13 books** are on the table.
+
+### Teams 2v2 (house rule)
+- You and your **partner** (sitting across from you) are **Team Blue**. The two **rivals** are **Team Red**. Seats alternate, so turns go Blue, Red, Blue, Red.
+- You may only ask players on the **other team**. Teammates never trade cards.
+- Each player lays their own books, but the **team total** decides the winner (shown top right as BLUE / RED).
+- Once the pond is empty, if a team holds all four of a rank between its two players, they **pool** them into a book. This stops the game from getting stuck.
 
 ### The HUD
-- **Opponent panels** (top): name, card count, number of books and which ranks.
-- **Speech bubbles**: who asked whom for what, "Go Fish!", "Here, take 2."
+- **Player panels** (top): portrait, name, card count, team, skill hearts and number of books.
+- **Books on the table**: each player's books sit under their panel. Yours are on the left.
+- **Speech bubbles**: who asked whom for what, "Go Fish!", and each member's own lines.
 - **Table talk** (right): a running log of every ask, give, draw and book. Read it to work out who holds what.
-- **Your books** (left) and the **pond** count (centre).
-
-### Computer skill levels
-| Level | How it plays |
-|---|---|
-| **Easy** | Asks for random ranks from random players |
-| **Normal** | Remembers *some* of what others ask for, and slowly forgets |
-| **Hard** | Remembers every ask, hand-over and miss, targets players it knows have a rank, and asks for the ranks it holds the most of |
+- **Pond** count (centre).
 
 ### Tips
 - When someone asks for a rank, they're holding at least one. Ask them for it on your next turn.
 - If you ask someone for a rank and they say "Go Fish", don't ask them again until they've drawn more cards.
+- In teams, watch what your rivals ask your partner for. Your partner can't give you cards, but the rival who asked is now a good target.
+
+---
+
+## The Club
+
+The Club is 18 computer players. Each one has a portrait, a skill level (hearts: 1 Easy, 2 Normal, 3 Hard), a Go Fish habit, a Blackjack style and their own table talk. Your win/loss record against each member is saved and shown in the picker and the rulebook.
+
+| Member | Skill | Go Fish | Blackjack |
+|---|---|---|---|
+| LUCKY LOU | Easy | Random asks | Gut feeling |
+| MAVIS | Normal | Some memory, targets the biggest hand | By the book |
+| RICO | Hard | Sharp memory, asks for its biggest set | By the book |
+| DOC | Hard | Sharp memory | By the book |
+| PIXIE | Easy | Random asks | Reckless |
+| TANK | Normal | Some memory, goes after the leader | Reckless |
+| GRANNY JO | Hard | Sharp memory, likes to ask you | Cautious |
+| ZIGGY | Easy | Random asks | Gut feeling |
+| VIPER | Hard | Sharp memory, goes after the leader | By the book |
+| BUBBA | Easy | Random asks | Dealer style |
+| CAPT FINN | Normal | Some memory | Reckless |
+| NOVA | Normal | Some memory, targets the biggest hand | By the book |
+| THE DUKE | Hard | Sharp memory, goes after the leader | Cautious |
+| MIMI | Easy | Random asks, likes to ask you | Gut feeling |
+| SARGE | Normal | Some memory, targets the biggest hand | Dealer style |
+| KAI | Normal | Some memory, targets the biggest hand | Cautious |
+| ROSA | Hard | Sharp memory, likes to ask you | By the book |
+| BYTE | Hard | Perfect memory | By the book |
+
+**Go Fish memory**
+| Level | How it plays |
+|---|---|
+| **Forgetful** (Easy) | Asks for random ranks from random players |
+| **Some memory** (Normal) | Hears about 60% of what others ask for and slowly forgets |
+| **Sharp memory** (Hard) | Hears about 95% of asks, gives and misses, and never forgets |
+| **Perfect memory** (BYTE) | Remembers everything |
+
+Members who know a player holds a rank ask that player for it first. A member who just had cards taken may hold a grudge and go after whoever took them. The AI only uses what a person at the table could hear. It never looks at hidden hands.
+
+**Blackjack styles**
+| Style | How it plays |
+|---|---|
+| By the book | Perfect basic strategy |
+| Cautious | Stands on hard 12 or more, hits soft hands below 18 |
+| Reckless | Hits to 18 and loves to double on 9–11 |
+| Dealer style | Hits below 17, like the dealer |
+| Gut feeling | Plays on a hunch, with random bets |
+
+Table-mates never split.

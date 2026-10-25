@@ -9,9 +9,9 @@
 
   // ---------- Title / main menu ----------
   const GAMES = [
-    { key: '1', name: 'BLACKJACK', blurb: ['Beat the dealer to 21.', 'Hit, stand, double, split.', 'Basic-strategy advisor.'], scene: () => G.Blackjack, color: 'red', icon: [[1, 1], [13, 0]] },
+    { key: '1', name: 'BLACKJACK', blurb: ['Beat the dealer to 21.', 'Hit, stand, double, split.', 'Up to 2 Club table-mates.'], scene: () => G.Blackjack, color: 'red', icon: [[1, 1], [13, 0]] },
     { key: '2', name: 'SOLITAIRE', blurb: ['Classic Klondike.', 'Draw 1 or draw 3.', 'Undo, hints, auto-finish.'], scene: () => G.Solitaire, color: 'gold', icon: [[13, 3], [12, 1], [11, 0]] },
-    { key: '3', name: 'GO FISH', blurb: ['You vs 1-3 rivals.', 'Easy, Normal, Hard AI.', 'Collect the most books.'], scene: () => G.GoFish, color: 'blue', icon: [[7, 2], [7, 3], [7, 0]] }
+    { key: '3', name: 'GO FISH', blurb: ['Free-for-all or 2v2 teams.', '18 Club members to face.', 'Lay your books down.'], scene: () => G.GoFish, color: 'blue', icon: [[7, 2], [7, 3], [7, 0]] }
   ];
   const Menu = (G.Menu = {
     enter() {
@@ -70,14 +70,15 @@
       });
       // footer buttons
       const fy = 296;
-      if (ui.button('OPTIONS', G.W / 2 - 150, fy, 140, 20, { key: 'o', theme: 'dark' })) this.options = true;
+      if (ui.button('OPTIONS', G.W / 2 - 220, fy, 140, 20, { key: 'o', theme: 'dark' })) this.options = true;
+      if (ui.button('RULEBOOK', G.W / 2 - 70, fy, 140, 20, { key: 'r', theme: 'blue' })) G.Rulebook.open('contents', G.Menu);
       const quitEnabled = !!window.cardclubNative;
-      if (ui.button(quitEnabled ? 'QUIT' : 'FULLSCREEN', G.W / 2 + 10, fy, 140, 20, { key: quitEnabled ? 'q' : 'f', theme: 'dark' })) {
+      if (ui.button(quitEnabled ? 'QUIT' : 'FULLSCREEN', G.W / 2 + 80, fy, 140, 20, { key: quitEnabled ? 'q' : 'f', theme: 'dark' })) {
         if (quitEnabled) window.cardclubNative.quit();
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
       }
       G.text('PICK A GAME WITH THE MOUSE OR PRESS 1  2  3', G.W / 2, 330, P.felt4, 'small', 'center');
-      G.text('V1.0', G.W - 8, G.H - 10, P.felt3, 'small', 'right');
+      G.text('V1.1', G.W - 8, G.H - 10, P.felt3, 'small', 'right');
       if (this.options) this.drawOptions();
     },
     drawOptions() {
@@ -110,7 +111,7 @@
       if (deckOpts[dk] !== S.bjDecks) { S.bjDecks = deckOpts[dk]; changed = true; }
       yy += 26; row('RESET STATS', yy);
       if (ui.button('RESET CHIPS + WINS', x + 150, yy, w - 168, 18, { modal: true, theme: 'red', font: 'small' })) {
-        ['bj_chips', 'bj_best', 'sol_won', 'sol_played', 'sol_best', 'fish_won', 'fish_played'].forEach((k) => G.store.set(k, null));
+        ['bj_chips', 'bj_best', 'sol_won', 'sol_played', 'sol_best', 'fish_won', 'fish_played', 'records', 'bj_mates'].forEach((k) => G.store.set(k, null));
         G.floatText('STATS RESET', G.W / 2, y + h - 40, P.orange, 'small');
       }
       if (changed) { G.saveSettings(); G.audio.sfx('click'); }

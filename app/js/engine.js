@@ -76,11 +76,11 @@
   G.key = (k) => !!input.keyPressed[k];
 
   // ---------- Drawing primitives ----------
-  G.rect = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  G.rect = (x, y, w, h, c) => { G.ctx.fillStyle = c; G.ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
   G.outline = (x, y, w, h, c, t = 1) => {
     x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
-    ctx.fillStyle = c;
-    ctx.fillRect(x, y, w, t); ctx.fillRect(x, y + h - t, w, t); ctx.fillRect(x, y, t, h); ctx.fillRect(x + w - t, y, t, h);
+    G.ctx.fillStyle = c;
+    G.ctx.fillRect(x, y, w, t); G.ctx.fillRect(x, y + h - t, w, t); G.ctx.fillRect(x, y, t, h); G.ctx.fillRect(x + w - t, y, t, h);
   };
   // 16-bit style bevelled panel
   G.panel = (x, y, w, h, opt = {}) => {
@@ -92,7 +92,9 @@
     G.rect(x + 2, y + h - 2, w - 4, 1, lo); G.rect(x + w - 2, y + 2, 1, h - 4, lo);
     if (opt.accent) { G.rect(x + 3, y + 3, w - 6, 1, opt.accent); }
   };
-  G.alpha = (a, fn) => { ctx.globalAlpha = a; fn(); ctx.globalAlpha = 1; };
+  G.alpha = (a, fn) => { const c = G.ctx, prev = c.globalAlpha; c.globalAlpha = prev * a; fn(); c.globalAlpha = prev; };
+  // run drawing code against another canvas context (used for rulebook pages)
+  G.withCtx = (c, fn) => { const prev = G.ctx; G.ctx = c; try { fn(); } finally { G.ctx = prev; } };
 
   // ---------- Bitmap text ----------
   const fonts = {};
@@ -131,7 +133,7 @@
     const a = atlas(font, color);
     for (const ch of str) {
       const g = font.glyphs[ch] || font.glyphs['?'];
-      ctx.drawImage(a, g.ax, 0, g.adv + 1, font.h, cx, cy, (g.adv + 1) * s, font.h * s);
+      G.ctx.drawImage(a, g.ax, 0, g.adv + 1, font.h, cx, cy, (g.adv + 1) * s, font.h * s);
       cx += (g.adv + spacing[f]) * s;
     }
     return w;
@@ -186,6 +188,7 @@
       case 'lose': [392, 330, 262, 196].forEach((f, i) => tone(f, 0.16, 'triangle', 0.4, i * 0.11)); break;
       case 'book': [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.08, 'square', 0.25, i * 0.05)); break;
       case 'fish': tone(300, 0.25, 'sine', 0.4, 0, 500); noise(0.18, 0.15, 0.05, 600); break;
+      case 'page': noise(0.18, 0.22, 0, 900); noise(0.1, 0.12, 0.08, 2400); break;
       case 'shuffle': for (let i = 0; i < 10; i++) noise(0.03, 0.25, i * 0.035, 2000 + i * 150); break;
     }
   };

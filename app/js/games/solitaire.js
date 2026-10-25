@@ -7,6 +7,7 @@
 
   const scene = (G.Solitaire = {
     title: 'SOLITAIRE',
+    bookChapter: 'solitaire',
     rules: [
       '#GOAL',
       'Move all 52 cards onto the four foundations (top right), building each suit up from Ace to King.',
@@ -226,7 +227,7 @@
         if (p.type === 'found' && i !== p.cards.length - 1) return;
         const cards = p.type === 'tab' ? p.cards.slice(i) : [c];
         this.drag = { cards, from: p, ox: input.x - c.tx, oy: input.y - c.ty, gaps: cards.map((k) => k.ty - c.ty) };
-        cards.forEach((k) => (k._drag = true));
+        cards.forEach((k) => (k._drag = true)); this.hintShow = null;
       }
       if (this.drag) {
         const d = this.drag;
@@ -281,7 +282,7 @@
         hs.t -= dt;
         if (Math.floor(hs.t * 6) % 2 === 0) {
           if (hs.dest) { const [x, y0] = this.pileXY(hs.dest); const t = this.top(hs.dest); G.outline(x - 1, (t ? t.ty : y0) - 1, CW + 2, CH + 2, P.gold, 2); }
-          if (hs.stock) G.outline(colX(0) - 4, TOP - 4, CW + 2, CH + 2, P.gold, 2);
+          if (hs.stock) { const n = this.stock.cards.length, off = n ? Math.min(3, Math.floor((n - 1) / 8)) : 0; G.outline(colX(0) - off - 1, TOP - off - 1, CW + 2, CH + 2, P.gold, 2); }
         }
       }
       if (this.celebrate) this.updateCelebration(dt);

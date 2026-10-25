@@ -18,7 +18,7 @@ Pixel Card Club is plain JavaScript drawing onto an HTML5 `<canvas>`. It has no 
 ui.begin()  →  scene.frame(dt)  →  ui.end()  →  clear one-frame input flags
 ```
 
-A **scene** is any object with `enter()` and `frame(dt)`: `G.Menu`, `G.Blackjack`, `G.Solitaire` or `G.GoFish`. `G.go(scene)` switches between them.
+A **scene** is any object with `enter()` and `frame(dt)`: `G.Menu`, `G.Blackjack`, `G.Solitaire`, `G.GoFish` or `G.Rulebook`. `G.go(scene)` switches between them, and `G.resume(scene)` returns to a game without restarting it (used when the rulebook closes).
 
 ## Cards (`cards.js`)
 
@@ -36,6 +36,21 @@ The UI is **immediate mode**: `if (ui.button('HIT', x, y, w, h, { key: 'h' })) h
 - `ui.blocked()`: card games check this so a click on a button doesn't also grab a card underneath.
 - `ui.tag()`, `ui.banner()`, `ui.bubble()`: labels, messages and speech bubbles.
 
+## The Club (`roster.js`)
+
+- `G.ROSTER` is a list of 18 members. Each has an `id`, `name`, `skill` (0 Easy, 1 Normal, 2 Hard), `fish` habits (`rank`: `random` or `most`; `target`: `random`, `mostCards`, `leader` or `human`; optional `perfect`), a Blackjack style `bj` (`basic`, `cautious`, `reckless`, `dealer` or `hunch`), a bet size, a quote and table-talk `lines`.
+- **Portraits are generated in code.** `G.avatar(id)` builds a 24×24 canvas from the member's colours, hair, hat and accessories (glasses, shades, monocle, beard, eyepatch…), and caches it. `G.drawAvatar()` draws it at any whole-number scale.
+- `G.miniCard()` and `G.drawMiniBook()` draw the small 14×20 cards used for books on the table and in the rulebook.
+- `G.rosterPicker(state)` is the shared opponent picker (seat slots, a 6×3 grid of portraits and an info panel). Go Fish and Blackjack both use it. `G.fillRandom()` fills empty seats.
+- `G.record()` / `G.addRecord()` store each member's win/loss record against you.
+
+## The rulebook (`rulebook.js`)
+
+- `G.Rulebook` is a scene that draws a desk, a leather cover and two cream pages, with chapter tabs down the right edge.
+- Pages are data: each page is a list of blocks (`h`, `h2`, `p`, `li`, `table`, `cards`, `groups`, `books`, `tip`, `member`, `toc`, `draw`). A small layout function wraps text to the page width and stacks blocks top to bottom. A QA check warns if any page overflows.
+- Turning a page squeezes the turning page horizontally with a cosine curve, then reveals the next spread, with a paper `page` sound.
+- `G.Rulebook.open(chapter, returnScene)` opens at a chapter. Each game sets `bookChapter`, so **Esc → How to Play** opens its own chapter.
+
 ## Turn timing
 
 Blackjack and Go Fish use a small **step queue** (`after(seconds, fn)` / `runQueue(dt)`). Dealing, dealer draws and AI turns are queued with short pauses, so you can follow what's happening, and the queue stops while the game is paused.
@@ -44,9 +59,9 @@ Blackjack and Go Fish use a small **step queue** (`after(seconds, fn)` / `runQue
 
 | File | Key pieces |
 |---|---|
-| `blackjack.js` | `handTotal()` (soft/hard Aces), `basicStrategy()` (the HINT advisor: multi-deck, dealer stands on soft 17, double after split), shoe and reshuffle, split hands, payouts, dealer AI (hit < 17) |
+| `blackjack.js` | `handTotal()` (soft/hard Aces), `basicStrategy()` (the HINT advisor: multi-deck, dealer stands on soft 17, double after split), shoe and reshuffle, split hands, payouts, dealer AI (hit < 17). Table-mates: setup screen, `startPlay()` → `nextSeat()` (right seat, you, left seat, dealer), `aiDecide()` per style. The dealer only draws if some hand is still live. |
 | `solitaire.js` | Piles (`stock`, `waste`, `found[4]`, `tab[7]`), `legal()` and `canTab()`/`canFound()`, drag and drop with best-overlap drop target, click-to-move `bestDest()`, snapshot-based unlimited undo, `findHint()`, auto-finish, Windows-style scoring, bouncing-card win screen |
-| `gofish.js` | Turn flow (`startTurn` → `ask` → give or go fish → `checkBooks` → `nextTurn`), the AI memory model below, table-talk log, speech bubbles |
+| `gofish.js` | Setup screen (free-for-all or teams), turn flow (`startTurn` → `ask` → give or go fish → `checkBooks` → `nextTurn`), `targets()` (teams may only ask the other team), books flying to the table, `poolTeams()`, the AI memory model below, table-talk log, speech bubbles |
 
 ### Go Fish AI
 
@@ -55,13 +70,15 @@ Each computer player keeps a memory of facts it has *observed*:
 - `has[player_rank]`: that player asked for this rank, so they hold at least one.
 - `lacks[player_rank]`: that player just said "Go Fish" for this rank. This is forgotten as soon as they draw a new card.
 
-Skill levels change how much is remembered and how it's used:
+How much is heard and kept depends on the member's skill: Easy hears nothing, Normal hears 60% of facts and forgets 15% of its memory each turn, Hard hears 95% and never forgets, and BYTE (`perfect`) hears everything.
 
-- **Easy** records nothing and asks for a random rank from a random player.
-- **Normal** records each fact with a 60% chance and forgets 15% of its memory every turn.
-- **Hard** remembers everything, asks a player it *knows* holds a rank first, otherwise asks for the rank it holds the most of, aimed at the player with the most cards who isn't known to lack it.
+On its turn a member first asks a player it *knows* holds one of its ranks. Otherwise it picks a rank (`random`, or the rank it holds `most` of), skips players known to lack it, and chooses a target by habit: `mostCards`, the `leader` (counting team books in teams mode), the `human`, or at random. A member that just had cards taken may hold a `grudge` against the taker.
 
 The AI only uses information a human at the table could also know. It never looks at hidden hands.
+
+### Go Fish teams
+
+Seats are `[you, rival, partner, rival]`, so turns alternate between teams. `targets()` filters out teammates. Books are still laid per player, and `teamBooks()` sums them. In teams mode a team can end up holding all four cards of a rank between its two players with no legal way to collect them, because teammates can't ask each other. `poolTeams()` runs whenever the pond is empty and turns any such rank into a book for that team, so the game always reaches 13 books.
 
 ## Saving
 
@@ -70,7 +87,7 @@ The AI only uses information a human at the table could also know. It never look
 - **Desktop app:** `electron/preload.js` exposes `window.cardclubNative`, which reads and writes `save.json` in the app's user-data folder (`%APPDATA%\Pixel Card Club\` on Windows).
 - **Browser:** values are kept in memory for the session.
 
-Saved data: settings, Blackjack chips and best stack, Solitaire games played, won and best score, and Go Fish games played and won.
+Saved data: settings (including chosen opponents and teams), Blackjack chips and best stack, table-mates' chips (`bj_mates`), Solitaire games played, won and best score, Go Fish games played and won, and each Club member's record against you (`records`).
 
 ## Sound
 
