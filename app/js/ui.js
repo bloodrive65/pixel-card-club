@@ -81,17 +81,88 @@
     { name: 'CHARCOAL', f: ['#15161c', '#1b1c24', '#22232d', '#2c2e3a', '#444858'] }
   ];
   G.applyTable = (i) => {
-    const t = G.TABLES[i] || G.TABLES[0];
+    const t = (G.settings.surface === 3) ? { f: ['#24160c', '#3a2414', '#4a2e1a', '#7a5434', '#c8a070'] } : G.TABLES[i] || G.TABLES[0];
     t.f.forEach((c, k) => (P['felt' + k] = c));
     felt = null;
   };
+  // table surfaces (Customize > Table)
+  G.SURFACES = ['FELT', 'PATTERN', 'WOOD RAIL', 'WOOD', 'CASINO'];
+  G.applySurface = () => { G.applyTable(G.settings.table || 0); };
+  const WOOD = ['#2e1c10', '#4a2e1a', '#5e3b22', '#74492a', '#8c5a34', '#a86f42'];
+  function lattice(x, FW, FH) {
+    // a subtle diamond weave printed in the felt
+    for (let yy = 0; yy < FH; yy++) for (let xx = 0; xx < FW; xx++) {
+      const u = (xx + yy) % 16, v = (xx - yy + 4096) % 16;
+      if (u === 0 || v === 0) { x.fillStyle = P.felt1; x.fillRect(xx, yy, 1, 1); }
+      else if (u === 8 && v === 8) { x.fillStyle = P.felt3; x.fillRect(xx, yy, 1, 1); }
+    }
+  }
+  function woodPlanks(x, FW, FH) {
+    const PH = 18;
+    for (let py = 0; py * PH < FH; py++) {
+      const y0 = py * PH, off = (py * 97) % 160;
+      x.fillStyle = WOOD[2 + (py % 2)]; x.fillRect(0, y0, FW, PH);
+      // grain lines
+      for (let g = 0; g < 5; g++) {
+        const gy = y0 + 2 + ((g * 7 + py * 3) % (PH - 4));
+        x.fillStyle = g % 2 ? WOOD[1] : WOOD[4];
+        for (let xx = 0; xx < FW; xx++) if (((xx + g * 31 + py * 13) % 23) < 17) x.fillRect(xx, gy + (Math.sin((xx + off) / 19 + g) > 0.7 ? 1 : 0), 1, 1);
+      }
+      // knots
+      for (let k = 0; k < Math.ceil(FW / 260); k++) {
+        if ((py * 7 + k * 3) % 4) continue;
+        const kx = (off + k * 260 + py * 41) % FW, ky = y0 + PH / 2;
+        x.fillStyle = WOOD[1]; x.fillRect(kx - 3, ky - 1, 6, 3); x.fillRect(kx - 2, ky - 2, 4, 5);
+        x.fillStyle = WOOD[0]; x.fillRect(kx - 1, ky, 2, 1);
+      }
+      // plank seams and butt joints
+      x.fillStyle = WOOD[0]; x.fillRect(0, y0, FW, 1);
+      x.fillStyle = WOOD[5]; x.fillRect(0, y0 + 1, FW, 1);
+      for (let j = off; j < FW; j += 160) { x.fillStyle = WOOD[0]; x.fillRect(j, y0, 1, PH); x.fillStyle = WOOD[4]; x.fillRect(j + 1, y0 + 1, 1, PH - 1); }
+    }
+  }
+  function rail(x, FW, FH, T, gold) {
+    // a bevelled wooden rail around the edge of the table
+    const band = (i, c) => { x.fillStyle = c; x.fillRect(i, i, FW - i * 2, 1); x.fillRect(i, FH - 1 - i, FW - i * 2, 1); x.fillRect(i, i, 1, FH - i * 2); x.fillRect(FW - 1 - i, i, 1, FH - i * 2); };
+    const shades = [WOOD[0], WOOD[3], WOOD[5], WOOD[4], WOOD[4], WOOD[3], WOOD[3], WOOD[2], WOOD[2], WOOD[1], WOOD[1], WOOD[0]];
+    for (let i = 0; i < T; i++) band(i, shades[Math.min(shades.length - 1, Math.round(i * (shades.length - 1) / (T - 1)))]);
+    // grain flecks on the rail
+    for (let n = 0; n < (FW + FH) * 2; n++) {
+      const t = G.rand(T - 3) + 1, side = G.rand(4);
+      const px = side < 2 ? G.rand(FW) : side === 2 ? t : FW - 1 - t, py = side >= 2 ? G.rand(FH) : side === 0 ? t : FH - 1 - t;
+      x.fillStyle = Math.random() < 0.5 ? WOOD[1] : WOOD[4]; x.fillRect(px, py, 2, 1);
+    }
+    // shadow cast on the felt
+    x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(T, T, FW - T * 2, 2); x.fillRect(T, T, 2, FH - T * 2);
+    x.fillStyle = 'rgba(0,0,0,0.18)'; x.fillRect(T, FH - T - 1, FW - T * 2, 1); x.fillRect(FW - T - 1, T, 1, FH - T * 2);
+    if (gold) {
+      x.fillStyle = P.gold;
+      const g = T + 7;
+      x.fillRect(g, g, FW - g * 2, 1); x.fillRect(g, FH - g - 1, FW - g * 2, 1); x.fillRect(g, g, 1, FH - g * 2); x.fillRect(FW - g - 1, g, 1, FH - g * 2);
+      x.fillStyle = '#c98a2e';
+      const h = g + 3;
+      x.fillRect(h, h, FW - h * 2, 1); x.fillRect(h, FH - h - 1, FW - h * 2, 1); x.fillRect(h, h, 1, FH - h * 2); x.fillRect(FW - h - 1, h, 1, FH - h * 2);
+    }
+  }
   let feltKey = '';
   // the felt covers the whole screen (G.SW x G.SH); it is drawn at (-G.ox, -G.oy)
   ui.feltCanvas = () => {
     if (!felt || feltKey !== G.sizeKey) {
       feltKey = G.sizeKey;
-      const FW = G.SW, FH = G.SH;
+      const FW = G.SW, FH = G.SH, surf = G.settings.surface || 0;
       const [c, x] = G.makeCanvas(FW, FH);
+      if (surf === 3) {
+        woodPlanks(x, FW, FH);
+        // darken the edges a little so the middle of the table stands out
+        const cx = FW / 2, cy = FH / 2;
+        x.fillStyle = 'rgba(20,10,4,0.28)';
+        for (let yy = 0; yy < FH; yy++) for (let xx = 0; xx < FW; xx++) {
+          const d = Math.hypot((xx - cx) / (FW * 0.62), (yy - cy) / (FH * 0.66));
+          const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5][(yy % 4) * 4 + (xx % 4)] / 16;
+          if (d > 0.7 && (d - 0.7) * 3 > bayer) x.fillRect(xx, yy, 1, 1);
+        }
+        felt = c; return felt;
+      }
       x.fillStyle = P.felt2; x.fillRect(0, 0, FW, FH);
       // sparse noise
       for (let i = 0; i < Math.round(2600 * FW * FH / (G.W * G.H)); i++) { x.fillStyle = Math.random() < 0.5 ? P.felt1 : P.felt3; x.fillRect(G.rand(FW), G.rand(FH), 1, 1); }
@@ -103,6 +174,9 @@
         if (d > 0.62 && (d - 0.62) * 4 > bayer) { x.fillStyle = P.felt1; x.fillRect(xx, yy, 1, 1); }
         if (d > 0.85 && (d - 0.85) * 4 > bayer) { x.fillStyle = P.felt0; x.fillRect(xx, yy, 1, 1); }
       }
+      if (surf >= 1) lattice(x, FW, FH);
+      if (surf === 2) rail(x, FW, FH, 9, false);
+      if (surf === 4) rail(x, FW, FH, 9, true);
       felt = c;
     }
     return felt;

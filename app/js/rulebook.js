@@ -39,7 +39,7 @@
         { h2: 'SAVING' },
         { p: 'Your chips, wins, settings and your record against each Club member are saved for you.' },
         { h2: 'CUSTOMIZE' },
-        { p: 'C on the menu picks table colours, card backs and the Classic or worn 1890s Western deck. P sets your name and look.' },
+        { p: 'C on the menu picks table colours and surfaces (felt, wood, casino), the deck (Classic, Four Colour, Midnight or Western), card colours and backs. P sets your name and look.' },
         { tip: 'In a game, press ESC and pick HOW TO PLAY to jump to its chapter.' }],
       // 3 deck
       [{ h: 'THE DECK', ch: 'deck' },

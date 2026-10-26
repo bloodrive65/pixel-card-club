@@ -38,9 +38,11 @@ Your portrait and name appear on your seat at every Club table: Blackjack, Hold'
 
 Press **CUSTOMIZE** (or **C**) on the main menu. Your choices are saved and used in every game.
 
-- **Table colour**: Green (default), Blue, Red, Brown, Orange, Pink, Purple, Teal or Charcoal.
-- **Deck**: **Classic** (crisp white cards with royal court cards) or **Western**, a worn 1890s deck with yellowed card stock, coffee stains, faded ink, nicked corners and creases. Its court cards are frontier characters in wanted-poster frames: an outlaw Jack in a bandana, a saloon Queen in a plumed hat and a cattle-baron King with a handlebar moustache. The Ace of Spades carries an 1890 maker's stamp.
-- **Card back**: four backs for each deck. Classic: Crimson, Cobalt, Forest, Royal. Western: Oxblood, Prussian, Sage, Tobacco, each with a sheriff-star medallion.
+- **TABLE tab: Table colour**: Green (default), Blue, Red, Brown, Orange, Pink, Purple, Teal or Charcoal.
+- **TABLE tab: Surface**: **Felt** (plain), **Pattern** (a diamond weave in the felt), **Wood Rail** (patterned felt inside a bevelled wooden rail), **Wood** (a plank table, which ignores the table colour) or **Casino** (a wooden rail with gold pinstripes). A preview shows the whole table.
+- **CARDS tab: Deck**: **Classic** (crisp cards with double-headed court cards robed in their suit's colours, and ornate Aces), **Four Colour** (the Classic art with spades black, hearts red, diamonds blue and clubs green, so suits are easy to tell apart at a glance), **Midnight** (dark navy cards with glowing ink) or **Western**, a worn 1890s deck with yellowed card stock, coffee stains, faded ink, nicked corners and creases. Its court cards are frontier characters in wanted-poster frames: an outlaw Jack in a bandana, a saloon Queen in a plumed hat and a cattle-baron King with a handlebar moustache. The Ace of Spades carries an 1890 maker's stamp.
+- **CARDS tab: Card colour**: White, Ivory, Mint, Sky, Rose or Gold card stock for the Classic and Four Colour decks.
+- **CARDS tab: Card back**: eight backs for Classic, Four Colour and Midnight (Crimson, Cobalt, Forest, Royal, Gold, Ocean, Ember, Shadow) and four for Western (Oxblood, Prussian, Sage, Tobacco, each with a sheriff-star medallion).
 
 The live preview shows your table, deck and back together.
 

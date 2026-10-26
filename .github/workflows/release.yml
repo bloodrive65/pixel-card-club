@@ -26,9 +26,24 @@ jobs:
           name: pixel-card-club-windows
           path: |
             release/*.exe
+      - name: Release notes from CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '/^## /{ if (f) exit; if ($2 == v) { f=1; next } } f' CHANGELOG.md > notes.md
+          {
+            echo ""
+            echo "**Play in your browser or on iPhone / iPad:** https://bloodrive65.github.io/pixel-card-club/"
+            echo ""
+            echo "**Windows:** download \`Pixel.Card.Club.Setup.$v.exe\` (installer) or \`PixelCardClub-$v-portable.exe\` (no install) below."
+            echo ""
+            echo "Older versions: [CHANGELOG.md](https://github.com/bloodrive65/pixel-card-club/blob/master/CHANGELOG.md)"
+          } >> notes.md
+          cat notes.md
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: release/*.exe
-          generate_release_notes: true
+          body_path: notes.md

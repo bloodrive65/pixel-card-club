@@ -21,7 +21,7 @@
   canvas.width = W; canvas.height = H;
   ctx.imageSmoothingEnabled = false;
   G.canvas = canvas; G.ctx = ctx;
-  G.settings = { sound: true, back: 0, pixelPerfect: false, fitV: 2, drawThree: false, fishOpponents: 2, fishLevel: 1, bjDecks: 4 };
+  G.settings = { sound: true, back: 0, pixelPerfect: false, fitV: 2, drawThree: false, fishOpponents: 2, fishLevel: 1, bjDecks: 4, surface: 0, cardColour: 0 };
 
   // touch devices (iPhone / iPad / tablets): fill the screen, hide keyboard hints, show tap wording
   G.touch = !window.cardclubNative && (('ontouchstart' in window) || navigator.maxTouchPoints > 1) && matchMedia('(pointer: coarse)').matches;

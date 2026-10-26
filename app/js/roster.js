@@ -245,7 +245,7 @@
     x.fillStyle = ink.line; x.fillRect(1, 0, 12, 20); x.fillRect(0, 1, 14, 18);
     x.fillStyle = ink.paper; x.fillRect(1, 1, 12, 18);
     x.fillStyle = ink.edge; x.fillRect(1, 18, 12, 1);
-    const col = G.isRed(suit) ? ink.red : ink.black;
+    const col = ink.suit ? ink.suit[suit] : G.isRed(suit) ? ink.red : ink.black;
     G.withCtx(x, () => { G.text(G.RANK_LABEL[rank], 3, 3, col, 'small'); G.drawSuit(suit, 5, 11, 'small', col); });
     mini[k] = c; return c;
   };

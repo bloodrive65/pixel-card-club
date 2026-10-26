@@ -82,59 +82,147 @@
     } else x.drawImage(c, px, py);
   }
 
-  // Face-card portrait (J / Q / K)
-  function drawCourt(x, suit, rank) {
-    const red = G.isRed(suit);
-    const robe = [P.blue, P.red, P.plum, P.teal][suit];
-    const trim = P.gold;
-    // frame
-    x.fillStyle = red ? P.red : P.ink; x.fillRect(11, 8, 22, 46);
-    x.fillStyle = '#e8dcc0'; x.fillRect(12, 9, 20, 44);
-    const cx = 22;
-    // headwear
-    x.fillStyle = trim;
-    if (rank === 13) { // crown
-      x.fillRect(cx - 6, 15, 12, 4); x.fillRect(cx - 6, 12, 2, 3); x.fillRect(cx - 1, 11, 2, 4); x.fillRect(cx + 4, 12, 2, 3);
-      x.fillStyle = P.red; x.fillRect(cx - 1, 16, 2, 2);
-    } else if (rank === 12) { // tiara + hair
-      x.fillStyle = red ? P.orange : P.wood2; x.fillRect(cx - 7, 15, 14, 15);
-      x.fillStyle = trim; x.fillRect(cx - 5, 14, 10, 2); x.fillRect(cx - 1, 12, 2, 2);
-      x.fillStyle = P.cyan; x.fillRect(cx - 1, 14, 2, 1);
-    } else { // jack hat with feather
-      x.fillStyle = robe; x.fillRect(cx - 7, 15, 14, 4); x.fillRect(cx - 5, 13, 10, 2);
-      x.fillStyle = trim; x.fillRect(cx - 7, 18, 14, 1);
-      x.fillStyle = P.lime; x.fillRect(cx + 4, 10, 2, 5); x.fillRect(cx + 6, 9, 1, 3);
+  // ---------- Court cards (J / Q / K): double-headed portraits, like a real deck ----------
+  // 20 x 22 top-half portraits (mirrored for the bottom half). Palette keys are swapped per suit:
+  // k outline, s/S skin, g/G gold, r/R main robe, b/B second robe, w white fur, h hair, e emblem cloth, p steel, . frame paper
+  const COURT_J = [
+    '....rrrrrrrrr.......',
+    '...rrRRRRRRRrr...ww.',
+    '...gggggggggggg.wpw.',
+    '..krhhhhhhhhhrk..p..',
+    '..khhsssssssshk..p..',
+    '...khskssskshk...p..',
+    '...khssssssshk...p..',
+    '...khsssSssshk...p..',
+    '...khhsssssshk...p..',
+    '....khSSSSShk....p..',
+    '....kkhhhhhkk...gpg.',
+    '.....kwwwwwk....sss.',
+    '..bbbbwwgwwbbbb.sss.',
+    '.bBbbbbwgwbbbbBbbp..',
+    'bBbrrbbbgbbbrrbBbp..',
+    'bBrrrrbbgbbrrrrBbp..',
+    'bBrrrrbbgbbrrrrBbp..',
+    'bBbrrbbbgbbbrrbBbp..',
+    'bBggggggggggggggBp..',
+    'bBbbeeebbgbbbbbbBp..',
+    'bBbbeeebbgbbbbbbBp..',
+    'bBbbbebbbgbbbbbbBp..'
+  ];
+  const COURT_Q = [
+    '.....g..g..g........',
+    '.....ggggggg........',
+    '....gbgggggbg.......',
+    '...hhhhhhhhhhh......',
+    '..hhhssssssshhh.....',
+    '..hhskssssskshh.....',
+    '..hhssssssssshh.....',
+    '..hhssssSsssshh.....',
+    '..hhhssSSSsshhh..w..',
+    '..hhhhsssssshhh.wpw.',
+    '..hhhhhkkkkhhhh..w..',
+    '.wwhhhhwwwwhhhhww.G.',
+    'wwkwhhwwgwwwhhwkw.G.',
+    'wkwwwwwwgwwwwwwwwwG.',
+    'bbbwwrrrgrrrwwbbbsss',
+    'bBbbrrrrgrrrrbbBbsss',
+    'bBbbrrwrgrwrrbbBb.G.',
+    'bBbbrrrrgrrrrbbBb.G.',
+    'bBggggggggggggggB.G.',
+    'bBbreeebbgbbbbrbB.G.',
+    'bBbreeebbgbbbbrbB.G.',
+    'bBbbrebbbgbbbbrbB...'
+  ];
+  const COURT_K = [
+    '....g...gg...g......',
+    '....gg..gg..gg...w..',
+    '....gggggggggg...p..',
+    '....gRggbbggRg...p..',
+    '...kGGGGGGGGGGk..p..',
+    '...khhssssssshhk.p..',
+    '...khskssssskshk.p..',
+    '...khssssssssshk.p..',
+    '...khhsssSssshhk.p..',
+    '...khhhSsssShhhk.p..',
+    '...khhhhhhhhhhhk.p..',
+    '..wkkhhhhhhhhhkkwp..',
+    '.wwwrkhhhhhhhkrwwg..',
+    'wwkwrrkkhhhkkrrwgGg.',
+    'wkwwrrrrkkkrrrrwwgw.',
+    'wwwrrbbrrgrrbbrrwsw.',
+    'rrrrbbbbrgrbbbbrrsr.',
+    'rRrrbbbbrgrbbbbrrRr.',
+    'rRrrrbbrrgrrbbrrrRr.',
+    'rRggggggggggggggrRr.',
+    'rRreeerrrgrrrrrrrRr.',
+    'rRreeerrrgrrbbrrrRr.'
+  ];
+  const COURTS = { 11: COURT_J, 12: COURT_Q, 13: COURT_K };
+  // robe colours per suit: [main, second, queen hair]
+  const COURT_SUIT = [
+    ['#3b5dc9', '#29366f', '#e8ecf4'], // spades
+    ['#b13e53', '#3b5dc9', '#ef7d57'], // hearts
+    ['#ef7d57', '#5d275d', '#ffcd75'], // diamonds
+    ['#38b764', '#b13e53', '#6a482b']  // clubs
+  ];
+  const suitCol = (ink, suit) => (ink.suit ? ink.suit[suit] : G.isRed(suit) ? ink.red : ink.black);
+  G.suitColour = (suit) => suitCol(G.cardInk || {}, suit) || (G.isRed(suit) ? P.red : P.ink);
+  function drawCourt(x, suit, rank, ink) {
+    const art = COURTS[rank], [main, second, qhair] = COURT_SUIT[suit];
+    const frameInk = suitCol(ink, suit), bg = ink.frame || '#f3e9cf';
+    const pal = { '.': bg, k: '#1a1c2c', s: '#f2c79a', S: '#d0866a', g: '#ffcd75', G: '#c98a2e', r: main, R: '#1a1c2c', b: second, B: '#1a1c2c',
+      w: '#f4f4f4', h: rank === 13 ? '#e8ecf4' : rank === 12 ? qhair : '#86603e', e: main, p: '#94b0c2' };
+    const X0 = 12, Y0 = 9, AW = 20, AH = 22;
+    x.fillStyle = frameInk; x.fillRect(X0 - 1, Y0 - 1, AW + 2, AH * 2 + 3);
+    x.fillStyle = bg; x.fillRect(X0, Y0, AW, AH * 2 + 1);
+    for (let ry = 0; ry < AH; ry++) {
+      const row = art[ry];
+      for (let cx = 0; cx < AW; cx++) {
+        const ch = row[cx];
+        if (ch === '.' || ch === undefined) continue;
+        x.fillStyle = pal[ch];
+        x.fillRect(X0 + cx, Y0 + ry, 1, 1);
+        x.fillRect(X0 + AW - 1 - cx, Y0 + AH * 2 - ry, 1, 1); // the same figure, upside down
+      }
     }
-    // face
-    x.fillStyle = '#f2c79a'; x.fillRect(cx - 5, 19, 10, 9);
-    x.fillStyle = P.ink; x.fillRect(cx - 3, 22, 2, 2); x.fillRect(cx + 1, 22, 2, 2);
-    x.fillStyle = '#d0866a'; x.fillRect(cx - 2, 26, 4, 1);
-    if (rank === 13) { // beard
-      x.fillStyle = P.silver; x.fillRect(cx - 5, 26, 10, 4); x.fillRect(cx - 3, 30, 6, 2);
-      x.fillStyle = '#d0866a'; x.fillRect(cx - 2, 26, 4, 1);
-    }
-    // body / robe
-    x.fillStyle = robe; x.fillRect(cx - 8, 31, 16, 22); x.fillRect(cx - 6, 29, 12, 2);
-    x.fillStyle = trim; x.fillRect(cx - 1, 29, 2, 24); x.fillRect(cx - 8, 31, 16, 1);
-    // suit emblem on chest
-    blit(x, SMALL[SUITS[suit]], cx - 7, 37, red ? P.white : P.gold);
-    // held item: K sword, Q flower, J staff
-    x.fillStyle = P.silver;
-    if (rank === 13) { x.fillRect(cx + 5, 33, 1, 16); x.fillStyle = trim; x.fillRect(cx + 3, 46, 5, 1); }
-    else if (rank === 12) { x.fillStyle = P.green; x.fillRect(cx + 5, 38, 1, 10); x.fillStyle = P.red; x.fillRect(cx + 4, 36, 3, 3); }
-    else { x.fillStyle = P.wood2; x.fillRect(cx + 5, 30, 1, 21); x.fillStyle = trim; x.fillRect(cx + 4, 29, 3, 2); }
+    // gold divider through the middle, and the suit on each half
+    x.fillStyle = frameInk; x.fillRect(X0, Y0 + AH, AW, 1);
+    x.fillStyle = '#ffcd75'; x.fillRect(X0 + 2, Y0 + AH, AW - 4, 1);
+    blit(x, SMALL[SUITS[suit]], X0 + 2, Y0 + AH - 6, frameInk);
+    blit(x, SMALL[SUITS[suit]], X0 + AW - 7, Y0 + AH + 2, frameInk, 1, true);
   }
 
-  function makeFace(suit, rank) {
-    const [c, x] = G.makeCanvas(CW, CH);
-    cardBase(x, P.white, '#d4dde6');
-    const color = G.isRed(suit) ? P.red : P.ink;
-    const s = SUITS[suit];
-    if (rank >= 11) drawCourt(x, suit, rank);
-    else if (rank === 1) {
-      blit(x, BIG[s], CW / 2 - 10.5 | 0, CH / 2 - 10.5 | 0, color, 3);
-      if (suit === 0) { x.fillStyle = P.gold; x.fillRect(CW / 2 - 1 | 0, CH / 2 - 2 | 0, 2, 2); }
+  // ---------- Aces: an ornate medallion (the Ace of Spades gets the fanciest one) ----------
+  function drawAce(x, suit, ink) {
+    const col = suitCol(ink, suit), s = SUITS[suit];
+    const cx = CW / 2, cy = CH / 2;
+    const ring = (r, c, t = 1) => { x.fillStyle = c; for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) { const d = Math.hypot(xx + 0.5, yy + 0.5); if (d <= r && d > r - t) x.fillRect(cx + xx, cy + yy, 1, 1); } };
+    const disc = (r, c) => { x.fillStyle = c; for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (Math.hypot(xx + 0.5, yy + 0.5) <= r) x.fillRect(cx + xx, cy + yy, 1, 1); };
+    if (suit === 0) {
+      // sunburst rays, a gold ring and a big spade with gold filigree
+      x.fillStyle = '#ffcd75';
+      for (let a = 0; a < 16; a++) { const an = a * Math.PI / 8; for (let r = 14; r < 19; r++) x.fillRect(Math.round(cx + Math.cos(an) * r - 0.5), Math.round(cy + Math.sin(an) * r * 1.15 - 0.5), 1, 1); }
+      disc(14, ink.frame || '#f3e9cf'); ring(14, col, 1); ring(13, '#ffcd75', 1); ring(11, '#c98a2e', 1);
+      blit(x, BIG[s], cx - 10.5 | 0, cy - 11 | 0, col, 3);
+      x.fillStyle = '#ffcd75'; x.fillRect(cx - 1, cy - 6, 2, 8); x.fillRect(cx - 3, cy - 3, 6, 2);
+      x.fillStyle = col; x.fillRect(cx - 1, cy - 4, 2, 1);
     } else {
+      disc(13, ink.frame || '#f3e9cf'); ring(13, col, 1); ring(11, '#ffcd75', 1);
+      for (const [dx, dy] of [[0, -12], [0, 12], [-12, 0], [12, 0]]) { x.fillStyle = '#ffcd75'; x.fillRect(cx + dx - 1, cy + dy - 1, 2, 2); }
+      blit(x, BIG[s], cx - 7, cy - 7, col, 2);
+      x.fillStyle = 'rgba(255,255,255,0.55)'; x.fillRect(cx - 4, cy - 4, 2, 2);
+    }
+  }
+
+  // build one face for a deck ink (paper / edge / line / suit colours)
+  function makeFace(suit, rank, ink = CLASSIC_INK) {
+    const [c, x] = G.makeCanvas(CW, CH);
+    cardBase(x, ink.paper, ink.edge, ink.line);
+    const color = suitCol(ink, suit);
+    const s = SUITS[suit];
+    if (rank >= 11) drawCourt(x, suit, rank, ink);
+    else if (rank === 1) drawAce(x, suit, ink);
+    else {
       const x0 = 13, x1 = 29, y0 = 14, y1 = 48;
       for (const [u, v] of PIPS[rank]) {
         const px = Math.round(G.lerp(x0, x1, u)) - 3, py = Math.round(G.lerp(y0, y1, v)) - 3;
@@ -154,18 +242,29 @@
     { name: 'Crimson', a: P.red, b: '#7d2440', c: P.gold },
     { name: 'Cobalt', a: P.blue, b: P.navy, c: P.cyan },
     { name: 'Forest', a: P.green, b: P.teal, c: P.lime },
-    { name: 'Royal', a: P.plum, b: '#3a1a40', c: P.gold }
+    { name: 'Royal', a: P.plum, b: '#3a1a40', c: P.gold },
+    // 1.7: more colours and patterns
+    { name: 'Gold', a: '#e0a33a', b: '#8a5a1c', c: '#fff1c4', pat: 'sun' },
+    { name: 'Ocean', a: '#41a6f6', b: '#1f3d6d', c: '#c8f0ff', pat: 'waves' },
+    { name: 'Ember', a: '#ef7d57', b: '#5a1e2a', c: '#ffcd75', pat: 'checks' },
+    { name: 'Shadow', a: '#566c86', b: '#15161c', c: '#c8ccd8', pat: 'stripes' }
   ]);
-  function makeBack(b) {
-    const [c, x] = G.makeCanvas(CW, CH);
-    cardBase(x, P.white);
-    x.fillStyle = b.b; x.fillRect(4, 4, CW - 8, CH - 8);
-    // diamond lattice
-    for (let yy = 4; yy < CH - 4; yy++) for (let xx = 4; xx < CW - 4; xx++) {
-      const u = (xx + yy) % 8, v = (xx - yy + 64) % 8;
-      if (u === 0 || v === 0) { x.fillStyle = b.a; x.fillRect(xx, yy, 1, 1); }
-      else if ((u === 4 && v === 4)) { x.fillStyle = b.c; x.fillRect(xx, yy, 1, 1); }
+  function backPattern(x, b, x0, y0, x1, y1) {
+    for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) {
+      let on = 0;
+      if (b.pat === 'stripes') on = (xx + yy) % 6 < 2 ? 1 : 0;
+      else if (b.pat === 'checks') { const q = ((xx >> 2) + (yy >> 2)) % 2; on = q ? 1 : 0; if (!q && (xx % 4 === 1) && (yy % 4 === 1)) on = 2; }
+      else if (b.pat === 'waves') { const w = Math.round(Math.sin(xx / 2.2) * 1.5); on = ((yy + w) % 6 === 0) ? 1 : ((yy + w) % 6 === 3 && xx % 4 === 0) ? 2 : 0; }
+      else if (b.pat === 'sun') { const d = Math.hypot(xx - CW / 2, (yy - CH / 2) * 0.8), an = Math.atan2(yy - CH / 2, xx - CW / 2); on = Math.floor(an / (Math.PI / 10) + 20) % 2 ? 1 : 0; if (Math.round(d) % 7 === 0) on = 2; }
+      else { const u = (xx + yy) % 8, v = (xx - yy + 64) % 8; on = (u === 0 || v === 0) ? 1 : (u === 4 && v === 4) ? 2 : 0; }
+      if (on) { x.fillStyle = on === 1 ? b.a : b.c; x.fillRect(xx, yy, 1, 1); }
     }
+  }
+  function makeBack(b, k, ink) {
+    const [c, x] = G.makeCanvas(CW, CH);
+    cardBase(x, (ink && ink.backBorder) || P.white, null, ink && ink.line);
+    x.fillStyle = b.b; x.fillRect(4, 4, CW - 8, CH - 8);
+    backPattern(x, b, 4, 4, CW - 4, CH - 4);
     x.fillStyle = b.c; x.fillRect(4, 4, CW - 8, 1); x.fillRect(4, CH - 5, CW - 8, 1); x.fillRect(4, 4, 1, CH - 8); x.fillRect(CW - 5, 4, 1, CH - 8);
     // centre medallion
     const mx = CW / 2, my = CH / 2;
@@ -183,17 +282,30 @@
   // shared drawing kit for other deck styles (js/western.js)
   G._cardKit = { blit, BIG, SMALL, SUITS, PIPS, drawTextOn, cardBase };
   // deck styles: each builds 52 faces and 4 backs. The Classic deck is drawn here.
-  const CLASSIC_INK = { paper: P.white, edge: '#d4dde6', line: P.ink, red: P.red, black: P.ink };
-  G.DECKS = [{ name: 'CLASSIC', ink: CLASSIC_INK, backs: BACKS, face: makeFace, back: makeBack }];
+  const CLASSIC_INK = { paper: P.white, edge: '#d4dde6', line: P.ink, red: P.red, black: P.ink, frame: '#f3e9cf' };
+  // card colours (Customize > Cards): the paper of the Classic and Four Colour decks
+  G.CARD_COLOURS = [
+    { name: 'WHITE', paper: '#f4f4f4', edge: '#d4dde6', frame: '#f3e9cf' },
+    { name: 'IVORY', paper: '#f3ead2', edge: '#d8c9a4', frame: '#fbf4e2' },
+    { name: 'MINT', paper: '#dcf1e1', edge: '#b3d6bd', frame: '#f1faf2' },
+    { name: 'SKY', paper: '#dbe8f7', edge: '#b0c4de', frame: '#f1f6fc' },
+    { name: 'ROSE', paper: '#f6dde3', edge: '#dbb4bf', frame: '#fcf0f3' },
+    { name: 'GOLD', paper: '#f6e3a8', edge: '#d8bb6c', frame: '#fbf1d2' }
+  ];
+  G.DECKS = [{ name: 'CLASSIC', ink: CLASSIC_INK, tint: true, backs: BACKS, face: makeFace, back: makeBack }];
   G.cardInk = CLASSIC_INK;
   G.backNames = () => (G.DECKS[G.deckIndex || 0].backs || BACKS).map((b) => b.name);
+  G.deckTintable = () => !!(G.DECKS[G.deckIndex || 0] || {}).tint;
   function buildDefault() {
     const i = G.clamp(G.settings.deck || 0, 0, G.DECKS.length - 1), d = G.DECKS[i];
-    G.deckIndex = i; G.cardInk = d.ink;
-    for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) G.cardArt.faces[s + '_' + r] = d.face(s, r);
-    G.cardArt.backs = d.backs.map((b, k) => d.back(b, k));
+    let ink = d.ink;
+    if (d.tint) { const cc = G.CARD_COLOURS[G.settings.cardColour || 0] || G.CARD_COLOURS[0]; ink = Object.assign({}, d.ink, { paper: cc.paper, edge: cc.edge, frame: cc.frame }); }
+    G.deckIndex = i; G.cardInk = ink;
+    for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) G.cardArt.faces[s + '_' + r] = d.face(s, r, ink);
+    G.cardArt.backs = d.backs.map((b, k) => d.back(b, k, ink));
     if (G.clearMiniCards) G.clearMiniCards();
   }
+  G.rebuildDeck = () => { if (!G.cardArt.custom) buildDefault(); };
   // switch deck style at run time (Customize menu). A custom sprite sheet always wins.
   G.applyDeck = (i) => {
     G.settings.deck = i;

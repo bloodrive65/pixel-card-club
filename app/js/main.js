@@ -1,7 +1,7 @@
 // Pixel Card Club - scene manager, title menu, options, main loop
 (function () {
   'use strict';
-  G.VERSION = '1.6.5'; // keep in step with package.json and app/version.json
+  G.VERSION = '1.7.0'; // keep in step with package.json and app/version.json
   const P = G.P, ui = G.ui, CW = G.CW, CH = G.CH;
 
   G.saveSettings = () => G.store.set('settings', G.settings);
@@ -179,7 +179,7 @@
       if (changed) { G.resetAvatar('you'); G.saveSettings(); }
       if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) { G.typer.close(); f.name = (f.name || '').trim(); G.saveSettings(); this.profileOpen = false; }
     },
-    // ---------- Customize: table colour and card back, with a live preview ----------
+    // ---------- Customize: TABLE tab (colour + surface) and CARDS tab (deck, card colour, back) ----------
     drawCustomize() {
       ui.modal = true;
       G.alpha(0.6, () => G.rect(0, 0, G.W, G.H, P.ink));
@@ -188,51 +188,97 @@
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
       G.text('CUSTOMIZE', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
       const S = G.settings;
-      // table colours
-      G.text('TABLE COLOUR', x + 18, y + 34, P.silver, 'small');
-      G.TABLES.forEach((t, i) => {
-        const sx = x + 18 + (i % 3) * 78, sy = y + 46 + Math.floor(i / 3) * 40;
-        const sel = (S.table || 0) === i;
-        const hover = G.inRect(G.input.x, G.input.y, sx, sy, 72, 34);
-        G.rect(sx, sy, 72, 34, sel ? P.gold : hover ? P.white : P.black);
-        G.rect(sx + 2, sy + 2, 68, 20, t.f[2]);
-        for (let k = 0; k < 5; k++) G.rect(sx + 2 + k * 13.6, sy + 18, 13.6, 4, t.f[k]);
-        G.rect(sx + 2, sy + 22, 68, 10, sel ? P.gold : P.dusk);
-        G.text(t.name, sx + 36, sy + 24, sel ? P.ink : P.white, 'small', 'center');
-        if (hover) { ui.hoverId = 'tbl' + i; }
-        if (hover && G.input.pressed) { G.input.pressed = false; S.table = i; G.applyTable(i); G.saveSettings(); G.audio.sfx('click'); }
-      });
-      // card backs
-      G.text('CARD BACK', x + 18, y + 174, P.silver, 'small');
-      G.backNames().forEach((name, i) => {
-        const bx = x + 18 + i * 58, by = y + 184;
-        const sel = S.back === i;
-        const hover = G.inRect(G.input.x, G.input.y, bx, by, 50, 80);
-        G.rect(bx, by, 50, 80, sel ? P.gold : hover ? P.white : P.black);
-        G.rect(bx + 1, by + 1, 48, 78, P.ink);
-        G.ctx.drawImage(G.cardArt.backs[i % G.cardArt.backs.length], bx + 3, by + 3);
-        G.text(name.toUpperCase().slice(0, 8), bx + 25, by + 69, sel ? P.gold : P.silver, 'small', 'center');
-        if (hover) ui.hoverId = 'bk' + i;
-        if (hover && G.input.pressed) { G.input.pressed = false; S.back = i; G.saveSettings(); G.audio.sfx('chip'); }
-      });
-      // preview: a small slice of the table with your choices
-      const px = x + 262, py = y + 46, pw = 220, ph = 154;
-      G.text('PREVIEW', px, y + 34, P.silver, 'small');
-      G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(px, py, pw, ph); G.ctx.clip();
-      G.ctx.drawImage(G.ui.feltCanvas(), 210 + G.ox, 80 + G.oy, pw, ph, px, py, pw, ph);
-      G.drawSlot(px + 14, py + 14, 'A');
-      G.ctx.drawImage(G.backImg(), px + 64, py + 14); G.ctx.drawImage(G.backImg(), px + 67, py + 11);
-      G.ctx.drawImage(G.cardArt.faces['1_1'], px + 120, py + 14); G.ctx.drawImage(G.cardArt.faces['0_13'], px + 150, py + 24);
-      G.ctx.drawImage(G.cardArt.faces['2_10'], px + 30, py + 84); G.ctx.drawImage(G.cardArt.faces['3_12'], px + 62, py + 84); G.ctx.drawImage(G.cardArt.faces['0_1'], px + 94, py + 84); G.ctx.drawImage(G.backImg(), px + 156, py + 84);
-      G.ctx.restore();
-      G.outline(px - 1, py - 1, pw + 2, ph + 2, P.black);
-      // deck style
-      G.text('DECK', px, py + ph + 10, P.silver, 'small');
-      const di = ui.choice(G.DECKS.map((d) => d.name), G.deckIndex || 0, px, py + ph + 20, pw, 20, { modal: true, id: 'deck' });
-      if (di !== (G.deckIndex || 0)) { G.applyDeck(di); G.saveSettings(); G.audio.sfx('shuffle'); }
-      if (G.cardArt.custom) G.text('A CUSTOM CARD SHEET IS IN USE', px + pw / 2, py + ph + 44, P.orange, 'small', 'center');
-      else G.text('SAVED FOR EVERY GAME', px + pw / 2, py + ph + 46, P.slate, 'small', 'center');
-      if (ui.button('DONE', G.W / 2 - 50, y + h - 28, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) this.custom = false;
+      const tab = ui.choice(['TABLE', 'CARDS'], this.cTab || 0, G.W / 2 - 100, y + 28, 200, 18, { modal: true, id: 'ctab' });
+      if (tab !== (this.cTab || 0)) { this.cTab = tab; G.audio.sfx('click'); }
+      const smooth = G.ctx.imageSmoothingEnabled;
+      if (!this.cTab) {
+        // table colours
+        G.text('TABLE COLOUR', x + 18, y + 56, P.silver, 'small');
+        G.TABLES.forEach((t, i) => {
+          const sx = x + 18 + (i % 3) * 78, sy = y + 66 + Math.floor(i / 3) * 32;
+          const sel = (S.table || 0) === i;
+          const hover = G.inRect(G.input.x, G.input.y, sx, sy, 72, 28);
+          G.rect(sx, sy, 72, 28, sel ? P.gold : hover ? P.white : P.black);
+          G.rect(sx + 2, sy + 2, 68, 14, t.f[2]);
+          for (let k = 0; k < 5; k++) G.rect(sx + 2 + k * 13.6, sy + 13, 13.6, 3, t.f[k]);
+          G.rect(sx + 2, sy + 16, 68, 10, sel ? P.gold : P.dusk);
+          G.text(t.name, sx + 36, sy + 18, sel ? P.ink : P.white, 'small', 'center');
+          if (hover) { ui.hoverId = 'tbl' + i; }
+          if (hover && G.input.pressed) { G.input.pressed = false; S.table = i; G.applyTable(i); G.saveSettings(); G.audio.sfx('click'); }
+        });
+        // surfaces
+        G.text('SURFACE', x + 18, y + 170, P.silver, 'small');
+        G.SURFACES.forEach((name, i) => {
+          const bx = x + 18 + (i % 3) * 78, by = y + 180 + Math.floor(i / 3) * 24;
+          const sel = (S.surface || 0) === i;
+          if (ui.button(name, bx, by, 72, 20, { modal: true, theme: sel ? 'gold' : 'dark', selected: sel, font: 'small', id: 'surf' + i }) && !sel) {
+            S.surface = i; G.applySurface(); G.saveSettings(); G.audio.sfx('click');
+          }
+        });
+        if (S.surface === 3) G.text('WOOD IGNORES THE TABLE COLOUR', x + 18, y + 234, P.slate, 'small');
+        // preview: the whole table, shrunk down
+        const px = x + 262, py = y + 66, pw = 220, ph = Math.round(pw * G.SH / G.SW);
+        G.text('PREVIEW', px, y + 56, P.silver, 'small');
+        G.ctx.imageSmoothingEnabled = false;
+        G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(px, py, pw, ph); G.ctx.clip();
+        G.ctx.drawImage(G.ui.feltCanvas(), 0, 0, G.SW, G.SH, px, py, pw, ph);
+        const k = pw / G.SW, cw = Math.round(G.CW * k * 1.4), ch = Math.round(G.CH * k * 1.4);
+        const mx = px + pw / 2, my = py + ph / 2;
+        [['0_1', -2.2], ['1_13', -1.1], ['2_12', 0], ['3_11', 1.1]].forEach(([f, o], i) => G.ctx.drawImage(G.cardArt.faces[f], Math.round(mx + o * cw * 0.8 - cw / 2 + cw * 0.5), Math.round(my - ch * 1.05), cw, ch));
+        for (let i = 0; i < 3; i++) G.ctx.drawImage(G.backImg(), Math.round(mx - cw * 1.6 + i * cw * 0.9), Math.round(my + ch * 0.15), cw, ch);
+        G.ctx.drawImage(G.cardArt.faces['1_1'], Math.round(mx + cw * 1.3), Math.round(my + ch * 0.15), cw, ch);
+        G.ctx.restore();
+        G.ctx.imageSmoothingEnabled = smooth;
+        G.outline(px - 1, py - 1, pw + 2, ph + 2, P.black);
+        G.text('SAVED FOR EVERY GAME', px + pw / 2, py + ph + 10, P.slate, 'small', 'center');
+      } else {
+        // deck style
+        G.text('DECK', x + 18, y + 56, P.silver, 'small');
+        G.DECKS.forEach((d, i) => {
+          const bx = x + 18 + (i % 2) * 117, by = y + 66 + Math.floor(i / 2) * 24;
+          const sel = (G.deckIndex || 0) === i;
+          if (ui.button(d.name, bx, by, 111, 20, { modal: true, theme: sel ? 'gold' : 'dark', selected: sel, font: 'small', id: 'deck' + i }) && !sel) {
+            G.applyDeck(i); G.saveSettings(); G.audio.sfx('shuffle');
+          }
+        });
+        // card colour (paper) for decks that allow it
+        const cy0 = y + 66 + Math.ceil(G.DECKS.length / 2) * 24 + 8;
+        G.text('CARD COLOUR', x + 18, cy0, P.silver, 'small');
+        if (G.cardArt.custom) G.text('A CUSTOM CARD SHEET IS IN USE', x + 18, cy0 + 14, P.orange, 'small');
+        else if (!G.deckTintable()) G.text('THIS DECK HAS ITS OWN COLOURS', x + 18, cy0 + 14, P.slate, 'small');
+        else G.CARD_COLOURS.forEach((cc, i) => {
+          const sx = x + 18 + (i % 3) * 78, sy = cy0 + 9 + Math.floor(i / 3) * 21;
+          const sel = (S.cardColour || 0) === i;
+          const hover = G.inRect(G.input.x, G.input.y, sx, sy, 72, 18);
+          G.rect(sx, sy, 72, 18, sel ? P.gold : hover ? P.white : P.black);
+          G.rect(sx + 2, sy + 2, 68, 14, cc.paper); G.rect(sx + 2, sy + 13, 68, 3, cc.edge);
+          G.text(cc.name, sx + 36, sy + 5, P.ink, 'small', 'center');
+          if (hover) ui.hoverId = 'cc' + i;
+          if (hover && G.input.pressed && !sel) { G.input.pressed = false; S.cardColour = i; G.rebuildDeck(); G.saveSettings(); G.audio.sfx('chip'); }
+        });
+        // preview: a fan of court cards and aces on your table
+        const px = x + 262, py = y + 56, pw = 220, ph = 112;
+        G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(px, py, pw, ph); G.ctx.clip();
+        G.ctx.drawImage(G.ui.feltCanvas(), 210 + G.ox, 80 + G.oy, pw, ph, px, py, pw, ph);
+        ['0_1', '1_13', '2_12', '3_11', '1_1', '2_10'].forEach((f, i) => G.ctx.drawImage(G.cardArt.faces[f], px + 8 + i * 34, py + (i % 2 ? 44 : 8)));
+        G.ctx.restore();
+        G.outline(px - 1, py - 1, pw + 2, ph + 2, P.black);
+        // card backs
+        G.text('CARD BACK', x + 18, y + 176, P.silver, 'small');
+        const names = G.backNames();
+        names.forEach((name, i) => {
+          const bx = x + 18 + i * 58, by = y + 186;
+          const sel = S.back === i;
+          const hover = G.inRect(G.input.x, G.input.y, bx, by, 50, 80);
+          G.rect(bx, by, 50, 80, sel ? P.gold : hover ? P.white : P.black);
+          G.rect(bx + 1, by + 1, 48, 78, P.ink);
+          G.ctx.drawImage(G.cardArt.backs[i % G.cardArt.backs.length], bx + 3, by + 3);
+          G.text(name.toUpperCase().slice(0, 8), bx + 25, by + 69, sel ? P.gold : P.silver, 'small', 'center');
+          if (hover) ui.hoverId = 'bk' + i;
+          if (hover && G.input.pressed) { G.input.pressed = false; S.back = i; G.saveSettings(); G.audio.sfx('chip'); }
+        });
+      }
+      if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) this.custom = false;
     },
     drawOptions() {
       ui.modal = true;
@@ -299,6 +345,29 @@
     } else go();
   };
 
+  // ---------- Splash: the developer card, shown for a moment when the game opens ----------
+  const logo = new Image();
+  logo.src = 'assets/brand/bloodrive65.png';
+  const Splash = (G.Splash = {
+    enter() { this.t = 0; },
+    frame(dt) {
+      this.t += dt;
+      const T = 1.8, t = this.t;
+      G.rect(0, 0, G.W, G.H, '#07080d');
+      const a = Math.min(1, t / 0.3, Math.max(0, (T - t) / 0.35));
+      G.alpha(a, () => {
+        const s = 2, lw = 56 * s, lx = G.W / 2 - lw / 2, ly = 92;
+        G.rect(lx - 3, ly - 3, lw + 6, lw + 6, P.dusk); G.rect(lx - 2, ly - 2, lw + 4, lw + 4, P.black);
+        if (logo.complete && logo.naturalWidth) { const sm = G.ctx.imageSmoothingEnabled; G.ctx.imageSmoothingEnabled = false; G.ctx.drawImage(logo, lx, ly, lw, lw); G.ctx.imageSmoothingEnabled = sm; }
+        G.text('BLOODRIVE65', G.W / 2, ly + lw + 16, '#ff5fa2', 'big', 'center', 2, P.black);
+        G.text('PRESENTS', G.W / 2, ly + lw + 42, P.silver, 'small', 'center');
+      });
+      // a tap, click or key skips it
+      if (t > 0.25 && (G.input.pressed || Object.keys(G.input.keyPressed).length)) { G.input.pressed = false; G.input.keyPressed = {}; G.go(Menu); return; }
+      if (t >= T) G.go(Menu);
+    }
+  });
+
   // ---------- Boot ----------
   function boot() {
     const saved = G.store.get('settings', null);
@@ -309,7 +378,7 @@
     G.resize();
     G.applyTable(G.settings.table || 0);
     G.initCardArt(() => {
-      G.go(Menu);
+      G.go(Splash);
       let last = performance.now();
       function loop(now) {
         const dt = Math.min(0.05, (now - last) / 1000); last = now;
