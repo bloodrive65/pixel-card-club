@@ -45,7 +45,7 @@
     const keyLbl = opt.keyLabel || (opt.key ? String(opt.key).toUpperCase() : null);
     const th2 = G.fontH(f);
     let ty = y + Math.floor((h - 2 - th2) / 2) + dy + (f === 'small' ? 1 : 0);
-    if (keyLbl && opt.showKey !== false && w >= G.textWidth(label, f) + G.textWidth(keyLbl, 'small') + 14) {
+    if (keyLbl && opt.showKey !== false && !G.touch && w >= G.textWidth(label, f) + G.textWidth(keyLbl, 'small') + 14) {
       G.text(label, x + w / 2 - 4, ty, tcol, f, 'center');
       G.text(keyLbl, x + w - 4, y + h - 9 + dy, !enabled ? P.slate : th.lo, 'small', 'right');
     } else G.text(label, x + w / 2, ty, tcol, f, 'center');

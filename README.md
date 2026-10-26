@@ -1,6 +1,8 @@
 # Pixel Card Club
 
-A 16-bit pixel-art card game collection for Windows (and the browser). It has seven classic games, each with its own HUD, animated cards and chiptune sound effects. A club of **18 computer players** fills the empty seats, and an in-game **rulebook** that you page through like a real book teaches every game.
+A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / iPad (as a Home Screen web app).
+
+**Play it in your browser or on your iPhone / iPad: [https://bloodrive65.github.io/pixel-card-club/](https://bloodrive65.github.io/pixel-card-club/)** It has seven classic games, each with its own HUD, animated cards and chiptune sound effects. A club of **18 computer players** fills the empty seats, and an in-game **rulebook** that you page through like a real book teaches every game.
 
 | Game | Mode | Highlights |
 |---|---|---|
@@ -35,6 +37,15 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 | The rulebook | The Club members | Choosing opponents |
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
+
+## What's new in 1.6.0
+
+- **Play on iPhone and iPad.** The game is now hosted on GitHub Pages and works as a touch game. Add it to your Home Screen and it opens full screen like an app (see [Play on iPhone / iPad](#play-on-iphone--ipad)).
+- Touch controls: tap anything you would click. The keyboard hints on the buttons are hidden on touch screens, and on-screen hints say TAP instead of CLICK.
+- Tap the name box in Your profile to type your name with the on-screen keyboard.
+- The picture scales to fill the screen on phones and tablets, and a "turn your device sideways" screen appears in portrait.
+- Progress in the browser and on iPhone / iPad is now saved on the device, so chips, wins and settings carry over between visits.
+- It works offline after the first visit.
 
 ## What's new in 1.5.0
 
@@ -100,9 +111,17 @@ A 16-bit pixel-art card game collection for Windows (and the browser). It has se
 
 Your chips, wins, best scores and settings are saved automatically to `%APPDATA%\Pixel Card Club\save.json`.
 
+## Play on iPhone / iPad
+
+1. Open **[https://bloodrive65.github.io/pixel-card-club/](https://bloodrive65.github.io/pixel-card-club/)** in **Safari**.
+2. Tap the **Share** button, then **Add to Home Screen**. Leave **Open as Web App** turned on, then tap **Add** ([Apple's guide](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios)).
+3. Open **Card Club** from your Home Screen and turn the device sideways. It runs full screen, with no Safari bars.
+
+Tap anything you would click. In Solitaire and Spider you can drag cards with your finger or tap a card to move it. Progress is saved on the device. If you remove the Home Screen icon, that saved progress may be removed too. Updates arrive automatically the next time you open it with an internet connection.
+
 ### Play in a browser instead
 
-Open `app/index.html` in any modern browser (Chrome, Edge, Firefox). No server or install is needed. In the browser, progress lasts only for the session.
+Open the [web version](https://bloodrive65.github.io/pixel-card-club/) in any modern browser, or open `app/index.html` from a download of this repo. Progress is saved in that browser on that computer.
 
 ## Controls at a glance
 
@@ -162,6 +181,7 @@ Full details, including automatic GitHub releases, are in [**docs/BUILDING.md**]
 ```
 app/                  the game itself (plain HTML5 canvas + JavaScript, no frameworks)
   index.html
+  manifest.webmanifest, sw.js, icon-*.png   Home Screen app (iPhone / iPad) and offline support
   js/engine.js        canvas scaling, input, bitmap text, chiptune audio, save storage
   js/cards.js         card model, procedural pixel card art, deck styles, card animation
   js/western.js       the weathered 1890s Western Deck
@@ -175,7 +195,7 @@ app/                  the game itself (plain HTML5 canvas + JavaScript, no frame
   assets/cards/       optional custom card sprite sheet (see docs/CUSTOM_CARDS.md)
 electron/             desktop wrapper (window, fullscreen, save file)
 docs/                 documentation and screenshots
-.github/workflows/    automatic Windows build + release
+.github/workflows/    automatic Windows build + release, and the GitHub Pages deploy
 ```
 
 ## Credits and license

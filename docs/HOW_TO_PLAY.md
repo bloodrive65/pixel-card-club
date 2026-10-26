@@ -7,6 +7,15 @@ Every game shares the same layout:
 - **Controls**: buttons along the bottom or side. Each shows its keyboard shortcut in the corner.
 - **Pause menu (Esc)**: Resume, **How to Play** (opens the rulebook at that game's chapter), New Game, Main Menu.
 
+## On iPhone and iPad (touch)
+
+- Tap anything you would click. Drag cards with your finger in Solitaire and Spider.
+- Buttons do not show keyboard shortcuts on touch screens.
+- Go Fish: tap a card, then tap a player. Tap the same card again to cancel.
+- Your profile: tap your badge (top left) or the **PROFILE** button, then tap the name box to type with the on-screen keyboard.
+- Play in landscape. In portrait, the game asks you to turn the device sideways.
+- See the README for how to add the game to your Home Screen.
+
 ## Main menu keys
 
 The menu has two pages. Click the arrows at the sides, the page dots, or press **← / →** or **Tab** to switch.

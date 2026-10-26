@@ -329,7 +329,7 @@
       G.text('FOUNDATIONS', x + 2, TOP + 114, P.silver, 'small'); G.text(this.found.reduce((a, f) => a + f.cards.length, 0) + '/52', x + w - 2, TOP + 114, P.white, 'small', 'right');
       G.text('WINS', x + 2, TOP + 126, P.silver, 'small'); G.text(G.store.get('sol_won', 0) + '/' + G.store.get('sol_played', 0), x + w - 2, TOP + 126, P.white, 'small', 'right');
       G.text('BEST', x + 2, TOP + 138, P.silver, 'small'); G.text(String(G.store.get('sol_best', 0)), x + w - 2, TOP + 138, P.gold, 'small', 'right');
-      if (canAuto && !this.auto && Math.floor(performance.now() / 500) % 2) G.text('PRESS A', x + w / 2, TOP + 166, P.lime, 'small', 'center');
+      if (canAuto && !this.auto && !G.touch && Math.floor(performance.now() / 500) % 2) G.text('PRESS A', x + w / 2, TOP + 166, P.lime, 'small', 'center');
     }
   });
 })();

@@ -399,7 +399,8 @@
       let s = '', col = P.white;
       const p = this.cur();
       if (this.phase === 'choose') {
-        s = this.selRank === null ? 'YOUR TURN - CLICK A CARD TO ASK FOR ITS RANK' : 'NOW CLICK ' + (this.teamMode ? 'A RIVAL' : 'A PLAYER') + ' TO ASK FOR ' + plural(this.selRank) + '  (RIGHT-CLICK CANCELS)';
+        const tap = G.touch ? 'TAP' : 'CLICK';
+        s = this.selRank === null ? 'YOUR TURN - ' + tap + ' A CARD TO ASK FOR ITS RANK' : 'NOW ' + tap + ' ' + (this.teamMode ? 'A RIVAL' : 'A PLAYER') + ' TO ASK FOR ' + plural(this.selRank) + (G.touch ? '  (TAP THE CARD AGAIN TO CANCEL)' : '  (RIGHT-CLICK CANCELS)');
         col = P.gold;
       } else if (this.phase === 'deal') s = 'DEALING...';
       else if (p && !p.human && !this.over) s = p.name + ' IS THINKING...';

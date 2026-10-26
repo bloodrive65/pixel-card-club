@@ -23,16 +23,23 @@
   G.canvas = canvas; G.ctx = ctx;
   G.settings = { sound: true, back: 0, pixelPerfect: true, drawThree: false, fishOpponents: 2, fishLevel: 1, bjDecks: 4 };
 
+  // touch devices (iPhone / iPad / tablets): fill the screen, hide keyboard hints, show tap wording
+  G.touch = !window.cardclubNative && (('ontouchstart' in window) || navigator.maxTouchPoints > 1) && matchMedia('(pointer: coarse)').matches;
+  G.standalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+  if (G.touch) document.documentElement.classList.add('touch');
   function resize() {
+    const vw = window.visualViewport ? visualViewport.width : innerWidth, vh = window.visualViewport ? visualViewport.height : innerHeight;
     const r = Math.min(innerWidth / W, innerHeight / H);
-    let s = r;
-    if (G.settings.pixelPerfect && r >= 1) s = Math.floor(r);
+    let s = G.touch ? Math.min(vw / W, vh / H) : r;
+    if (G.settings.pixelPerfect && !G.touch && r >= 1) s = Math.floor(r);
     canvas.style.width = Math.floor(W * s) + 'px';
     canvas.style.height = Math.floor(H * s) + 'px';
     G.screenScale = s;
   }
   G.resize = resize;
   addEventListener('resize', resize);
+  addEventListener('orientationchange', () => setTimeout(resize, 250));
+  if (window.visualViewport) visualViewport.addEventListener('resize', resize);
   resize();
 
   // ---------- Helpers ----------
@@ -55,16 +62,26 @@
     input.y = Math.floor(((e.clientY - r.top) / r.height) * H);
   }
   canvas.addEventListener('pointermove', (e) => { toLocal(e); if (input.down && (Math.abs(input.x - input.downX) > 2 || Math.abs(input.y - input.downY) > 2)) input.moved = true; });
+  let touchClear = false;
   canvas.addEventListener('pointerdown', (e) => {
-    toLocal(e); G.audio.unlock();
+    toLocal(e); G.audio.unlock(); touchClear = false;
     if (e.button === 2) { input.rpressed = true; return; }
     input.down = true; input.pressed = true; input.downX = input.x; input.downY = input.y; input.moved = false;
     try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
   });
-  addEventListener('pointerup', (e) => { if (e.button === 2) return; toLocal(e); if (input.down) input.released = true; input.down = false; });
+  addEventListener('pointerup', (e) => {
+    if (e.button === 2) return; toLocal(e); G.audio.unlock(); if (input.down) input.released = true; input.down = false;
+    // a finger has no hover: forget the position once this tap has been handled
+    if (e.pointerType === 'touch') touchClear = true;
+    const z = G.typer.zone;
+    if (z && performance.now() - z.t < 250 && G.inRect(input.x, input.y, z.x, z.y, z.w, z.h)) G.typer.open(z.value(), z.set);
+  });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  canvas.addEventListener('pointerleave', () => { if (!input.down) { input.x = -1; input.y = -1; } });
+  // stop the browser's follow-up mouse/click/focus after a tap (it would steal focus from the on-screen keyboard box)
+  canvas.addEventListener('touchend', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && !input.down) { input.x = -1; input.y = -1; } });
   addEventListener('keydown', (e) => {
+    if (e.target && e.target.id === 'typer') return; // on-screen keyboard text box handles its own keys
     G.audio.unlock();
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (!input.keys[k]) input.keyPressed[k] = true;
@@ -72,7 +89,31 @@
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Tab'].includes(e.key)) e.preventDefault();
   });
   addEventListener('keyup', (e) => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; input.keys[k] = false; });
-  G.endInputFrame = () => { input.pressed = false; input.released = false; input.rpressed = false; input.keyPressed = {}; };
+  G.endInputFrame = () => {
+    input.pressed = false; input.released = false; input.rpressed = false; input.keyPressed = {};
+    if (touchClear && !input.down) { input.x = -1; input.y = -1; touchClear = false; }
+  };
+  // ---------- On-screen keyboard (touch devices): a hidden text box that feeds a callback ----------
+  G.typer = {
+    el: null, zone: null,
+    open(value, onChange, max = 10) {
+      let el = this.el;
+      if (!el) {
+        el = this.el = document.createElement('input');
+        el.id = 'typer'; el.type = 'text'; el.autocomplete = 'off'; el.spellcheck = false;
+        el.setAttribute('autocapitalize', 'characters'); el.setAttribute('autocorrect', 'off');
+        el.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;';
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.blur(); });
+        document.body.appendChild(el);
+      }
+      el.maxLength = max; el.value = value || '';
+      el.oninput = () => onChange(el.value);
+      el.focus();
+      try { el.setSelectionRange(el.value.length, el.value.length); } catch (_) {}
+    },
+    close() { this.zone = null; if (this.el) { this.el.oninput = null; this.el.blur(); } },
+    get active() { return !!this.el && document.activeElement === this.el; }
+  };
   G.key = (k) => !!input.keyPressed[k];
 
   // ---------- Drawing primitives ----------
@@ -193,14 +234,21 @@
     }
   };
 
-  // ---------- Storage: native file in desktop build, in-memory otherwise ----------
+  // ---------- Storage: native file in desktop build, browser storage on the web / phones, memory as a last resort ----------
   const memStore = {};
+  let ls = null;
+  try { ls = window.localStorage; ls.setItem('pcc_test', '1'); ls.removeItem('pcc_test'); } catch (_) { ls = null; }
   G.store = {
     get(key, def) {
       if (window.cardclubNative) { const v = window.cardclubNative.load(key); return v === undefined || v === null ? def : v; }
+      if (ls) { try { const raw = ls.getItem('pcc_' + key); if (raw !== null) { const v = JSON.parse(raw); return v === null ? def : v; } } catch (_) {} return def; }
       return memStore[key] === undefined || memStore[key] === null ? def : memStore[key];
     },
-    set(key, val) { if (window.cardclubNative) window.cardclubNative.save(key, val); else memStore[key] = val; }
+    set(key, val) {
+      if (window.cardclubNative) window.cardclubNative.save(key, val);
+      else if (ls) { try { ls.setItem('pcc_' + key, JSON.stringify(val)); } catch (_) { memStore[key] = val; } }
+      else memStore[key] = val;
+    }
   };
 
   // ---------- Tweened floating text (for payouts, etc.) ----------

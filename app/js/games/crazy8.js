@@ -337,7 +337,7 @@
       if (myTurn && ui.button('DRAW', STOCK.x - 2, STOCK.y + CH + 14, CW + 4, 16, { key: 'd', theme: noPlay ? 'gold' : 'dark', font: 'small', enabled: this.canDraw(), showKey: false })) this.humanDraw();
       if (myTurn && noPlay && !this.canDraw() && ui.button('PASS', DISC.x - 2, DISC.y + CH + 14, CW + 4, 16, { key: 'p', theme: 'red', font: 'small', showKey: false })) this.pass(0);
       let s = '', col = P.gold;
-      if (myTurn) s = noPlay ? (this.canDraw() ? 'NO MATCH - CLICK THE STOCK TO DRAW' : 'NO MATCH AND NO CARDS TO DRAW - PASS') : 'YOUR TURN - PLAY ' + SUIT_WORD[this.suit] + ', ' + (this.top().rank === 8 ? 'OR ANOTHER 8' : ([1, 8].includes(this.top().rank) ? 'AN ' : 'A ') + G.RANK_NAME[this.top().rank].toUpperCase() + ', OR AN 8') + '   (D DRAWS)';
+      if (myTurn) s = noPlay ? (this.canDraw() ? (G.touch ? 'NO MATCH - TAP THE STOCK TO DRAW' : 'NO MATCH - CLICK THE STOCK TO DRAW') : 'NO MATCH AND NO CARDS TO DRAW - PASS') : 'YOUR TURN - PLAY ' + SUIT_WORD[this.suit] + ', ' + (this.top().rank === 8 ? 'OR ANOTHER 8' : ([1, 8].includes(this.top().rank) ? 'AN ' : 'A ') + G.RANK_NAME[this.top().rank].toUpperCase() + ', OR AN 8') + '   (D DRAWS)';
       else if (this.phase === 'deal') { s = 'DEALING...'; col = P.white; }
       else if (this.phase === 'ai' || this.phase === 'wait') { const p = this.cur(); if (p && !p.human) { s = p.name + ' IS THINKING...'; col = P.white; } }
       if (s) ui.tag(s, G.W / 2, 340, col, P.ink);

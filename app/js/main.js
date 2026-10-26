@@ -94,12 +94,18 @@
       if (ui.button('CUSTOMIZE', fx + (bw + gap), fy, bw, 20, { key: 'c', theme: 'gold' })) this.custom = true;
       if (ui.button('RULEBOOK', fx + (bw + gap) * 2, fy, bw, 20, { key: 'r', theme: 'blue' })) G.Rulebook.open('contents', G.Menu);
       const quitEnabled = !!window.cardclubNative;
-      if (ui.button(quitEnabled ? 'QUIT' : 'FULLSCREEN', fx + (bw + gap) * 3, fy, bw, 20, { key: quitEnabled ? 'q' : 'f', theme: 'dark' })) {
+      // phones / tablets: a Home Screen app is already full screen, so that slot opens your profile instead
+      const fsApi = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+      const lastBtn = quitEnabled ? 'QUIT' : G.touch && (G.standalone || !fsApi) ? 'PROFILE' : 'FULLSCREEN';
+      if (ui.button(lastBtn, fx + (bw + gap) * 3, fy, bw, 20, { key: quitEnabled ? 'q' : 'f', theme: 'dark' })) {
         if (quitEnabled) window.cardclubNative.quit();
+        else if (lastBtn === 'PROFILE') { this.profileOpen = true; this.nameT = 0; }
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+        else if (fsApi) fsApi.call(document.documentElement);
       }
-      G.text(pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
-      G.text('V1.5.0', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text(G.touch ? pg.name + '  -  TAP A GAME TO PLAY  -  ' + (this.page ? 'TAP < FOR THE CLASSICS' : 'TAP > FOR MORE GAMES')
+        : pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
+      G.text('V1.6.0', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
       // your player badge (top left) opens the profile editor
@@ -109,7 +115,7 @@
         G.panel(bx, by, bw, 30, { fill: hov ? P.navy : P.ink, hi: hov ? P.gold : P.dusk, border: hov ? P.gold : P.black });
         G.drawAvatar('you', bx + 3, by + 3);
         G.text(G.playerName(), bx + 31, by + 6, hov ? P.gold : P.white, 'big');
-        G.text('EDIT PROFILE  P', bx + 31, by + 18, P.silver, 'small');
+        G.text(G.touch ? 'TAP TO EDIT' : 'EDIT PROFILE  P', bx + 31, by + 18, P.silver, 'small');
         if (hov) { ui.cursorHand = true; ui.hoverId = 'badge'; }
         if ((hov && G.input.pressed) || G.key('p')) { G.input.pressed = false; delete G.input.keyPressed.p; G.audio.sfx('click'); this.profileOpen = true; this.nameT = 0; }
       }
@@ -137,7 +143,11 @@
       const px = x + 18, py = y + 34;
       G.rect(px - 2, py - 2, 124, 124, P.black);
       G.drawAvatar('you', px, py, 5);
-      G.text('NAME - JUST TYPE', px, py + 130, P.silver, 'small');
+      G.text(G.touch ? 'NAME - TAP TO TYPE' : 'NAME - JUST TYPE', px, py + 130, P.silver, 'small');
+      // touch: tapping the name box brings up the on-screen keyboard
+      // (iOS only opens the keyboard from inside a real tap, so the engine opens it on pointerup)
+      if (G.touch) G.typer.zone = { x: px - 2, y: py + 138, w: 124, h: 24, t: performance.now(), value: () => f.name || '',
+        set: (v) => { f.name = v.toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').replace(/^ +/, '').slice(0, 10); G.saveSettings(); } };
       G.rect(px - 2, py + 140, 124, 20, P.gold); G.rect(px - 1, py + 141, 122, 18, P.ink);
       const nm = (f.name || '');
       G.text(nm, px + 4, py + 146, P.white, 'big');
@@ -165,7 +175,7 @@
         G.text((cur + 1) + '/' + o.items.length, ax + aw - 22, yy + 6, P.slate, 'small', 'right');
       });
       if (changed) { G.resetAvatar('you'); G.saveSettings(); }
-      if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) { f.name = (f.name || '').trim(); G.saveSettings(); this.profileOpen = false; }
+      if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) { G.typer.close(); f.name = (f.name || '').trim(); G.saveSettings(); this.profileOpen = false; }
     },
     // ---------- Customize: table colour and card back, with a live preview ----------
     drawCustomize() {

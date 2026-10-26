@@ -283,7 +283,7 @@
     });
     // club grid
     const gx = 248, gy = 58, tw = 58, th = 62, gap = 4;
-    G.text('THE CLUB - CLICK A MEMBER TO SEAT THEM', gx, 46, P.gold, 'small');
+    G.text(G.touch ? 'THE CLUB - TAP A MEMBER TO SEAT THEM' : 'THE CLUB - CLICK A MEMBER TO SEAT THEM', gx, 46, P.gold, 'small');
     let hov = null;
     R.forEach((c, i) => {
       const x = gx + (i % 6) * (tw + gap), y = gy + Math.floor(i / 6) * (th + gap);

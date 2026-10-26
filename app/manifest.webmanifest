@@ -1,0 +1,15 @@
+{
+  "name": "Pixel Card Club",
+  "short_name": "Card Club",
+  "description": "A 16-bit pixel card club: Blackjack, Solitaire, Go Fish, Texas Hold'em, Crazy Eights, War and Spider, with AI opponents.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0b0c14",
+  "theme_color": "#0b0c14",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -258,7 +258,7 @@
       if (ui.button('SPEED X' + this.speed, 392, y, 72, 22, { key: 's', theme: 'blue', font: 'small' })) this.speed = sp[(sp.indexOf(this.speed) + 1) % sp.length];
       let s = '';
       if (this.spectate && !this.over) s = 'YOU ARE OUT - WATCHING (' + this.active().length + ' LEFT)';
-      else if (this.phase === 'ready' && !this.auto) s = 'CLICK YOUR DECK OR PRESS SPACE TO FLIP';
+      else if (this.phase === 'ready' && !this.auto) s = G.touch ? 'TAP YOUR DECK TO FLIP' : 'CLICK YOUR DECK OR PRESS SPACE TO FLIP';
       if (s) ui.tag(s, 330, 302, P.gold, P.ink);
     },
     drawResult() {
