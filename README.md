@@ -38,6 +38,12 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.6.3
+
+- Typing your name on iPhone / iPad: the game no longer shrinks when the on-screen keyboard opens. It keeps its size and slides up just enough to keep the name box above the keyboard.
+- When the keyboard closes, the game returns to full screen right away, instead of staying the wrong size until you refresh.
+- The keyboard's return key reads Done, and the browser's password and address suggestions no longer appear over the name box (where the browser allows it).
+
 ## What's new in 1.6.2
 
 - **No more border in the PC browser or the desktop app.** Fill window is now the default screen mode, and it fills the whole window at any size or shape. The game stays centred, and the table, top bar and bottom controls stretch into the extra space. Saves from older versions switch to Fill window once. You can still pick Pixel perfect in Options for perfectly even pixels with a border.

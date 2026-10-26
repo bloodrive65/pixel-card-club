@@ -31,8 +31,32 @@
   // the canvas grows to fill the screen and the stage sits in the middle (offset G.ox, G.oy); the felt,
   // top bar, bottom panels and dim overlays stretch into the extra space so there are no black bars.
   G.ox = 0; G.oy = 0; G.SW = W; G.SH = H; G.sizeKey = W + 'x' + H;
+  // while the on-screen keyboard is up, the screen size is frozen (so the game does not shrink) and the
+  // canvas slides up just enough to keep the name box above the keyboard
+  let frozen = null, lift = 0;
+  const viewSize = () => [window.visualViewport ? visualViewport.width : innerWidth, window.visualViewport ? visualViewport.height : innerHeight];
+  function liftForKeyboard() {
+    let want = 0;
+    const z = G.typer && G.typer.zone;
+    if (frozen && z && window.visualViewport) {
+      const r = canvas.getBoundingClientRect(), s = G.screenScale || 1;
+      const baseTop = r.top - lift;
+      const boxBottom = baseTop + (z.y + z.h + G.oy + 10) * s;
+      const visibleBottom = visualViewport.offsetTop + visualViewport.height;
+      want = Math.min(0, Math.round(visibleBottom - boxBottom));
+    }
+    if (want !== lift) { lift = want; canvas.style.transform = lift ? 'translateY(' + lift + 'px)' : ''; }
+  }
+  G.freezeView = (on) => {
+    if (on) { if (!frozen) { const [w, h] = viewSize(); frozen = { vw: w, vh: h }; } return; }
+    frozen = null; lift = 0; canvas.style.transform = '';
+    try { window.scrollTo(0, 0); } catch (_) {}
+    // the browser reports the full size again a moment after the keyboard closes
+    for (const ms of [0, 120, 350, 700, 1200]) setTimeout(resize, ms);
+  };
   function resize() {
-    const vw = window.visualViewport ? visualViewport.width : innerWidth, vh = window.visualViewport ? visualViewport.height : innerHeight;
+    let [vw, vh] = viewSize();
+    if (frozen) { vw = frozen.vw; vh = frozen.vh; }
     const r = Math.min(innerWidth / W, innerHeight / H);
     // FILL WINDOW (default, and always on touch screens): smooth scaling + the stage stretches to fill the window.
     // PIXEL PERFECT: whole-number scaling only (crispest pixels), with a border around the game.
@@ -47,9 +71,11 @@
     canvas.style.width = Math.floor(cw * s) + 'px';
     canvas.style.height = Math.floor(ch * s) + 'px';
     G.screenScale = s;
+    liftForKeyboard();
   }
   // start each frame: clear the whole canvas, then draw the 640x360 stage at its offset
   G.beginFrame = () => {
+    if (frozen) { if (!G.typer.el || document.activeElement !== G.typer.el) G.freezeView(false); else liftForKeyboard(); }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
     ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, G.SW, G.SH);
     ctx.setTransform(1, 0, 0, 1, G.ox, G.oy);
@@ -57,7 +83,9 @@
   G.resize = resize;
   addEventListener('resize', resize);
   addEventListener('orientationchange', () => setTimeout(resize, 250));
-  if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+  if (window.visualViewport) { visualViewport.addEventListener('resize', resize); visualViewport.addEventListener('scroll', resize); }
+  addEventListener('focus', () => setTimeout(resize, 100));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(resize, 100); });
   resize();
 
   // ---------- Helpers ----------
@@ -121,11 +149,14 @@
         el.id = 'typer'; el.type = 'text'; el.autocomplete = 'off'; el.spellcheck = false;
         el.setAttribute('autocapitalize', 'characters'); el.setAttribute('autocorrect', 'off');
         el.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;';
+        el.setAttribute('name', 'pcc-player-tag'); el.setAttribute('enterkeyhint', 'done');
         el.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.blur(); });
+        el.addEventListener('blur', () => G.freezeView(false));
         document.body.appendChild(el);
       }
       el.maxLength = max; el.value = value || '';
       el.oninput = () => onChange(el.value);
+      G.freezeView(true);
       el.focus();
       try { el.setSelectionRange(el.value.length, el.value.length); } catch (_) {}
     },
