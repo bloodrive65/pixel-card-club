@@ -38,6 +38,10 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.6.2
+
+- **No more border in the PC browser or the desktop app.** Fill window is now the default screen mode, and it fills the whole window at any size or shape. The game stays centred, and the table, top bar and bottom controls stretch into the extra space. Saves from older versions switch to Fill window once. You can still pick Pixel perfect in Options for perfectly even pixels with a border.
+
 ## What's new in 1.6.1
 
 - **Fills the whole screen on iPad and iPhone.** The game no longer shows black bars when the screen is not widescreen, such as an iPad, or a phone or tablet browser with its address bar showing. The table, top bar, bottom controls and the rulebook desk now stretch into the extra space, and the game stays centred. This works in Safari, Chrome and Firefox, and in the Home Screen app.
@@ -160,7 +164,7 @@ Full rules and strategy for every mode are in [**docs/HOW_TO_PLAY.md**](docs/HOW
 ## Options
 
 - **Sound**: on or off. All sounds are generated live, so there are no audio files.
-- **Scaling**: *Pixel perfect* scales the 640×360 image by whole numbers (2×, 3×, 4×…) for perfectly sharp pixels. *Fill window* stretches it to fit.
+- **Scaling**: **Fill window** (the default) scales the game to the window and stretches the table, top bar and bottom controls into any extra space, so there is no border. **Pixel perfect** scales the 640×360 image by whole numbers only (2×, 3×, 4×…) for perfectly even pixels, but leaves a dark border when the window size isn't an exact multiple. Phones and tablets always use Fill window.
 - **Solitaire draw**: draw 1 or draw 3.
 - **Blackjack decks**: 1, 2, 4 or 6 decks in the shoe.
 - **When you are out**: *Stop* (default) ends the game the moment you are knocked out. *Watch to the end* lets the Club play on so you can see who wins. It works in Hold'em, War and Blackjack (with table-mates seated). You get nothing for it; it is just for fun. Press **K** or **SKIP TO RESULT** to jump to the final standings.

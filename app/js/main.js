@@ -105,7 +105,7 @@
       }
       G.text(G.touch ? pg.name + '  -  TAP A GAME TO PLAY  -  ' + (this.page ? 'TAP < FOR THE CLASSICS' : 'TAP > FOR MORE GAMES')
         : pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
-      G.text('V1.6.1', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text('V1.6.2', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
       // your player badge (top left) opens the profile editor
@@ -272,6 +272,8 @@
   function boot() {
     const saved = G.store.get('settings', null);
     if (saved) Object.assign(G.settings, saved);
+    // 1.6.2: FILL WINDOW became the default screen mode (it now fills the window with no border)
+    if (saved && saved.fitV !== 2) { G.settings.pixelPerfect = false; G.settings.fitV = 2; G.store.set('settings', G.settings); }
     G.resize();
     G.applyTable(G.settings.table || 0);
     G.initCardArt(() => {

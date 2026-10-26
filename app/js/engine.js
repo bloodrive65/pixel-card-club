@@ -21,7 +21,7 @@
   canvas.width = W; canvas.height = H;
   ctx.imageSmoothingEnabled = false;
   G.canvas = canvas; G.ctx = ctx;
-  G.settings = { sound: true, back: 0, pixelPerfect: true, drawThree: false, fishOpponents: 2, fishLevel: 1, bjDecks: 4 };
+  G.settings = { sound: true, back: 0, pixelPerfect: false, fitV: 2, drawThree: false, fishOpponents: 2, fishLevel: 1, bjDecks: 4 };
 
   // touch devices (iPhone / iPad / tablets): fill the screen, hide keyboard hints, show tap wording
   G.touch = !window.cardclubNative && (('ontouchstart' in window) || navigator.maxTouchPoints > 1) && matchMedia('(pointer: coarse)').matches;
@@ -34,10 +34,12 @@
   function resize() {
     const vw = window.visualViewport ? visualViewport.width : innerWidth, vh = window.visualViewport ? visualViewport.height : innerHeight;
     const r = Math.min(innerWidth / W, innerHeight / H);
-    let s = G.touch ? Math.min(vw / W, vh / H) : r;
-    if (G.settings.pixelPerfect && !G.touch && r >= 1) s = Math.floor(r);
+    // FILL WINDOW (default, and always on touch screens): smooth scaling + the stage stretches to fill the window.
+    // PIXEL PERFECT: whole-number scaling only (crispest pixels), with a border around the game.
+    const fill = G.touch || !G.settings.pixelPerfect;
+    let s = fill ? Math.min(vw / W, vh / H) : (r >= 1 ? Math.floor(r) : r);
     let cw = W, ch = H;
-    if (G.touch && vw > 0 && vh > 0) { cw = Math.max(W, Math.min(Math.round(W * 1.5), Math.floor(vw / s))); ch = Math.max(H, Math.min(Math.round(H * 1.5), Math.floor(vh / s))); }
+    if (fill && vw > 0 && vh > 0) { cw = Math.max(W, Math.min(Math.round(W * 1.5), Math.floor(vw / s))); ch = Math.max(H, Math.min(Math.round(H * 1.5), Math.floor(vh / s))); }
     if (cw !== G.SW || ch !== G.SH) {
       G.SW = cw; G.SH = ch; G.ox = Math.floor((cw - W) / 2); G.oy = Math.floor((ch - H) / 2); G.sizeKey = cw + 'x' + ch;
       canvas.width = cw; canvas.height = ch; ctx.imageSmoothingEnabled = false;
