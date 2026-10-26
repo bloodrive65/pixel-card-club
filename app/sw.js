@@ -1,7 +1,7 @@
 // Pixel Card Club - offline support for the web / Home Screen version.
 // Network first, always asking GitHub Pages for the newest files (skipping the browser's 10-minute cache),
 // and falling back to the saved copy only when offline.
-const CACHE = 'pcc-v5';
+const CACHE = 'pcc-v6';
 const CORE = [
   './', './index.html', './version.json', './manifest.webmanifest', './icon.png', './icon-180.png', './icon-192.png', './icon-512.png',
   './js/font.js', './js/engine.js', './js/cards.js', './js/western.js', './js/ui.js', './js/roster.js', './js/table.js',

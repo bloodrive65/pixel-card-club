@@ -34,7 +34,20 @@
   // while the on-screen keyboard is up, the screen size is frozen (so the game does not shrink) and the
   // canvas slides up just enough to keep the name box above the keyboard
   let frozen = null, lift = 0;
-  const viewSize = () => [window.visualViewport ? visualViewport.width : innerWidth, window.visualViewport ? visualViewport.height : innerHeight];
+  // On touch screens a sudden big drop in height (same width) is a keyboard - the game's own, or the browser's
+  // address bar - so the game keeps its full size instead of shrinking behind it.
+  let kbWidth = 0, fullH = 0;
+  const viewSize = () => {
+    const w = window.visualViewport ? visualViewport.width : innerWidth;
+    let h = window.visualViewport ? visualViewport.height : innerHeight;
+    if (G.touch) {
+      const wk = Math.round(w);
+      if (wk !== kbWidth) { kbWidth = wk; fullH = h; }
+      else if (h > fullH) fullH = h;
+      else if (h < fullH * 0.8) h = fullH; // small changes (toolbars showing / hiding) are used as they are
+    }
+    return [w, h];
+  };
   function liftForKeyboard() {
     let want = 0;
     const z = G.typer && G.typer.zone;

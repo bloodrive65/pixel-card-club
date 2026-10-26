@@ -38,6 +38,10 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.6.5
+
+- iPhone / iPad: the game no longer shrinks when any keyboard opens, including the browser's own address bar. It keeps its full size behind the keyboard and is still the right size when the keyboard closes. Rotating the device and toolbars showing or hiding still resize it normally.
+
 ## What's new in 1.6.4
 
 - **The web version now updates itself.** GitHub Pages lets browsers reuse files for up to 10 minutes, so a phone or tablet could keep opening an older version. The game now always asks for the newest files. When a new version is published, it reloads on its own: right away if you are on the main menu, or the next time you return to it, so a hand in progress is never cut off.
