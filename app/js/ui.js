@@ -85,16 +85,20 @@
     t.f.forEach((c, k) => (P['felt' + k] = c));
     felt = null;
   };
+  let feltKey = '';
+  // the felt covers the whole screen (G.SW x G.SH); it is drawn at (-G.ox, -G.oy)
   ui.feltCanvas = () => {
-    if (!felt) {
-      const [c, x] = G.makeCanvas(G.W, G.H);
-      x.fillStyle = P.felt2; x.fillRect(0, 0, G.W, G.H);
+    if (!felt || feltKey !== G.sizeKey) {
+      feltKey = G.sizeKey;
+      const FW = G.SW, FH = G.SH;
+      const [c, x] = G.makeCanvas(FW, FH);
+      x.fillStyle = P.felt2; x.fillRect(0, 0, FW, FH);
       // sparse noise
-      for (let i = 0; i < 2600; i++) { x.fillStyle = Math.random() < 0.5 ? P.felt1 : P.felt3; x.fillRect(G.rand(G.W), G.rand(G.H), 1, 1); }
+      for (let i = 0; i < Math.round(2600 * FW * FH / (G.W * G.H)); i++) { x.fillStyle = Math.random() < 0.5 ? P.felt1 : P.felt3; x.fillRect(G.rand(FW), G.rand(FH), 1, 1); }
       // dithered vignette rings
-      const cx = G.W / 2, cy = G.H / 2;
-      for (let yy = 0; yy < G.H; yy++) for (let xx = 0; xx < G.W; xx++) {
-        const d = Math.hypot((xx - cx) / (G.W * 0.62), (yy - cy) / (G.H * 0.66));
+      const cx = FW / 2, cy = FH / 2;
+      for (let yy = 0; yy < FH; yy++) for (let xx = 0; xx < FW; xx++) {
+        const d = Math.hypot((xx - cx) / (FW * 0.62), (yy - cy) / (FH * 0.66));
         const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5][(yy % 4) * 4 + (xx % 4)] / 16;
         if (d > 0.62 && (d - 0.62) * 4 > bayer) { x.fillStyle = P.felt1; x.fillRect(xx, yy, 1, 1); }
         if (d > 0.85 && (d - 0.85) * 4 > bayer) { x.fillStyle = P.felt0; x.fillRect(xx, yy, 1, 1); }
@@ -103,7 +107,7 @@
     }
     return felt;
   };
-  ui.felt = () => G.ctx.drawImage(ui.feltCanvas(), 0, 0);
+  ui.felt = () => G.ctx.drawImage(ui.feltCanvas(), -G.ox, -G.oy);
 
   // ---------- HUD top bar ----------
   // stats: [{label, value, color}]

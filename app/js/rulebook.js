@@ -1,7 +1,7 @@
 // Pixel Card Club - the Rulebook: an open book on a desk with animated page turns
 (function () {
   'use strict';
-  const P = G.P, ui = G.ui, input = G.input, CW = G.CW, CH = G.CH;
+  const P = G.P, ui = G.ui, input = G.input, CW = G.SW, CH = G.SH;
   const PW = 266, PH = 300;              // one page
   const LX = 50, RX = 324, PY = 30, SPINE = 320;
   const PAPER = '#f3e6c4', PAPER_D = '#e4d1a6', PAPER_DD = '#cdb685';
@@ -391,18 +391,20 @@
   }
 
   // ---------- desk + book chrome ----------
-  let desk = null;
+  let desk = null, deskKey = '';
   function drawDesk() {
-    if (!desk) {
-      const [c, x] = G.makeCanvas(G.W, G.H);
+    if (!desk || deskKey !== G.sizeKey) {
+      deskKey = G.sizeKey;
+      const DW = G.SW, DH = G.SH;
+      const [c, x] = G.makeCanvas(DW, DH);
       G.withCtx(x, () => {
-        G.rect(0, 0, G.W, G.H, P.wood1);
-        for (let yy = 0; yy < G.H; yy += 24) { G.rect(0, yy, G.W, 1, P.wood0); G.rect(0, yy + 1, G.W, 1, P.wood2); }
-        for (let i = 0; i < 900; i++) { const yy = G.rand(G.H), xx = G.rand(G.W); G.rect(xx, yy, 2 + G.rand(14), 1, Math.random() < 0.5 ? P.wood0 : P.wood2); }
+        G.rect(0, 0, DW, DH, P.wood1);
+        for (let yy = 0; yy < DH; yy += 24) { G.rect(0, yy, DW, 1, P.wood0); G.rect(0, yy + 1, DW, 1, P.wood2); }
+        for (let i = 0; i < Math.round(900 * DW * DH / (G.W * G.H)); i++) { const yy = G.rand(DH), xx = G.rand(DW); G.rect(xx, yy, 2 + G.rand(14), 1, Math.random() < 0.5 ? P.wood0 : P.wood2); }
       });
       desk = c;
     }
-    G.ctx.drawImage(desk, 0, 0);
+    G.ctx.drawImage(desk, -G.ox, -G.oy);
   }
   function drawCover(spread, total) {
     // drop shadow + leather cover

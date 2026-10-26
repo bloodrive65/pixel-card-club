@@ -105,7 +105,7 @@
       }
       G.text(G.touch ? pg.name + '  -  TAP A GAME TO PLAY  -  ' + (this.page ? 'TAP < FOR THE CLASSICS' : 'TAP > FOR MORE GAMES')
         : pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
-      G.text('V1.6.0', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text('V1.6.1', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
       // your player badge (top left) opens the profile editor
@@ -217,7 +217,7 @@
       const px = x + 262, py = y + 46, pw = 220, ph = 154;
       G.text('PREVIEW', px, y + 34, P.silver, 'small');
       G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(px, py, pw, ph); G.ctx.clip();
-      G.ctx.drawImage(G.ui.feltCanvas(), 210, 80, pw, ph, px, py, pw, ph);
+      G.ctx.drawImage(G.ui.feltCanvas(), 210 + G.ox, 80 + G.oy, pw, ph, px, py, pw, ph);
       G.drawSlot(px + 14, py + 14, 'A');
       G.ctx.drawImage(G.backImg(), px + 64, py + 14); G.ctx.drawImage(G.backImg(), px + 67, py + 11);
       G.ctx.drawImage(G.cardArt.faces['1_1'], px + 120, py + 14); G.ctx.drawImage(G.cardArt.faces['0_13'], px + 150, py + 24);
@@ -280,7 +280,7 @@
       function loop(now) {
         const dt = Math.min(0.05, (now - last) / 1000); last = now;
         ui.begin();
-        G.ctx.fillStyle = P.black; G.ctx.fillRect(0, 0, G.W, G.H);
+        G.beginFrame();
         G.scene.frame(dt);
         if (G.scene === Menu || G.scene === G.Solitaire) G.drawFloaters(dt);
         ui.end();

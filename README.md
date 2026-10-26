@@ -38,6 +38,10 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.6.1
+
+- **Fills the whole screen on iPad and iPhone.** The game no longer shows black bars when the screen is not widescreen, such as an iPad, or a phone or tablet browser with its address bar showing. The table, top bar, bottom controls and the rulebook desk now stretch into the extra space, and the game stays centred. This works in Safari, Chrome and Firefox, and in the Home Screen app.
+
 ## What's new in 1.6.0
 
 - **Play on iPhone and iPad.** The game is now hosted on GitHub Pages and works as a touch game. Add it to your Home Screen and it opens full screen like an app (see [Play on iPhone / iPad](#play-on-iphone--ipad)).

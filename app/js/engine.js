@@ -27,15 +27,31 @@
   G.touch = !window.cardclubNative && (('ontouchstart' in window) || navigator.maxTouchPoints > 1) && matchMedia('(pointer: coarse)').matches;
   G.standalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
   if (G.touch) document.documentElement.classList.add('touch');
+  // The game is laid out on a 640x360 stage. On touch screens whose shape is not 16:9 (iPad is 4:3),
+  // the canvas grows to fill the screen and the stage sits in the middle (offset G.ox, G.oy); the felt,
+  // top bar, bottom panels and dim overlays stretch into the extra space so there are no black bars.
+  G.ox = 0; G.oy = 0; G.SW = W; G.SH = H; G.sizeKey = W + 'x' + H;
   function resize() {
     const vw = window.visualViewport ? visualViewport.width : innerWidth, vh = window.visualViewport ? visualViewport.height : innerHeight;
     const r = Math.min(innerWidth / W, innerHeight / H);
     let s = G.touch ? Math.min(vw / W, vh / H) : r;
     if (G.settings.pixelPerfect && !G.touch && r >= 1) s = Math.floor(r);
-    canvas.style.width = Math.floor(W * s) + 'px';
-    canvas.style.height = Math.floor(H * s) + 'px';
+    let cw = W, ch = H;
+    if (G.touch && vw > 0 && vh > 0) { cw = Math.max(W, Math.min(Math.round(W * 1.5), Math.floor(vw / s))); ch = Math.max(H, Math.min(Math.round(H * 1.5), Math.floor(vh / s))); }
+    if (cw !== G.SW || ch !== G.SH) {
+      G.SW = cw; G.SH = ch; G.ox = Math.floor((cw - W) / 2); G.oy = Math.floor((ch - H) / 2); G.sizeKey = cw + 'x' + ch;
+      canvas.width = cw; canvas.height = ch; ctx.imageSmoothingEnabled = false;
+    }
+    canvas.style.width = Math.floor(cw * s) + 'px';
+    canvas.style.height = Math.floor(ch * s) + 'px';
     G.screenScale = s;
   }
+  // start each frame: clear the whole canvas, then draw the 640x360 stage at its offset
+  G.beginFrame = () => {
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, G.SW, G.SH);
+    ctx.setTransform(1, 0, 0, 1, G.ox, G.oy);
+  };
   G.resize = resize;
   addEventListener('resize', resize);
   addEventListener('orientationchange', () => setTimeout(resize, 250));
@@ -58,8 +74,8 @@
   const input = (G.input = { x: -1, y: -1, down: false, pressed: false, released: false, rpressed: false, keys: {}, keyPressed: {}, wheel: 0, downX: 0, downY: 0, moved: false });
   function toLocal(e) {
     const r = canvas.getBoundingClientRect();
-    input.x = Math.floor(((e.clientX - r.left) / r.width) * W);
-    input.y = Math.floor(((e.clientY - r.top) / r.height) * H);
+    input.x = Math.floor(((e.clientX - r.left) / r.width) * G.SW) - G.ox;
+    input.y = Math.floor(((e.clientY - r.top) / r.height) * G.SH) - G.oy;
   }
   canvas.addEventListener('pointermove', (e) => { toLocal(e); if (input.down && (Math.abs(input.x - input.downX) > 2 || Math.abs(input.y - input.downY) > 2)) input.moved = true; });
   let touchClear = false;
@@ -117,7 +133,18 @@
   G.key = (k) => !!input.keyPressed[k];
 
   // ---------- Drawing primitives ----------
-  G.rect = (x, y, w, h, c) => { G.ctx.fillStyle = c; G.ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  G.rect = (x, y, w, h, c) => {
+    // on a stretched screen, bars and backdrops that span the stage also fill the extra space beside it
+    if (G.ctx === ctx && (G.ox || G.oy)) {
+      const fullW = x <= 0 && x + w >= W, fullH = y <= 0 && y + h >= H;
+      if (fullW || fullH) {
+        if (fullW || x <= 0) { w += x + G.ox; x = -G.ox; }
+        if (fullW || x + w >= W) w = W + G.ox - x;
+        if (fullH || y <= 0) { h += y + G.oy; y = -G.oy; }
+        if (fullH || y + h >= H) h = H + G.oy - y;
+      }
+    }
+    G.ctx.fillStyle = c; G.ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
   G.outline = (x, y, w, h, c, t = 1) => {
     x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
     G.ctx.fillStyle = c;

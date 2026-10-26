@@ -1,6 +1,6 @@
 // Pixel Card Club - offline support for the web / Home Screen version.
 // Network first (so updates show up right away), falling back to the cached copy when offline.
-const CACHE = 'pcc-v1';
+const CACHE = 'pcc-v2';
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll([
