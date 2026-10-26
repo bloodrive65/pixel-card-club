@@ -38,6 +38,10 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.7.1
+
+- **New splash logo**: the bloodrive65 intro now shows a pixel-art version of the bloodrive65 wolf, redrawn in the game's palette, with the name in dark red.
+
 ## What's new in 1.7.0
 
 - **Developer splash**: a short bloodrive65 intro when the game opens. It fades out on its own after about two seconds, or tap / click / press any key to skip it.

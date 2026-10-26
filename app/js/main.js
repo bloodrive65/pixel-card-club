@@ -1,7 +1,7 @@
 // Pixel Card Club - scene manager, title menu, options, main loop
 (function () {
   'use strict';
-  G.VERSION = '1.7.0'; // keep in step with package.json and app/version.json
+  G.VERSION = '1.7.1'; // keep in step with package.json and app/version.json
   const P = G.P, ui = G.ui, CW = G.CW, CH = G.CH;
 
   G.saveSettings = () => G.store.set('settings', G.settings);
@@ -353,14 +353,13 @@
     frame(dt) {
       this.t += dt;
       const T = 1.8, t = this.t;
-      G.rect(0, 0, G.W, G.H, '#07080d');
+      G.rect(0, 0, G.W, G.H, '#050506');
       const a = Math.min(1, t / 0.3, Math.max(0, (T - t) / 0.35));
       G.alpha(a, () => {
-        const s = 2, lw = 56 * s, lx = G.W / 2 - lw / 2, ly = 92;
-        G.rect(lx - 3, ly - 3, lw + 6, lw + 6, P.dusk); G.rect(lx - 2, ly - 2, lw + 4, lw + 4, P.black);
+        const s = 2, lw = 80 * s, lx = G.W / 2 - lw / 2, ly = 52;
         if (logo.complete && logo.naturalWidth) { const sm = G.ctx.imageSmoothingEnabled; G.ctx.imageSmoothingEnabled = false; G.ctx.drawImage(logo, lx, ly, lw, lw); G.ctx.imageSmoothingEnabled = sm; }
-        G.text('BLOODRIVE65', G.W / 2, ly + lw + 16, '#ff5fa2', 'big', 'center', 2, P.black);
-        G.text('PRESENTS', G.W / 2, ly + lw + 42, P.silver, 'small', 'center');
+        G.text('BLOODRIVE65', G.W / 2, ly + lw + 14, '#a3141c', 'big', 'center', 2, '#2a0507');
+        G.text('PRESENTS', G.W / 2, ly + lw + 38, '#8a7a72', 'small', 'center');
       });
       // a tap, click or key skips it
       if (t > 0.25 && (G.input.pressed || Object.keys(G.input.keyPressed).length)) { G.input.pressed = false; G.input.keyPressed = {}; G.go(Menu); return; }
