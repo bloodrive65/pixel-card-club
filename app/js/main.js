@@ -1,6 +1,7 @@
 // Pixel Card Club - scene manager, title menu, options, main loop
 (function () {
   'use strict';
+  G.VERSION = '1.6.4'; // keep in step with package.json and app/version.json
   const P = G.P, ui = G.ui, CW = G.CW, CH = G.CH;
 
   G.saveSettings = () => G.store.set('settings', G.settings);
@@ -32,6 +33,7 @@
       }
     },
     frame(dt) {
+      if (G.updateReady) G.applyUpdate();
       this.t += dt;
       if (this.options || this.custom || this.profileOpen) ui.modal = true;
       ui.felt();
@@ -105,7 +107,7 @@
       }
       G.text(G.touch ? pg.name + '  -  TAP A GAME TO PLAY  -  ' + (this.page ? 'TAP < FOR THE CLASSICS' : 'TAP > FOR MORE GAMES')
         : pg.name + '  -  PRESS 1 - ' + pg.games.length + ' TO PLAY  -  ' + (this.page ? '< OR TAB FOR THE CLASSICS' : '> OR TAB FOR MORE GAMES'), G.W / 2, 332, P.felt4, 'small', 'center');
-      G.text('V1.6.3', G.W - 8, G.H - 10, P.felt4, 'small', 'right');
+      G.text('V' + G.VERSION, G.W - 8, G.H - 10, P.felt4, 'small', 'right');
       if (this.options) this.drawOptions();
       if (this.custom) this.drawCustomize();
       // your player badge (top left) opens the profile editor
@@ -268,10 +270,40 @@
     }
   });
 
+  // ---------- Updates (web version) ----------
+  // Checks app/version.json (never cached) when the game opens and whenever you come back to it.
+  // A newer version reloads the page right away on the main menu, or the next time you return to the menu.
+  G.updateReady = false;
+  G.watchForUpdates = () => {
+    if (window.cardclubNative || !location.protocol.startsWith('http')) return;
+    let lastCheck = 0;
+    const check = () => {
+      if (Date.now() - lastCheck < 30000) return; lastCheck = Date.now();
+      fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then((r) => r.json()).then((j) => {
+        if (!j || !j.version || j.version === G.VERSION) return;
+        try { if (sessionStorage.getItem('pcc_reloaded_for') === j.version) return; sessionStorage.setItem('pcc_reloaded_for', j.version); } catch (_) {}
+        G.updateReady = true; G.applyUpdate();
+      }).catch(() => {});
+    };
+    check();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    addEventListener('focus', check); addEventListener('pageshow', check);
+    setInterval(check, 5 * 60 * 1000);
+  };
+  G.applyUpdate = () => {
+    if (!G.updateReady || G.scene !== Menu || Menu.profileOpen || Menu.options || Menu.custom) return;
+    G.updateReady = false;
+    const go = () => location.reload();
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+      navigator.serviceWorker.getRegistration().then((reg) => (reg ? reg.update().catch(() => {}) : null)).then(go, go);
+    } else go();
+  };
+
   // ---------- Boot ----------
   function boot() {
     const saved = G.store.get('settings', null);
     if (saved) Object.assign(G.settings, saved);
+    G.watchForUpdates();
     // 1.6.2: FILL WINDOW became the default screen mode (it now fills the window with no border)
     if (saved && saved.fitV !== 2) { G.settings.pixelPerfect = false; G.settings.fitV = 2; G.store.set('settings', G.settings); }
     G.resize();

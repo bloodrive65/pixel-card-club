@@ -38,6 +38,12 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
+## What's new in 1.6.4
+
+- **The web version now updates itself.** GitHub Pages lets browsers reuse files for up to 10 minutes, so a phone or tablet could keep opening an older version. The game now always asks for the newest files. When a new version is published, it reloads on its own: right away if you are on the main menu, or the next time you return to it, so a hand in progress is never cut off.
+- Links with extra tags on the end (such as `?utm_source=...`) open the same up-to-date game and still work offline.
+- Releasing: the version number lives in `package.json`, `app/version.json` and `G.VERSION` in `app/js/main.js`.
+
 ## What's new in 1.6.3
 
 - Typing your name on iPhone / iPad: the game no longer shrinks when the on-screen keyboard opens. It keeps its size and slides up just enough to keep the name box above the keyboard.
@@ -196,6 +202,7 @@ Full details, including automatic GitHub releases, are in [**docs/BUILDING.md**]
 app/                  the game itself (plain HTML5 canvas + JavaScript, no frameworks)
   index.html
   manifest.webmanifest, sw.js, icon-*.png   Home Screen app (iPhone / iPad) and offline support
+  version.json        current version, checked by the web version to update itself
   js/engine.js        canvas scaling, input, bitmap text, chiptune audio, save storage
   js/cards.js         card model, procedural pixel card art, deck styles, card animation
   js/western.js       the weathered 1890s Western Deck
