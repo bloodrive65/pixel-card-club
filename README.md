@@ -38,19 +38,10 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
-## What's new in 1.7.1
+## What's new in 1.7.2
 
-- **New splash logo**: the bloodrive65 intro now shows a pixel-art version of the bloodrive65 wolf, redrawn in the game's palette, with the name in dark red.
-
-## What's new in 1.7.0
-
-- **Developer splash**: a short bloodrive65 intro when the game opens. It fades out on its own after about two seconds, or tap / click / press any key to skip it.
-- **Detailed court cards**: the Classic deck's Jacks, Queens and Kings are now double-headed portraits (like a real deck), with robes coloured by suit. Every Ace has an ornate medallion, and the Ace of Spades gets a gold sunburst.
-- **New decks**: **Four Colour** (spades black, hearts red, diamonds blue, clubs green) and **Midnight** (dark cards with glowing ink).
-- **Card colours**: Classic and Four Colour cards come in White, Ivory, Mint, Sky, Rose or Gold.
-- **Four new card backs** with their own patterns: Gold (sunburst), Ocean (waves), Ember (checks) and Shadow (stripes).
-- **Table surfaces**: Felt, Pattern (a diamond weave), Wood Rail (patterned felt with a wooden rail), Wood (a plank table) and Casino (wood rail with gold pinstripes).
-- The **Customize** menu now has **TABLE** and **CARDS** tabs, with a preview of the whole table.
+- **Redrawn court cards**: the Jacks, Queens and Kings are new full-length, double-headed figures with real shading (3–4 tones per colour and a soft outline). The King has a sword and a golden orb, the Queen has a lace collar and fan, and the Jack carries a halberd and wears a feathered beret.
+- **Bigger aces**: every Ace now shows one large, clean suit symbol in the centre.
 
 Older versions are listed in [**CHANGELOG.md**](CHANGELOG.md).
 

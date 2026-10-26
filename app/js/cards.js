@@ -83,135 +83,199 @@
   }
 
   // ---------- Court cards (J / Q / K): double-headed portraits, like a real deck ----------
-  // 20 x 22 top-half portraits (mirrored for the bottom half). Palette keys are swapped per suit:
-  // k outline, s/S skin, g/G gold, r/R main robe, b/B second robe, w white fur, h hair, e emblem cloth, p steel, . frame paper
-  const COURT_J = [
-    '....rrrrrrrrr.......',
-    '...rrRRRRRRRrr...ww.',
-    '...gggggggggggg.wpw.',
-    '..krhhhhhhhhhrk..p..',
-    '..khhsssssssshk..p..',
-    '...khskssskshk...p..',
-    '...khssssssshk...p..',
-    '...khsssSssshk...p..',
-    '...khhsssssshk...p..',
-    '....khSSSSShk....p..',
-    '....kkhhhhhkk...gpg.',
-    '.....kwwwwwk....sss.',
-    '..bbbbwwgwwbbbb.sss.',
-    '.bBbbbbwgwbbbbBbbp..',
-    'bBbrrbbbgbbbrrbBbp..',
-    'bBrrrrbbgbbrrrrBbp..',
-    'bBrrrrbbgbbrrrrBbp..',
-    'bBbrrbbbgbbbrrbBbp..',
-    'bBggggggggggggggBp..',
-    'bBbbeeebbgbbbbbbBp..',
-    'bBbbeeebbgbbbbbbBp..',
-    'bBbbbebbbgbbbbbbBp..'
-  ];
-  const COURT_Q = [
-    '.....g..g..g........',
-    '.....ggggggg........',
-    '....gbgggggbg.......',
-    '...hhhhhhhhhhh......',
-    '..hhhssssssshhh.....',
-    '..hhskssssskshh.....',
-    '..hhssssssssshh.....',
-    '..hhssssSsssshh.....',
-    '..hhhssSSSsshhh..w..',
-    '..hhhhsssssshhh.wpw.',
-    '..hhhhhkkkkhhhh..w..',
-    '.wwhhhhwwwwhhhhww.G.',
-    'wwkwhhwwgwwwhhwkw.G.',
-    'wkwwwwwwgwwwwwwwwwG.',
-    'bbbwwrrrgrrrwwbbbsss',
-    'bBbbrrrrgrrrrbbBbsss',
-    'bBbbrrwrgrwrrbbBb.G.',
-    'bBbbrrrrgrrrrbbBb.G.',
-    'bBggggggggggggggB.G.',
-    'bBbreeebbgbbbbrbB.G.',
-    'bBbreeebbgbbbbrbB.G.',
-    'bBbbrebbbgbbbbrbB...'
-  ];
-  const COURT_K = [
-    '....g...gg...g......',
-    '....gg..gg..gg...w..',
-    '....gggggggggg...p..',
-    '....gRggbbggRg...p..',
-    '...kGGGGGGGGGGk..p..',
-    '...khhssssssshhk.p..',
-    '...khskssssskshk.p..',
-    '...khssssssssshk.p..',
-    '...khhsssSssshhk.p..',
-    '...khhhSsssShhhk.p..',
-    '...khhhhhhhhhhhk.p..',
-    '..wkkhhhhhhhhhkkwp..',
-    '.wwwrkhhhhhhhkrwwg..',
-    'wwkwrrkkhhhkkrrwgGg.',
-    'wkwwrrrrkkkrrrrwwgw.',
-    'wwwrrbbrrgrrbbrrwsw.',
-    'rrrrbbbbrgrbbbbrrsr.',
-    'rRrrbbbbrgrbbbbrrRr.',
-    'rRrrrbbrrgrrbbrrrRr.',
-    'rRggggggggggggggrRr.',
-    'rRreeerrrgrrrrrrrRr.',
-    'rRreeerrrgrrbbrrrRr.'
-  ];
-  const COURTS = { 11: COURT_J, 12: COURT_Q, 13: COURT_K };
-  // robe colours per suit: [main, second, queen hair]
-  const COURT_SUIT = [
-    ['#3b5dc9', '#29366f', '#e8ecf4'], // spades
-    ['#b13e53', '#3b5dc9', '#ef7d57'], // hearts
-    ['#ef7d57', '#5d275d', '#ffcd75'], // diamonds
-    ['#38b764', '#b13e53', '#6a482b']  // clubs
-  ];
+  // 1.7.2: shaded, full-length double-headed courts (28 x 54, drawn pixel by pixel; '.' = paper, '0' = outline)
+  const COURT_PAL = ["#2a1a26", "#ffffff", "#8c8c9c", "#e8e4ee", "#86c2f0", "#2c4892", "#c4bccc", "#4a7fd0", "#6a3e22", "#f0f0f6", "#ffe48c", "#cc861e", "#e0623a", "#f4b73a", "#c8823a", "#6a3a1e", "#fbdcb8", "#d08a62", "#3a1e12", "#9a5a2a", "#f8a8c4", "#7e2430", "#f0b88a", "#b8382e", "#9a5844", "#1e6a6a", "#6ccab0", "#2f9a8a", "#4a1a28", "#123c44", "#8a4c16", "#b88050", "#96603a", "#3e2214", "#2a1e36", "#5e4566", "#43304e", "#e0709a", "#4a2236", "#94404e", "#6e2e42", "#1a2452", "#c4c4d0", "#a8a2b2", "#6e6878", "#f2f0f6", "#d4d0dc"];
+  const COURT_KEY = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const COURT_ART = {
+    11: [
+      ".....010.00000000......020..",
+      "....01300444444450.....02000",
+      "...0336047777777550....08099",
+      "...06006555555555550.0008990",
+      "....0..0aaaabcaaddb009208990",
+      ".......0bbbbbbbbbbb002208990",
+      ".......0efgghgghhi0..0208990",
+      ".......0efghighihjf0..008290",
+      "......0ejfg10gh0hjf0...08090",
+      "......0efhkgghhlhji0..0bbb02",
+      "......0ffhgmhlngof0....080.0",
+      ".......0ffhhhhhhhf0....080..",
+      ".......011111111360....080..",
+      "......06666666666660...080..",
+      "....00cclllllppppppp00.080..",
+      "..00plnl61616166666nnl0080..",
+      ".0qprqcnl666666q6rpncl0080..",
+      ".0pdqplnnccclaqrrppslll080..",
+      ".0qprplnnnnnlqrrppptnlub80..",
+      ".0pdqrpllllllpppppptllbgmh0.",
+      "..0pppvvvvv8aabvwwwwww8mhh0.",
+      ".0aabp888888bxb8v888888mhh0.",
+      ".0bbbccclccclpqpw88rtp0hho0.",
+      ".0gghcnnlnnnlaqp8d8rtp0080..",
+      ".0gmhcnnlnnnlqrp888rtp0080..",
+      ".0hhhcnnlnnnlprrrrrptp0080..",
+      ".0dabllllllllapppppptp0080..",
+      "..0800ptppppppallllllllbad0.",
+      "..0800ptprrrrrplnnnlnnchhh0.",
+      "..0800ptr888prqlnnnlnnchmg0.",
+      "..0800ptr8d8pqalnnnlnnchgg0.",
+      ".0ohh0ptr88wpqplccclcccbbb0.",
+      ".0hhm888888v8bxb888888pbaa0.",
+      ".0hhm8wwwwwwvbaa8vvvvvppp0..",
+      ".0hmgblltppppppllllllprqdp0.",
+      "..08bulntppprrqlnnnnnlprpq0.",
+      "..080lllspprrqalcccnnlpqdp0.",
+      "..0800lcnpr6q666666lncqrpq0.",
+      "..0800lnn66666161616lnlp00..",
+      "..080.00ppppppplllllcc00....",
+      "..080...06666666666660......",
+      "..080....063111111110.......",
+      "..080....0fhhhhhhhff0.......",
+      "0.080....0fognlhmghff0......",
+      "20bbb0..0ijhlhhggkhfe0......",
+      "09080...0fjh0hg01gfje0......",
+      "092800..0fjhihgihgfe0.......",
+      "0998020..0ihhgghggfe0.......",
+      "099802200bbbbbbbbbbb0.......",
+      "099802900bddaacbaaaa0..0....",
+      "0998000.05555555555560060...",
+      "99080....0557777777406330...",
+      "00020.....05444444400310....",
+      "..020......00000000.010.....",
+    ],
+    12: [
+      ".........0.0ab0.0...........",
+      "........0a00bb00b0..........",
+      "........0bcb41bcb0..........",
+      ".......0ybbbbbbbby0.........",
+      "......0zAAAggghAAyy0........",
+      "......0zAAggmmhghAy0........",
+      "......0zygh0gh0ghAy0........",
+      ".....0zAygg7gh7hhAyy0.......",
+      ".....0zAyhkghhhBoAyy0.......",
+      ".....0zAyhghnclghAyy0.......",
+      ".....0zAyyhmggghhyyy0.......",
+      ".....0yy116ghhhh36yy0.......",
+      ".....0613331111166660.......",
+      "....00l63333641366l60.......",
+      "...0ccnd6666666666ncn0......",
+      "..0cnclCddddddddddnlll0.....",
+      "..0ccnnl44445b4474nlll0000..",
+      ".0clnnnl57774a5755llllggmh0.",
+      ".0l0lnnlC4775b4754Cllumhhh0.",
+      ".0070csDC4774a575ECClbmhhh0.",
+      ".07a7lDEC4775b475ECCEChhhh0.",
+      ".0a7aDCCC5554a555CCCCCC000..",
+      ".07a7CclabababababanlEC0....",
+      ".0F7FCcnlcccccclnnsllEC0....",
+      ".0ggghcnlnnncnnlllsllEC0....",
+      ".0gmmhcnlnnncnnlllsllEC0....",
+      ".0hhhhlnlnnncnnlllsllCC000..",
+      "..000CCllslllnncnnnlnlhhhh0.",
+      "....0CEllslllnncnnnlnchmmg0.",
+      "....0CEllslllnncnnnlnchggg0.",
+      "....0CEllsnnlcccccclncCF7F0.",
+      "....0CElnabababababalcC7a70.",
+      "..000CCCCCC555a4555CCCDa7a0.",
+      ".0hhhhCECCE574b5774CEDl7a70.",
+      ".0hhhmblCCE575a4774CDsc0700.",
+      ".0hhhmullC4574b5774Clnnl0l0.",
+      ".0hmggllll5575a47775lnnnlc0.",
+      "..0000llln4744b54444lnncc0..",
+      ".....0lllnddddddddddClcnc0..",
+      "......0ncn6666666666dncc0...",
+      ".......06l66314633336l00....",
+      ".......0666611111333160.....",
+      ".......0yy63hhhhg611yy0.....",
+      ".......0yyyhhgggmhyyAz0.....",
+      ".......0yyAhglcnhghyAz0.....",
+      ".......0yyAoBhhhgkhyAz0.....",
+      ".......0yyAhh7hg7ggyAz0.....",
+      "........0yAhg0hg0hgyz0......",
+      "........0yAhghmmggAAz0......",
+      "........0yyAAhgggAAAz0......",
+      ".........0ybbbbbbbby0.......",
+      "..........0bcb14bcb0........",
+      "..........0b00bb00a0........",
+      "...........0.0ba0.0.........",
+    ],
+    13: [
+      ".......0a0.00a00.0b0...000..",
+      ".......0b00b0b0b00b0..029G0.",
+      ".......0aaaaaaaaaab0..029G0.",
+      ".......0abcab4abcdb0..029G0.",
+      ".......0bbbbbbbbbbb0..029G0.",
+      ".......0HggggghhmhH0..029G0.",
+      ".......0HhIIghIImhH0..029G0.",
+      ".......0Hgh0gmh0hoH0..029G0.",
+      ".......0HhhhhhohhhH0..029G0.",
+      ".......0JKJJJoJJJKH0..029G0.",
+      "......00HKKKHsJKHK00..029G0.",
+      ".....0616HHKKJKKH6660.029G0.",
+      "....00l605JKHKHH5l0l00029G0.",
+      "...0Cccl66HHKKHH6nnlnl029G0.",
+      "..0DCcnnl660HH506lllll029G0.",
+      ".0DECcnsla665516lanlll029G00",
+      ".0DCcnnlnla6116lanllcldbnddb",
+      "0DEECcnlnnla66lallllllbbbbbu",
+      "0DEECcnsnlb5dab5bnlldbggmh00",
+      "0DEC0lnlnlb45a45bnlsdbmhmh0.",
+      "0DC0a0llnlb44575bnlsdbmhhh0.",
+      "0C00a00snlb45a45bnlsbbhhhh0.",
+      "00aadd0lnlb54555bnlsnl00w0..",
+      "00n4nnn0llabbcbbbnllll0adb0.",
+      "00ddddbgmlb44445bnllll0bbb0.",
+      "0C0bbu0hmlb44775bnllll0000..",
+      "0CC000mhhlb54775blllll00000.",
+      ".00000lllllb57745blhhm000CC0",
+      "..0000llllnb57744blmh0ubb0C0",
+      ".0bbb0llllnb54444blmgbdddd00",
+      ".0bda0llllnbbbcbball0nnn4n00",
+      "..0w00lnslnb55545blnl0ddaa00",
+      ".0hhhhbbslnb54a54blns00a00C0",
+      ".0hhhmbdslnb57544blnll0a0CD0",
+      ".0hmhmbdslnb54a54blnlnl0CED0",
+      "00hmggbdllnb5bad5blnsncCEED0",
+      "ubbbbbllllllal66alnnlncCEED0",
+      "bddnbdlcllnal6116alnlnncCD0.",
+      "00G920lllnal615566alsncCED0.",
+      ".0G920lllll605HH066lnncCD0..",
+      ".0G920lnlnn6HHKKHH66lccC0...",
+      ".0G92000l0l5HHKHKJ506l00....",
+      ".0G920.0666HKKJKKHH6160.....",
+      ".0G920..00KHKJsHKKKH00......",
+      ".0G920..0HKJJJoJJJKJ0.......",
+      ".0G920..0HhhhohhhhhH0.......",
+      ".0G920..0Hoh0hmg0hgH0.......",
+      ".0G920..0HhmIIhgIIhH0.......",
+      ".0G920..0HhmhhgggggH0.......",
+      ".0G920..0bbbbbbbbbbb0.......",
+      ".0G920..0bdcba4bacba0.......",
+      ".0G920..0baaaaaaaaaa0.......",
+      ".0G920..0b00b0b0b00b0.......",
+      "..000...0b0.00a00.0a0.......",
+    ],
+  };
   const suitCol = (ink, suit) => (ink.suit ? ink.suit[suit] : G.isRed(suit) ? ink.red : ink.black);
   G.suitColour = (suit) => suitCol(G.cardInk || {}, suit) || (G.isRed(suit) ? P.red : P.ink);
+  // full-length, double-headed figure: the top half is drawn, the bottom half is the same turned upside down
   function drawCourt(x, suit, rank, ink) {
-    const art = COURTS[rank], [main, second, qhair] = COURT_SUIT[suit];
-    const frameInk = suitCol(ink, suit), bg = ink.frame || '#f3e9cf';
-    const pal = { '.': bg, k: '#1a1c2c', s: '#f2c79a', S: '#d0866a', g: '#ffcd75', G: '#c98a2e', r: main, R: '#1a1c2c', b: second, B: '#1a1c2c',
-      w: '#f4f4f4', h: rank === 13 ? '#e8ecf4' : rank === 12 ? qhair : '#86603e', e: main, p: '#94b0c2' };
-    const X0 = 12, Y0 = 9, AW = 20, AH = 22;
-    x.fillStyle = frameInk; x.fillRect(X0 - 1, Y0 - 1, AW + 2, AH * 2 + 3);
-    x.fillStyle = bg; x.fillRect(X0, Y0, AW, AH * 2 + 1);
-    for (let ry = 0; ry < AH; ry++) {
+    const art = COURT_ART[rank], X0 = 8, Y0 = 4;
+    for (let ry = 0; ry < art.length; ry++) {
       const row = art[ry];
-      for (let cx = 0; cx < AW; cx++) {
+      for (let cx = 0; cx < row.length; cx++) {
         const ch = row[cx];
-        if (ch === '.' || ch === undefined) continue;
-        x.fillStyle = pal[ch];
+        if (ch === '.') continue;
+        x.fillStyle = ch === '0' && ink.courtLine ? ink.courtLine : COURT_PAL[COURT_KEY.indexOf(ch)];
         x.fillRect(X0 + cx, Y0 + ry, 1, 1);
-        x.fillRect(X0 + AW - 1 - cx, Y0 + AH * 2 - ry, 1, 1); // the same figure, upside down
       }
     }
-    // gold divider through the middle, and the suit on each half
-    x.fillStyle = frameInk; x.fillRect(X0, Y0 + AH, AW, 1);
-    x.fillStyle = '#ffcd75'; x.fillRect(X0 + 2, Y0 + AH, AW - 4, 1);
-    blit(x, SMALL[SUITS[suit]], X0 + 2, Y0 + AH - 6, frameInk);
-    blit(x, SMALL[SUITS[suit]], X0 + AW - 7, Y0 + AH + 2, frameInk, 1, true);
   }
 
-  // ---------- Aces: an ornate medallion (the Ace of Spades gets the fanciest one) ----------
+  // ---------- Aces: one clean, centred suit ----------
   function drawAce(x, suit, ink) {
-    const col = suitCol(ink, suit), s = SUITS[suit];
-    const cx = CW / 2, cy = CH / 2;
-    const ring = (r, c, t = 1) => { x.fillStyle = c; for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) { const d = Math.hypot(xx + 0.5, yy + 0.5); if (d <= r && d > r - t) x.fillRect(cx + xx, cy + yy, 1, 1); } };
-    const disc = (r, c) => { x.fillStyle = c; for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (Math.hypot(xx + 0.5, yy + 0.5) <= r) x.fillRect(cx + xx, cy + yy, 1, 1); };
-    if (suit === 0) {
-      // sunburst rays, a gold ring and a big spade with gold filigree
-      x.fillStyle = '#ffcd75';
-      for (let a = 0; a < 16; a++) { const an = a * Math.PI / 8; for (let r = 14; r < 19; r++) x.fillRect(Math.round(cx + Math.cos(an) * r - 0.5), Math.round(cy + Math.sin(an) * r * 1.15 - 0.5), 1, 1); }
-      disc(14, ink.frame || '#f3e9cf'); ring(14, col, 1); ring(13, '#ffcd75', 1); ring(11, '#c98a2e', 1);
-      blit(x, BIG[s], cx - 10.5 | 0, cy - 11 | 0, col, 3);
-      x.fillStyle = '#ffcd75'; x.fillRect(cx - 1, cy - 6, 2, 8); x.fillRect(cx - 3, cy - 3, 6, 2);
-      x.fillStyle = col; x.fillRect(cx - 1, cy - 4, 2, 1);
-    } else {
-      disc(13, ink.frame || '#f3e9cf'); ring(13, col, 1); ring(11, '#ffcd75', 1);
-      for (const [dx, dy] of [[0, -12], [0, 12], [-12, 0], [12, 0]]) { x.fillStyle = '#ffcd75'; x.fillRect(cx + dx - 1, cy + dy - 1, 2, 2); }
-      blit(x, BIG[s], cx - 7, cy - 7, col, 2);
-      x.fillStyle = 'rgba(255,255,255,0.55)'; x.fillRect(cx - 4, cy - 4, 2, 2);
-    }
+    const col = suitCol(ink, suit);
+    blit(x, BIG[SUITS[suit]], Math.floor(CW / 2 - 10.5), Math.floor(CH / 2 - 10.5), col, 3);
   }
 
   // build one face for a deck ink (paper / edge / line / suit colours)

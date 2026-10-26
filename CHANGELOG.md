@@ -2,6 +2,11 @@
 
 Every version of Pixel Card Club, newest first. The current version is also summarized at the top of the [README](README.md). Downloads for each version are on the [Releases page](https://github.com/bloodrive65/pixel-card-club/releases).
 
+## 1.7.2
+
+- **Redrawn court cards**: the Jacks, Queens and Kings are new full-length, double-headed figures with real shading (3–4 tones per colour and a soft outline). The King has a sword and a golden orb, the Queen has a lace collar and fan, and the Jack carries a halberd and wears a feathered beret.
+- **Bigger aces**: every Ace now shows one large, clean suit symbol in the centre.
+
 ## 1.7.1
 
 - **New splash logo**: the bloodrive65 intro now shows a pixel-art version of the bloodrive65 wolf, redrawn in the game's palette, with the name in dark red.
