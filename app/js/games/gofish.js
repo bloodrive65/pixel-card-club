@@ -7,9 +7,10 @@
   function lay() {
     if (G.portrait) {
       const E = G.EX(), m = Math.round(E / 2);
-      DECK = { x: 158, y: 196 + Math.round(m / 2) }; HAND_Y = 330 + m;
-      PLATE = { x: 8, y: HAND_Y + CH + 12 }; BOOK = { x: 146, y: PLATE.y + 12 }; BOOK_ROW = 7;
-      LOG = { x: 8, y: PLATE.y + 64, w: 344 }; LOG.h = G.H - 8 - LOG.y;
+      DECK = { x: 158, y: 196 + Math.round(m / 2) }; HAND_Y = 338 + m;
+      // a big hand splits into two rows so every card stays wide enough to tap
+      PLATE = { x: 8, y: HAND_Y + CH + 44 }; BOOK = { x: 146, y: PLATE.y + 12 }; BOOK_ROW = 7;
+      LOG = { x: 8, y: G.H - 42, w: 344, h: 34, strip: true };
       TAG_Y = DECK.y + CH + 22;
     } else {
       DECK = { x: 298, y: 176 }; HAND_Y = 268; BOOK = { x: 14, y: 190 }; BOOK_ROW = 7;
@@ -284,11 +285,12 @@
       this.deck.forEach((c, i) => G.place(c, DECK.x - Math.floor(i / 6), DECK.y - Math.floor(i / 6), i, false));
       const me = this.players[0];
       const n = me.hand.length;
-      const off = n > 1 ? Math.min(32, Math.floor(((G.portrait ? G.W - 16 : 560) - CW) / (n - 1))) : 0;
-      const hw = CW + (n - 1) * off;
+      const two = G.portrait && n > 9, k1 = two ? Math.ceil(n / 2) : n;
+      const rowOff = (k) => (k > 1 ? Math.min(G.portrait ? 38 : 32, Math.floor(((G.portrait ? G.W - 16 : 560) - CW) / (k - 1))) : 0);
       const hov = this.hoverCard;
       me.hand.forEach((c, i) => {
-        G.place(c, G.W / 2 - hw / 2 + i * off, HAND_Y, 100 + i, true);
+        const row = i < k1 ? 0 : 1, j = row ? i - k1 : i, k = row ? n - k1 : k1, off = rowOff(k), hw = CW + (k - 1) * off;
+        G.place(c, G.W / 2 - hw / 2 + j * off, HAND_Y + row * 38, 100 + i, true);
         const target = this.selRank === c.rank ? 12 : hov && hov.rank === c.rank && this.phase === 'choose' ? 5 : 0;
         c.lift = G.lerp(c.lift || 0, target, 0.35);
       });
@@ -357,6 +359,7 @@
       const stats = this.teamMode
         ? [{ label: 'BOOKS LEFT', value: 13 - this.totalBooks() }, { label: 'BLUE', value: this.teamBooks(0), color: P.sky }, { label: 'RED', value: this.teamBooks(1), color: P.red }]
         : [{ label: 'BOOKS LEFT', value: 13 - this.totalBooks() }, { label: 'YOUR BOOKS', value: me.books.length, color: P.gold }];
+      ui.talkOverlay(this, this.log);
       const menu = ui.topBar(this.teamMode ? 'GO FISH TEAMS' : 'GO FISH', stats);
       if (menu && !this.paused) { this.paused = true; ui.modal = true; }
       if (this.paused) {
@@ -406,6 +409,7 @@
       }
     },
     drawLog() {
+      if (G.portrait && LOG.strip) return ui.talkStrip(this, LOG, this.log);
       const { x, y, w, h } = LOG;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
       G.text('TABLE TALK', x + 6, y + 5, P.gold, 'small');
@@ -479,38 +483,38 @@
       ui.block(8, 8, G.W - 16, G.H - 16);
       G.text('GO FISH', 22, 18, P.gold, 'big', 'left', 2, P.black);
       G.text('MODE', 22, 40, P.silver, 'small');
-      const m = ui.choice(['FREE', 'TEAMS 2V2'], S.fishMode === 'teams' ? 1 : 0, 22, 48, 150, 16, { id: 'mode', font: 'small' });
+      const m = ui.choice(['FREE', 'TEAMS 2V2'], S.fishMode === 'teams' ? 1 : 0, 22, 48, 150, 26, { id: 'mode', font: 'small' });
       if ((m === 1 ? 'teams' : 'ffa') !== this.mode()) { S.fishMode = m === 1 ? 'teams' : 'ffa'; G.saveSettings(); }
       let st, view;
-      const gridY = 206 + Math.round(E / 3);
+      const gridY = 218 + Math.round(E / 3);
       if (this.mode() === 'ffa') {
         G.text('OPPONENTS', 188, 40, P.silver, 'small');
-        const o = ui.choice(['1', '2', '3'], S.fishOpponents - 1, 188, 48, 150, 16, { id: 'opp' });
+        const o = ui.choice(['1', '2', '3'], S.fishOpponents - 1, 188, 48, 150, 26, { id: 'opp' });
         if (o !== S.fishOpponents - 1) { S.fishOpponents = o + 1; G.saveSettings(); }
         st = this.ffa;
         const labels = S.fishOpponents === 1 ? ['OPPONENT - ACROSS'] : S.fishOpponents === 2 ? ['OPPONENT 1 - LEFT', 'OPPONENT 2 - RIGHT'] : ['OPPONENT 1 - LEFT', 'OPPONENT 2 - ACROSS', 'OPPONENT 3 - RIGHT'];
         st.slots = labels.map((l) => ({ label: l, color: P.orange }));
         st.focus = Math.min(st.focus, st.slots.length - 1);
-        view = { slots: st.slots, picks: st.picks.slice(0, st.slots.length), focus: st.focus, seatY: 72, gridY, hoverChar: st.hoverChar };
+        view = { slots: st.slots, picks: st.picks.slice(0, st.slots.length), focus: st.focus, seatY: 84, gridY, hoverChar: st.hoverChar };
         G.rosterPicker(view);
         st.picks.splice(0, view.picks.length, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar;
       } else {
         st = this.teams;
-        G.text('BLUE: YOU + PARTNER', 188, 44, P.sky, 'small');
-        G.text('RED: 2 RIVALS', 188, 54, P.red, 'small');
-        st.seatY = 72; st.gridY = gridY;
+        G.text('BLUE: YOU + PARTNER', 188, 48, P.sky, 'small');
+        G.text('RED: 2 RIVALS', 188, 60, P.red, 'small');
+        st.seatY = 84; st.gridY = gridY;
         G.rosterPicker(st);
       }
       const desc = this.mode() === 'teams'
         ? 'Partners sit across. Ask only the rival team. Team books are added together.'
         : 'Everyone plays for themselves. Most books wins.';
-      G.wrap(desc.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, 506 + E + i * 9, P.cyan, 'small'));
-      if (ui.button('RANDOM PICKS', 22, 538 + E, 155, 20, { id: 'rnd', theme: 'dark' })) {
+      G.wrap(desc.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, G.H - 114 + i * 9, P.cyan, 'small'));
+      if (ui.button('RANDOM PICKS', 22, G.H - 82, 155, 30, { id: 'rnd', theme: 'dark' })) {
         if (view) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, v.picks.length, ...v.picks); }
         else { st.picks = [null, null, null]; G.fillRandom(st); }
       }
-      if (ui.button('BACK', 183, 538 + E, 155, 20, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
-      if (ui.button('START', 22, 566 + E, 316, 26, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.start();
+      if (ui.button('BACK', 183, G.H - 82, 155, 30, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
+      if (ui.button('START', 22, G.H - 46, 316, 34, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.start();
     }
   });
 })();

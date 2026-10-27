@@ -2,6 +2,14 @@
 
 Every version of Pixel Card Club, newest first. The current version is also summarized at the top of the [README](README.md). Downloads for each version are on the [Releases page](https://github.com/bloodrive65/pixel-card-club/releases).
 
+## 1.7.4
+
+- **Easier portrait controls on iPhone**: every button in portrait is bigger and more spread out, so it is hard to hit the wrong one. This covers the game tables, setup screens, main menu, profile, customize, options, pause menu, end-of-game windows and the rulebook.
+- **Buttons fire when you lift your finger**: on touch screens a button only triggers if your finger is still on it when you let go. Slide off a button to cancel.
+- **Compact table talk**: in portrait the chat log is now a slim strip showing the last two lines. Tap it to read the whole conversation, then tap anywhere to close it.
+- **Bigger hands split into two rows** in Crazy Eights and Go Fish once you hold more than 9 cards, so every card stays wide enough to tap.
+- Hold'em, Blackjack, War, Solitaire and Spider have larger bottom button bars in portrait; War's card count is now a compact two-column panel.
+
 ## 1.7.3
 
 - **Portrait and landscape on iPhone and iPad**: hold the device upright or sideways and the game re-lays itself to fit, even in the middle of a hand. In portrait, every game has its own tall table with the main buttons in easy thumb reach along the bottom. The menu, setup screens, profile, customize screen, options and rulebook have upright layouts too.

@@ -10,6 +10,9 @@ Every game shares the same layout:
 ## On iPhone and iPad (touch)
 
 - Tap anything you would click. Drag cards with your finger in Solitaire and Spider.
+- Buttons trigger when you lift your finger. If you touch the wrong one, slide your finger off it before letting go and nothing happens.
+- In portrait, table talk is a slim strip above the buttons showing the latest two lines. Tap it to read the full conversation; tap anywhere to close it.
+- Crazy Eights and Go Fish: in portrait a hand of more than 9 cards is shown in two rows.
 - Buttons do not show keyboard shortcuts on touch screens.
 - Go Fish: tap a card, then tap a player. Tap the same card again to cancel.
 - Your profile: tap your badge (top left) or the **PROFILE** button, then tap the name box to type with the on-screen keyboard.

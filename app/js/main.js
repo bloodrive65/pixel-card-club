@@ -1,7 +1,7 @@
 // Pixel Card Club - scene manager, title menu, options, main loop
 (function () {
   'use strict';
-  G.VERSION = '1.7.3'; // keep in step with package.json and app/version.json
+  G.VERSION = '1.7.4'; // keep in step with package.json and app/version.json
   const P = G.P, ui = G.ui, CW = G.CW, CH = G.CH;
 
   G.saveSettings = () => G.store.set('settings', G.settings);
@@ -137,11 +137,11 @@
       [0, 1, 2, 3].forEach((s, i) => G.drawSuit(s, G.W / 2 - 34 + i * 18, ly + 67, 'big', s === 1 || s === 2 ? P.red : P.ink));
       [0, 1, 2, 3].forEach((s, i) => G.drawSuit(s, G.W / 2 - 34 + i * 18, ly + 66, 'big', s === 1 || s === 2 ? P.orange : P.white));
       const turn = (d) => { const np = Math.max(0, Math.min(PAGES.length - 1, (this.page || 0) + d)); if (np !== (this.page || 0)) { this.page = np; this.slide = 1; this.slideDir = d; G.audio.sfx('flip'); } };
-      const pi = ui.choice(PAGES.map((p) => p.name), this.page || 0, 20, 140, G.W - 40, 18, { id: 'pgtab', font: 'small' });
+      const pi = ui.choice(PAGES.map((p) => p.name), this.page || 0, 20, 132, G.W - 40, 28, { id: 'pgtab' });
       if (pi !== (this.page || 0)) turn(pi - (this.page || 0));
       if (!ui.modal && G.key('Tab')) { delete G.input.keyPressed.Tab; turn((this.page || 0) < PAGES.length - 1 ? 1 : -1); }
-      const E = G.EX(), pg = PAGES[this.page || 0], n = pg.games.length, y0 = 166 + Math.round(E / 6), gap = 6;
-      const rh = Math.min(n > 3 ? 100 : 124, Math.floor((340 + E * 0.6 - gap * (n - 1)) / n)), rw = G.W - 28, x0 = 14;
+      const E = G.EX(), pg = PAGES[this.page || 0], n = pg.games.length, y0 = 172 + Math.round(E / 6), gap = 8;
+      const rh = Math.min(n > 3 ? 100 : 124, Math.floor((314 + E * 0.6 - gap * (n - 1)) / n)), rw = G.W - 28, x0 = 14;
       this.slide = Math.max(0, (this.slide || 0) - dt * 6);
       const off = Math.round(this.slide * this.slide * 40 * (this.slideDir || 1));
       // a sideways swipe over the list also changes page
@@ -163,25 +163,25 @@
         const tx = x + 96, big = rh > 90;
         G.text(g.name, tx, y + (big ? 16 : 10), P.gold, 'big', 'left', 1, P.black);
         g.blurb.forEach((b, q) => G.text(b.toUpperCase(), tx, y + (big ? 34 : 25) + q * 10, P.silver, 'small'));
-        if (ui.button('PLAY', tx, y + rh - 28, 90, 20, { key: g.key, theme: g.theme, id: 'play' + this.page + i })) G.go(g.scene());
+        if (ui.button('PLAY', tx, y + rh - 38, 120, 30, { key: g.key, theme: g.theme, id: 'play' + this.page + i })) G.go(g.scene());
         else if (hover && inp.released && !inp.moved && !this.swiped && !ui.blocked()) { G.audio.sfx('click'); G.go(g.scene()); }
       });
       if (!inp.down) this.swiped = false;
-      const fy = 520 + E, bw = 160, fx = G.W / 2 - bw - 4;
-      if (ui.button('OPTIONS', fx, fy, bw, 20, { key: 'o', theme: 'dark' })) this.options = true;
-      if (ui.button('CUSTOMIZE', fx + bw + 8, fy, bw, 20, { key: 'c', theme: 'gold' })) this.custom = true;
-      if (ui.button('RULEBOOK', fx, fy + 26, bw, 20, { key: 'r', theme: 'blue' })) G.Rulebook.open('contents', G.Menu);
+      const fy = 500 + E, bw = 162, fx = G.W / 2 - bw - 5, fh = 34, fp = 42;
+      if (ui.button('OPTIONS', fx, fy, bw, fh, { key: 'o', theme: 'dark' })) this.options = true;
+      if (ui.button('CUSTOMIZE', fx + bw + 10, fy, bw, fh, { key: 'c', theme: 'gold' })) this.custom = true;
+      if (ui.button('RULEBOOK', fx, fy + fp, bw, fh, { key: 'r', theme: 'blue' })) G.Rulebook.open('contents', G.Menu);
       const quitEnabled = !!window.cardclubNative;
       const fsApi = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
       const lastBtn = quitEnabled ? 'QUIT' : G.touch && (G.standalone || !fsApi) ? 'PROFILE' : 'FULLSCREEN';
-      if (ui.button(lastBtn, fx + bw + 8, fy + 26, bw, 20, { key: quitEnabled ? 'q' : 'f', theme: 'dark' })) {
+      if (ui.button(lastBtn, fx + bw + 10, fy + fp, bw, fh, { key: quitEnabled ? 'q' : 'f', theme: 'dark' })) {
         if (quitEnabled) window.cardclubNative.quit();
         else if (lastBtn === 'PROFILE') { this.profileOpen = true; this.nameT = 0; }
         else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
         else if (fsApi) fsApi.call(document.documentElement);
       }
-      G.text('TAP A GAME TO PLAY - SWIPE FOR MORE', G.W / 2, 582 + E, P.felt4, 'small', 'center');
-      G.text('TURN SIDEWAYS FOR THE WIDE TABLE', G.W / 2, 594 + E, P.felt4, 'small', 'center');
+      G.text('TAP A GAME TO PLAY - SWIPE FOR MORE', G.W / 2, 588 + E, P.felt4, 'small', 'center');
+      G.text('TURN SIDEWAYS FOR THE WIDE TABLE', G.W / 2, 600 + E, P.felt4, 'small', 'center');
       G.text('V' + G.VERSION, G.W - 8, G.H - 10, P.felt4, 'small', 'right');
     },
     // ---------- Profile: your name and look ----------
@@ -218,29 +218,31 @@
       G.text(nm, nx + 4, ny + 146, P.white, 'big');
       if (Math.floor(this.nameT * 2) % 2 === 0 && nm.length < 10) G.rect(nx + 5 + G.textWidth(nm, 'big'), ny + 145, 6, 9, P.gold);
       if (!nm.length) G.text('SHOWS AS YOU', nx + nw / 2 + 2, ny + 164, P.slate, 'small', 'center');
-      if (ui.button('RANDOM LOOK', nx - 2, ny + 174, nw, 18, { modal: true, theme: 'blue', id: 'prnd' })) { G.randomProfile(); changed = true; G.audio.sfx('chip'); }
+      if (ui.button('RANDOM LOOK', nx - 2, ny + 172, nw, PT ? 26 : 18, { modal: true, theme: 'blue', id: 'prnd' })) { G.randomProfile(); changed = true; G.audio.sfx('chip'); }
       G.text('AT THE TABLE', nx, ny + 202, P.silver, 'small');
       G.youPlate(nx - 2, ny + 212, nw, 'YOUR STACK 1000', P.silver);
       // option rows
       const rx = PT ? x + 18 : x + 160, vw = PT ? w - 36 : w - 178;
       G.PROFILE_OPTS.forEach((o, i) => {
-        const yy = (PT ? y + 166 : y + 34) + i * 22;
+        // portrait rows are taller, with wide arrow buttons that are easy to hit
+        const rhh = PT ? 26 : 18, ab = PT ? 40 : 18, ty = PT ? 10 : 6;
+        const yy = (PT ? y + 162 : y + 34) + i * (PT ? 30 : 22);
         const cur = (f[o.key] || 0) % o.items.length;
-        G.text(o.label, rx, yy + 6, P.silver, 'small');
-        const ax = rx + 96, aw = vw - 96;
-        G.rect(ax, yy, aw, 18, P.black); G.rect(ax + 1, yy + 1, aw - 2, 16, P.dusk);
-        if (ui.button('<', ax, yy, 18, 18, { modal: true, theme: 'dark', id: 'pl' + i })) { f[o.key] = (cur + o.items.length - 1) % o.items.length; changed = true; G.audio.sfx('click'); }
-        if (ui.button('>', ax + aw - 18, yy, 18, 18, { modal: true, theme: 'dark', id: 'pr' + i })) { f[o.key] = (cur + 1) % o.items.length; changed = true; G.audio.sfx('click'); }
+        G.text(o.label, rx, yy + ty, P.silver, 'small');
+        const ax = rx + (PT ? 78 : 96), aw = vw - (PT ? 78 : 96);
+        G.rect(ax, yy, aw, rhh, P.black); G.rect(ax + 1, yy + 1, aw - 2, rhh - 2, P.dusk);
+        if (ui.button('<', ax, yy, ab, rhh, { modal: true, theme: 'dark', id: 'pl' + i })) { f[o.key] = (cur + o.items.length - 1) % o.items.length; changed = true; G.audio.sfx('click'); }
+        if (ui.button('>', ax + aw - ab, yy, ab, rhh, { modal: true, theme: 'dark', id: 'pr' + i })) { f[o.key] = (cur + 1) % o.items.length; changed = true; G.audio.sfx('click'); }
         const label = (o.names ? o.names[cur] : o.items[cur]).toUpperCase();
         if (o.names) {
           const tw = G.textWidth(label, 'small') + 14, sx = ax + aw / 2 - tw / 2;
-          G.rect(sx, yy + 5, 9, 8, P.black); G.rect(sx + 1, yy + 6, 7, 6, o.items[cur]);
-          G.text(label, sx + 14, yy + 6, P.white, 'small');
-        } else G.text(label, ax + aw / 2, yy + 6, P.white, 'small', 'center');
-        G.text((cur + 1) + '/' + o.items.length, ax + aw - 22, yy + 6, P.slate, 'small', 'right');
+          G.rect(sx, yy + ty - 1, 9, 8, P.black); G.rect(sx + 1, yy + ty, 7, 6, o.items[cur]);
+          G.text(label, sx + 14, yy + ty, P.white, 'small');
+        } else G.text(label, ax + aw / 2, yy + ty, P.white, 'small', 'center');
+        if (!PT) G.text((cur + 1) + '/' + o.items.length, ax + aw - 22, yy + 6, P.slate, 'small', 'right');
       });
       if (changed) { G.resetAvatar('you'); G.saveSettings(); }
-      if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) { G.typer.close(); f.name = (f.name || '').trim(); G.saveSettings(); this.profileOpen = false; }
+      if (ui.button('DONE', G.W / 2 - (PT ? 70 : 50), y + h - (PT ? 44 : 26), PT ? 140 : 100, PT ? 34 : 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) { G.typer.close(); f.name = (f.name || '').trim(); G.saveSettings(); this.profileOpen = false; }
     },
     // ---------- Customize: TABLE tab (colour + surface) and CARDS tab (deck, card colour, back) ----------
     drawCustomize() {
@@ -251,12 +253,12 @@
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
       G.text('CUSTOMIZE', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
       const S = G.settings;
-      const tab = ui.choice(['TABLE', 'CARDS'], this.cTab || 0, G.W / 2 - 100, y + 28, 200, 18, { modal: true, id: 'ctab' });
+      const tab = ui.choice(['TABLE', 'CARDS'], this.cTab || 0, G.W / 2 - (PT ? 120 : 100), y + 26, PT ? 240 : 200, PT ? 26 : 18, { modal: true, id: 'ctab' });
       if (tab !== (this.cTab || 0)) { this.cTab = tab; G.audio.sfx('click'); }
       const smooth = G.ctx.imageSmoothingEnabled;
       if (!this.cTab) {
         // table colours
-        G.text('TABLE COLOUR', x + 18, y + 56, P.silver, 'small');
+        G.text('TABLE COLOUR', x + 18, y + (PT ? 58 : 56), P.silver, 'small');
         G.TABLES.forEach((t, i) => {
           const sx = x + (PT ? 56 : 18) + (i % 3) * 78, sy = y + 66 + Math.floor(i / 3) * 32;
           const sel = (S.table || 0) === i;
@@ -272,16 +274,16 @@
         // surfaces
         G.text('SURFACE', x + 18, y + 170, P.silver, 'small');
         G.SURFACES.forEach((name, i) => {
-          const bx = x + (PT ? 56 : 18) + (i % 3) * 78, by = y + 180 + Math.floor(i / 3) * 24;
+          const bx = x + (PT ? 56 : 18) + (i % 3) * 78, by = y + 180 + Math.floor(i / 3) * (PT ? 32 : 24);
           const sel = (S.surface || 0) === i;
-          if (ui.button(name, bx, by, 72, 20, { modal: true, theme: sel ? 'gold' : 'dark', selected: sel, font: 'small', id: 'surf' + i }) && !sel) {
+          if (ui.button(name, bx, by, 72, PT ? 28 : 20, { modal: true, theme: sel ? 'gold' : 'dark', selected: sel, font: 'small', id: 'surf' + i }) && !sel) {
             S.surface = i; G.applySurface(); G.saveSettings(); G.audio.sfx('click');
           }
         });
-        if (S.surface === 3) G.text('WOOD IGNORES THE TABLE COLOUR', x + 18, y + 234, P.slate, 'small');
+        if (S.surface === 3) G.text('WOOD IGNORES THE TABLE COLOUR', x + 18, y + (PT ? 246 : 234), P.slate, 'small');
         // preview: the whole table, shrunk down
-        const ph = PT ? 250 : Math.round(220 * G.SH / G.SW), pw = PT ? Math.round(ph * G.SW / G.SH) : 220;
-        const px = PT ? Math.round(G.W / 2 - pw / 2) : x + 262, py = PT ? y + 262 : y + 66;
+        const ph = PT ? 236 : Math.round(220 * G.SH / G.SW), pw = PT ? Math.round(ph * G.SW / G.SH) : 220;
+        const px = PT ? Math.round(G.W / 2 - pw / 2) : x + 262, py = PT ? y + 270 : y + 66;
         G.text('PREVIEW', px, py - 10, P.silver, 'small');
         G.ctx.imageSmoothingEnabled = false;
         G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(px, py, pw, ph); G.ctx.clip();
@@ -299,40 +301,40 @@
         // deck style
         G.text('DECK', x + 18, y + 56, P.silver, 'small');
         G.DECKS.forEach((d, i) => {
-          const bx = x + (PT ? 55 : 18) + (i % 2) * 117, by = y + 66 + Math.floor(i / 2) * 24;
+          const bx = x + (PT ? 55 : 18) + (i % 2) * 117, by = y + 66 + Math.floor(i / 2) * (PT ? 32 : 24);
           const sel = (G.deckIndex || 0) === i;
-          if (ui.button(d.name, bx, by, 111, 20, { modal: true, theme: sel ? 'gold' : 'dark', selected: sel, font: 'small', id: 'deck' + i }) && !sel) {
+          if (ui.button(d.name, bx, by, 111, PT ? 28 : 20, { modal: true, theme: sel ? 'gold' : 'dark', selected: sel, font: 'small', id: 'deck' + i }) && !sel) {
             G.applyDeck(i); G.saveSettings(); G.audio.sfx('shuffle');
           }
         });
         // card colour (paper) for decks that allow it
-        const cy0 = y + 66 + Math.ceil(G.DECKS.length / 2) * 24 + 8;
+        const cy0 = y + 66 + Math.ceil(G.DECKS.length / 2) * (PT ? 32 : 24) + 8;
         G.text('CARD COLOUR', x + 18, cy0, P.silver, 'small');
         if (G.cardArt.custom) G.text('A CUSTOM CARD SHEET IS IN USE', x + 18, cy0 + 14, P.orange, 'small');
         else if (!G.deckTintable()) G.text('THIS DECK HAS ITS OWN COLOURS', x + 18, cy0 + 14, P.slate, 'small');
         else G.CARD_COLOURS.forEach((cc, i) => {
-          const sx = x + (PT ? 56 : 18) + (i % 3) * 78, sy = cy0 + 9 + Math.floor(i / 3) * 21;
+          const ch = PT ? 26 : 18, sx = x + (PT ? 56 : 18) + (i % 3) * 78, sy = cy0 + 9 + Math.floor(i / 3) * (PT ? 30 : 21);
           const sel = (S.cardColour || 0) === i;
-          const hover = G.inRect(G.input.x, G.input.y, sx, sy, 72, 18);
-          G.rect(sx, sy, 72, 18, sel ? P.gold : hover ? P.white : P.black);
-          G.rect(sx + 2, sy + 2, 68, 14, cc.paper); G.rect(sx + 2, sy + 13, 68, 3, cc.edge);
-          G.text(cc.name, sx + 36, sy + 5, P.ink, 'small', 'center');
+          const hover = G.inRect(G.input.x, G.input.y, sx, sy, 72, ch);
+          G.rect(sx, sy, 72, ch, sel ? P.gold : hover ? P.white : P.black);
+          G.rect(sx + 2, sy + 2, 68, ch - 4, cc.paper); G.rect(sx + 2, sy + ch - 5, 68, 3, cc.edge);
+          G.text(cc.name, sx + 36, sy + (PT ? 8 : 5), P.ink, 'small', 'center');
           if (hover) ui.hoverId = 'cc' + i;
           if (hover && G.input.pressed && !sel) { G.input.pressed = false; S.cardColour = i; G.rebuildDeck(); G.saveSettings(); G.audio.sfx('chip'); }
         });
         // preview: a fan of court cards and aces on your table
-        const px = PT ? x + 18 : x + 262, py = PT ? cy0 + 56 : y + 56, pw = PT ? w - 36 : 220, ph = PT ? 116 : 112;
+        const px = PT ? x + 18 : x + 262, py = PT ? cy0 + 74 : y + 56, pw = PT ? w - 36 : 220, ph = PT ? 108 : 112;
         G.ctx.save(); G.ctx.beginPath(); G.ctx.rect(px, py, pw, ph); G.ctx.clip();
         G.ctx.drawImage(G.ui.feltCanvas(), 210 + G.ox, 80 + G.oy, pw, ph, px, py, pw, ph);
-        ['0_1', '1_13', '2_12', '3_11', '1_1', '2_10'].forEach((f, i) => G.ctx.drawImage(G.cardArt.faces[f], px + (PT ? 22 : 8) + i * (PT ? 46 : 34), py + (i % 2 ? 46 : 8)));
+        ['0_1', '1_13', '2_12', '3_11', '1_1', '2_10'].forEach((f, i) => G.ctx.drawImage(G.cardArt.faces[f], px + (PT ? 22 : 8) + i * (PT ? 46 : 34), py + (i % 2 ? (PT ? 40 : 46) : (PT ? 6 : 8))));
         G.ctx.restore();
         G.outline(px - 1, py - 1, pw + 2, ph + 2, P.black);
         // card backs
-        const bky = PT ? py + ph + 16 : y + 176;
+        const bky = PT ? py + ph + 14 : y + 176;
         G.text('CARD BACK', x + 18, bky, P.silver, 'small');
         const names = G.backNames();
         names.forEach((name, i) => {
-          const bx = PT ? x + 28 + (i % 5) * 58 : x + 18 + i * 58, by = PT ? bky + 10 + Math.floor(i / 5) * 86 : y + 186;
+          const bx = PT ? x + 28 + (i % 5) * 58 : x + 18 + i * 58, by = PT ? bky + 8 + Math.floor(i / 5) * 84 : y + 186;
           const sel = S.back === i;
           const hover = G.inRect(G.input.x, G.input.y, bx, by, 50, 80);
           G.rect(bx, by, 50, 80, sel ? P.gold : hover ? P.white : P.black);
@@ -343,42 +345,43 @@
           if (hover && G.input.pressed) { G.input.pressed = false; S.back = i; G.saveSettings(); G.audio.sfx('chip'); }
         });
       }
-      if (ui.button('DONE', G.W / 2 - 50, y + h - 26, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) this.custom = false;
+      if (ui.button('DONE', G.W / 2 - (PT ? 70 : 50), y + h - (PT ? 44 : 26), PT ? 140 : 100, PT ? 34 : 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) this.custom = false;
     },
     drawOptions() {
       ui.modal = true;
       G.alpha(0.7, () => G.rect(0, 0, G.W, G.H, P.ink));
       ui.block(0, 0, G.W, G.H);
-      const w = Math.min(380, G.W - 12), h = 256, x = G.W / 2 - w / 2, y = G.portrait ? Math.round(G.H / 2 - 128) : 52;
+      const PT = G.portrait, ch = PT ? 30 : 18, pitch = PT ? 40 : 26;
+      const w = Math.min(380, G.W - 12), h = PT ? 34 + pitch * 6 + 50 : 256, x = G.W / 2 - w / 2, y = PT ? Math.round(G.H / 2 - h / 2) : 52;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
       G.text('OPTIONS', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
       const S = G.settings; let changed = false;
-      const row = (label, yy) => G.text(label, x + 18, yy + 7, P.silver, 'small');
-      const ox2 = G.portrait ? 130 : 150; // where the choices start
+      const row = (label, yy) => G.text(label, x + (PT ? 12 : 18), yy + (PT ? 12 : 7), P.silver, 'small');
+      const ox2 = PT ? 120 : 150; // where the choices start
       let yy = y + 34;
       row('SOUND', yy);
-      const snd = ui.choice(['ON', 'OFF'], S.sound ? 0 : 1, x + ox2, yy, w - ox2 - 18, 18, { modal: true, id: 'snd' });
+      const snd = ui.choice(['ON', 'OFF'], S.sound ? 0 : 1, x + ox2, yy, w - ox2 - (PT ? 8 : 18), ch, { modal: true, id: 'snd' });
       if ((snd === 0) !== S.sound) { S.sound = snd === 0; changed = true; }
-      yy += 26; row('SCALING', yy);
-      const sc = ui.choice(['PIXEL PERFECT', 'FILL WINDOW'], S.pixelPerfect ? 0 : 1, x + ox2, yy, w - ox2 - 18, 18, { modal: true, id: 'sc', font: 'small' });
+      yy += pitch; row('SCALING', yy);
+      const sc = ui.choice(['PIXEL PERFECT', 'FILL WINDOW'], S.pixelPerfect ? 0 : 1, x + ox2, yy, w - ox2 - (PT ? 8 : 18), ch, { modal: true, id: 'sc', font: 'small' });
       if ((sc === 0) !== S.pixelPerfect) { S.pixelPerfect = sc === 0; G.resize(); changed = true; }
-      yy += 26; row('SOLITAIRE DRAW', yy);
-      const dr = ui.choice(['DRAW 1', 'DRAW 3'], S.drawThree ? 1 : 0, x + ox2, yy, w - ox2 - 18, 18, { modal: true, id: 'dr', font: 'small' });
+      yy += pitch; row('SOLITAIRE DRAW', yy);
+      const dr = ui.choice(['DRAW 1', 'DRAW 3'], S.drawThree ? 1 : 0, x + ox2, yy, w - ox2 - (PT ? 8 : 18), ch, { modal: true, id: 'dr', font: 'small' });
       if ((dr === 1) !== S.drawThree) { S.drawThree = dr === 1; changed = true; }
-      yy += 26; row('BLACKJACK DECKS', yy);
+      yy += pitch; row('BLACKJACK DECKS', yy);
       const deckOpts = [1, 2, 4, 6];
-      const dk = ui.choice(deckOpts.map(String), Math.max(0, deckOpts.indexOf(S.bjDecks)), x + ox2, yy, w - ox2 - 18, 18, { modal: true, id: 'dk' });
+      const dk = ui.choice(deckOpts.map(String), Math.max(0, deckOpts.indexOf(S.bjDecks)), x + ox2, yy, w - ox2 - (PT ? 8 : 18), ch, { modal: true, id: 'dk' });
       if (deckOpts[dk] !== S.bjDecks) { S.bjDecks = deckOpts[dk]; changed = true; }
-      yy += 26; row('WHEN YOU ARE OUT', yy);
-      const wo = ui.choice(['STOP', 'WATCH TO THE END'], S.watchOut ? 1 : 0, x + ox2, yy, w - ox2 - 18, 18, { modal: true, id: 'wo', font: 'small' });
+      yy += pitch; row('WHEN YOU ARE OUT', yy);
+      const wo = ui.choice(['STOP', 'WATCH TO THE END'], S.watchOut ? 1 : 0, x + ox2, yy, w - ox2 - (PT ? 8 : 18), ch, { modal: true, id: 'wo', font: 'small' });
       if ((wo === 1) !== !!S.watchOut) { S.watchOut = wo === 1; changed = true; }
-      yy += 26; row('RESET STATS', yy);
-      if (ui.button('RESET CHIPS + WINS', x + ox2, yy, w - ox2 - 18, 18, { modal: true, theme: 'red', font: 'small' })) {
+      yy += pitch; row('RESET STATS', yy);
+      if (ui.button('RESET CHIPS + WINS', x + ox2, yy, w - ox2 - (PT ? 8 : 18), ch, { modal: true, theme: 'red', font: 'small' })) {
         ['bj_chips', 'bj_best', 'sol_won', 'sol_played', 'sol_best', 'fish_won', 'fish_played', 'records', 'bj_mates', 'war_won', 'war_played', 'c8_won', 'c8_played', 'spider_won', 'spider_played', 'spider_best1', 'spider_best2', 'spider_best4', 'poker_won', 'poker_played'].forEach((k) => G.store.set(k, null));
         G.floatText('STATS RESET', G.W / 2, y + h - 40, P.orange, 'small');
       }
       if (changed) { G.saveSettings(); G.audio.sfx('click'); }
-      if (ui.button('DONE', G.W / 2 - 50, y + h - 28, 100, 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) this.options = false;
+      if (ui.button('DONE', G.W / 2 - (PT ? 70 : 50), y + h - (PT ? 44 : 28), PT ? 140 : 100, PT ? 34 : 20, { modal: true, theme: 'green', key: ['Escape', 'Enter'], showKey: false })) this.options = false;
     }
   });
 

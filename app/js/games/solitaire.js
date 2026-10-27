@@ -6,7 +6,7 @@
   // wide (landscape) table by default; lay() swaps in the upright (portrait) layout with the buttons along the bottom
   let COLW, X0, TOP, TAB_Y, BOTTOM;
   function lay() {
-    if (G.portrait) { COLW = 51; X0 = 5; TOP = 42; TAB_Y = 118; BOTTOM = 56; }
+    if (G.portrait) { COLW = 51; X0 = 5; TOP = 42; TAB_Y = 118; BOTTOM = 72; }
     else { COLW = 56; X0 = 150; TOP = 32; TAB_Y = 106; BOTTOM = 6; }
   }
   lay();
@@ -321,20 +321,20 @@
       }
     },
     drawSidePortrait() {
-      const y2 = G.H - 48, y1 = G.H - 26;
-      G.rect(0, y2 - 8, G.W, G.H - (y2 - 8), P.ink); G.rect(0, y2 - 8, G.W, 1, P.dusk); G.rect(0, y2 - 8 - 1, G.W, 1, P.black);
-      ui.block(0, y2 - 8, G.W, G.H - y2 + 8);
+      const y2 = G.H - 60, y1 = G.H - 44, X0b = -G.ox, BW = G.W + G.ox * 2;
+      G.rect(X0b, y2 - 6, BW, G.H - (y2 - 6), P.ink); G.rect(X0b, y2 - 6, BW, 1, P.dusk); G.rect(X0b, y2 - 7, BW, 1, P.black);
+      ui.block(X0b, y2 - 7, BW, G.H - y2 + 7);
       const stats = [['STOCK', String(this.stock.cards.length), P.white], ['FOUND', this.found.reduce((a, f) => a + f.cards.length, 0) + '/52', P.white], ['WINS', G.store.get('sol_won', 0) + '/' + G.store.get('sol_played', 0), P.white], ['BEST', String(G.store.get('sol_best', 0)), P.gold]];
       stats.forEach(([l, v, c], i) => { const x = 8 + i * 88; G.text(l, x, y2 + 2, P.silver, 'small'); G.text(v, x + G.textWidth(l, 'small') + 4, y2 + 2, c, 'small'); });
       const bw = 84, bx = (i) => 6 + i * 88;
-      if (ui.button('NEW', bx(0), y1, bw, 20, { key: 'n', theme: 'gold' })) { this.newGame(); return; }
-      if (ui.button('UNDO', bx(1), y1, bw, 20, { key: 'z', theme: 'blue', enabled: this.undoStack.length > 0 && !this.won && !this.auto })) this.undo();
-      if (ui.button('HINT', bx(2), y1, bw, 20, { key: 'h', theme: 'dark', enabled: !this.won && !this.auto })) {
+      if (ui.button('NEW', bx(0), y1, bw, 36, { key: 'n', theme: 'gold' })) { this.newGame(); return; }
+      if (ui.button('UNDO', bx(1), y1, bw, 36, { key: 'z', theme: 'blue', enabled: this.undoStack.length > 0 && !this.won && !this.auto })) this.undo();
+      if (ui.button('HINT', bx(2), y1, bw, 36, { key: 'h', theme: 'dark', enabled: !this.won && !this.auto })) {
         const h = this.findHint();
         if (h) this.hintShow = { ...h, t: 1.6 }; else { G.audio.sfx('error'); G.floatText('NO MOVES LEFT', G.W / 2, 180, P.orange); }
       }
       const canAuto = this.canAutoFinish();
-      if (ui.button('AUTO', bx(3), y1, bw, 20, { key: 'a', theme: 'green', enabled: canAuto && !this.auto })) { this.auto = true; this.autoT = 0; }
+      if (ui.button('AUTO', bx(3), y1, bw, 36, { key: 'a', theme: 'green', enabled: canAuto && !this.auto })) { this.auto = true; this.autoT = 0; }
     },
     drawSide() {
       if (G.portrait) return this.drawSidePortrait();

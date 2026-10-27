@@ -4,9 +4,47 @@
   const P = G.P, input = G.input;
   const ui = (G.ui = { rects: [], prev: [], lastHover: null, hoverId: null, modal: false });
 
-  ui.begin = () => { ui.modal = false; ui.prev = ui.rects; ui.rects = []; const h = ui.hoverId; ui.hoverId = null; ui._prevHover = h; };
-  ui.end = () => { if (ui.hoverId && ui.hoverId !== ui._prevHover) G.audio.sfx('hover'); G.canvas.style.cursor = ui.hoverId || ui.cursorHand ? 'pointer' : 'default'; ui.cursorHand = false; };
+  ui.begin = () => { ui.shieldPrev = ui.shield; ui.shield = false; ui.modal = false; ui.prev = ui.rects; ui.rects = []; const h = ui.hoverId; ui.hoverId = null; ui._prevHover = h; };
+  ui.end = () => { if (!input.down) ui.armed = null; if (ui.hoverId && ui.hoverId !== ui._prevHover) G.audio.sfx('hover'); G.canvas.style.cursor = ui.hoverId || ui.cursorHand ? 'pointer' : 'default'; ui.cursorHand = false; };
   // true if the pointer is over a UI element drawn last frame (cards underneath should ignore it)
+  // ---------- table talk (phone held upright) ----------
+  // a slim strip with the last two lines; tap it to read the whole conversation over the table
+  const talkLines = (log, w) => {
+    const out = [];
+    for (const l of log) for (const t of G.wrap(l.text.toUpperCase(), w, 'small')) out.push({ t, color: l.color });
+    return out;
+  };
+  ui.talkStrip = (owner, L, log) => {
+    const { x, y, w } = L, h = L.h || 30;
+    const hover = !ui.modal && !ui.shieldPrev && G.inRect(input.x, input.y, x, y, w, h);
+    G.panel(x, y, w, h, { fill: hover ? P.navy : P.ink, hi: P.dusk });
+    ui.block(x, y, w, h);
+    G.text('TALK', x + 5, y + 5, P.gold, 'small');
+    G.text('MORE', x + w - 6, y + h - 10, P.slate, 'small', 'right');
+    G.rect(x + w - 15, y + 5, 7, 1, P.slate); G.rect(x + w - 14, y + 6, 5, 1, P.slate); G.rect(x + w - 13, y + 7, 3, 1, P.slate); G.rect(x + w - 12, y + 8, 1, 1, P.slate);
+    const rows = Math.max(1, Math.floor((h - 8) / 10));
+    talkLines(log, w - 64).slice(-rows).forEach((l, i) => G.text(l.t, x + 30, y + 5 + i * 10, l.color, 'small'));
+    if (hover) { ui.hoverId = 'talk'; ui.cursorHand = true; }
+    if (hover && input.pressed) { input.pressed = false; owner._logOpen = true; G.audio.sfx('click'); }
+  };
+  // full-screen conversation, drawn last so it sits over the table; any tap closes it
+  ui.talkOverlay = (owner, log) => {
+    if (owner._logOpen && (owner.over || owner.setup || owner.paused)) owner._logOpen = false;
+    if (!owner._logOpen) return false;
+    if (!G.portrait) { owner._logOpen = false; return false; }
+    ui.shield = true;
+    const top = ui.TOP ? ui.TOP() : 33;
+    G.alpha(0.6, () => G.rect(-G.ox, 0, G.W + G.ox * 2, G.H, P.ink));
+    ui.block(-G.ox, 0, G.W + G.ox * 2, G.H);
+    const x = 8, y = top + 6, w = G.W - 16, h = G.H - y - 8;
+    G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
+    G.text('TABLE TALK', x + 8, y + 8, P.gold, 'big');
+    const rows = Math.floor((h - 50) / 10);
+    talkLines(log, w - 16).slice(-rows).forEach((l, i) => G.text(l.t, x + 8, y + 26 + i * 10, l.color, 'small'));
+    G.text('TAP ANYWHERE TO CLOSE', G.W / 2, y + h - 14, P.silver, 'small', 'center');
+    if (input.pressed || G.key('Escape')) { input.pressed = false; delete input.keyPressed.Escape; owner._logOpen = false; ui.armed = null; }
+    return true;
+  };
   ui.blocked = () => ui.prev.some((r) => G.inRect(input.x, input.y, r[0], r[1], r[2], r[3]));
   ui.block = (x, y, w, h) => ui.rects.push([x, y, w, h]);
 
@@ -26,9 +64,9 @@
     const th = THEMES[opt.theme || 'gold'];
     const id = opt.id || label + '@' + x + ',' + y;
     ui.rects.push([x, y, w, h]);
-    const hover = enabled && !(ui.modal && !opt.modal) && G.inRect(input.x, input.y, x, y, w, h);
+    const hover = enabled && !(ui.modal && !opt.modal) && !(ui.shieldPrev && !opt.shield) && G.inRect(input.x, input.y, x, y, w, h);
     if (hover) ui.hoverId = id;
-    const pressedNow = hover && input.down;
+    const pressedNow = hover && input.down && (!G.touch || ui.armed === id);
     const sel = opt.selected;
     // body
     const face = !enabled ? P.dusk : sel ? th.hi : hover ? th.hi : th.face;
@@ -49,7 +87,15 @@
       G.text(label, x + w / 2 - 4, ty, tcol, f, 'center');
       G.text(keyLbl, x + w - 4, y + h - 9 + dy, !enabled ? P.slate : th.lo, 'small', 'right');
     } else G.text(label, x + w / 2, ty, tcol, f, 'center');
-    let clicked = hover && input.pressed;
+    // touch: a button arms when your finger lands on it and fires when you lift it still on the button,
+    // so brushing past or sliding off a button never triggers it
+    let clicked;
+    if (G.touch) {
+      if (hover && input.pressed) { ui.armed = id; input.pressed = false; }
+      const slop = 6;
+      clicked = enabled && ui.armed === id && input.released && !(ui.modal && !opt.modal) && G.inRect(input.x, input.y, x - slop, y - slop, w + slop * 2, h + slop * 2);
+      if (clicked) ui.armed = null;
+    } else clicked = hover && input.pressed;
     if (enabled && opt.key && !ui.modalBlocksKeys(opt) && [].concat(opt.key).some((k) => G.key(k))) { clicked = true; [].concat(opt.key).forEach((k) => delete input.keyPressed[k]); }
     if (clicked && enabled) { G.audio.sfx('click'); input.pressed = false; return true; }
     return false;
@@ -191,15 +237,16 @@
     const P2 = G.portrait, bh = P2 ? 32 : 20;
     G.rect(0, 0, G.W, bh, P.ink); G.rect(0, bh, G.W, 1, P.black); G.rect(0, bh - 1, G.W, 1, P.dusk);
     ui.block(0, 0, G.W, bh + 1);
-    const menu = ui.button('MENU', 3, 2, 46, 15, { key: 'Escape', keyLabel: 'ESC', theme: 'dark', font: 'small', showKey: false });
-    G.text(title, 57, 6, P.gold, 'big');
+    const menu = P2 ? ui.button('MENU', 4, 3, 58, 26, { key: 'Escape', theme: 'dark', showKey: false, id: 'topmenu' })
+      : ui.button('MENU', 3, 2, 46, 15, { key: 'Escape', keyLabel: 'ESC', theme: 'dark', font: 'small', showKey: false });
+    G.text(title, P2 ? 70 : 57, P2 ? 5 : 6, P.gold, 'big');
     if (P2) {
       // the stats share the second row, spread evenly across it
       const widthOf = (s) => G.textWidth(s.label, 'small') + 4 + G.textWidth(String(s.value), 'big');
       const rest = stats;
       if (rest.length) {
-        const total = rest.reduce((a, s) => a + widthOf(s), 0), gap = Math.max(8, Math.min(24, (G.W - 12 - total) / Math.max(1, rest.length - 1)));
-        let x = rest.length === 1 ? G.W / 2 - total / 2 : (G.W - (total + gap * (rest.length - 1))) / 2;
+        const L = 70, R = G.W - 6, total = rest.reduce((a, s) => a + widthOf(s), 0), gap = Math.max(6, Math.min(20, (R - L - total) / Math.max(1, rest.length - 1)));
+        let x = L;
         for (const s of rest) {
           G.text(s.label, x, 22, P.silver, 'small'); x += G.textWidth(s.label, 'small') + 4;
           G.text(String(s.value), x, 20, s.color || P.white, 'big'); x += G.textWidth(String(s.value), 'big') + gap;
@@ -257,14 +304,16 @@
     G.alpha(0.7, () => G.rect(0, 0, G.W, G.H, P.ink));
     ui.block(0, 0, G.W, G.H);
     if (scene._showRules) return ui.rulesPanel(scene);
-    const w = 200, h = 150, x = G.W / 2 - w / 2, y = G.portrait ? Math.round(G.H / 2 - 75) : 90;
+    const PT = G.portrait, bh = PT ? 38 : 20, pitch = PT ? 48 : 24;
+    const w = PT ? 260 : 200, h = PT ? 36 + pitch * 4 + 6 : 150, x = G.W / 2 - w / 2, y = PT ? Math.round(G.H / 2 - h / 2) : 90;
     G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
     G.text('PAUSED', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
     let act = null;
-    if (ui.button('RESUME', x + 20, y + 30, w - 40, 20, { key: 'Escape', modal: true, theme: 'green', showKey: false })) act = 'resume';
-    if (ui.button('HOW TO PLAY', x + 20, y + 54, w - 40, 20, { modal: true, theme: 'blue' })) { if (G.Rulebook) G.Rulebook.open(scene.bookChapter, scene); else scene._showRules = true; }
-    if (ui.button('NEW GAME', x + 20, y + 78, w - 40, 20, { modal: true, theme: 'gold' })) act = 'restart';
-    if (ui.button('MAIN MENU', x + 20, y + 102, w - 40, 20, { modal: true, theme: 'red' })) act = 'menu';
+    const by = y + (PT ? 34 : 30);
+    if (ui.button('RESUME', x + 20, by, w - 40, bh, { key: 'Escape', modal: true, theme: 'green', showKey: false })) act = 'resume';
+    if (ui.button('HOW TO PLAY', x + 20, by + pitch, w - 40, bh, { modal: true, theme: 'blue' })) { if (G.Rulebook) G.Rulebook.open(scene.bookChapter, scene); else scene._showRules = true; }
+    if (ui.button('NEW GAME', x + 20, by + pitch * 2, w - 40, bh, { modal: true, theme: 'gold' })) act = 'restart';
+    if (ui.button('MAIN MENU', x + 20, by + pitch * 3, w - 40, bh, { modal: true, theme: 'red' })) act = 'menu';
     return act;
   };
   ui.rulesPanel = (scene) => {
@@ -278,7 +327,7 @@
       for (const l of lines) { G.text(l, x + 18 + (head ? 0 : 6), yy, head ? P.cyan : P.white, 'small'); yy += 9; }
       yy += head ? 1 : 4;
     }
-    if (ui.button('BACK', G.W / 2 - 40, y + h - 26, 80, 18, { key: ['Escape', 'Enter'], modal: true, theme: 'gold', showKey: false })) scene._showRules = false;
+    if (ui.button('BACK', G.W / 2 - (G.portrait ? 60 : 40), y + h - (G.portrait ? 40 : 26), G.portrait ? 120 : 80, G.portrait ? 32 : 18, { key: ['Escape', 'Enter'], modal: true, theme: 'gold', showKey: false })) scene._showRules = false;
     return null;
   };
 
@@ -287,15 +336,20 @@
     ui.modal = true;
     G.alpha(opt.dim === undefined ? 0.55 : opt.dim, () => G.rect(0, 0, G.W, G.H, P.ink));
     ui.block(0, 0, G.W, G.H);
-    const w = Math.min(G.W - 12, opt.w || 260), h = 54 + lines.length * 12 + 26, x = Math.round(G.W / 2 - w / 2), y = Math.round(opt.y || (G.H / 2 - h / 2));
+    const PT = G.portrait, w = Math.min(G.W - 12, opt.w || 260);
+    // portrait: long lines wrap instead of running off the panel
+    const rows = [];
+    lines.forEach((l) => { const f = l.font || 'small'; const parts = PT ? G.wrap(String(l.text), w - 20, f) : [l.text]; parts.forEach((t) => rows.push({ ...l, text: t })); });
+    const bh = PT ? 34 : 20, gap = PT ? 8 : 6;
+    const h = 54 + rows.length * 12 + (PT ? 40 : 26), x = Math.round(G.W / 2 - w / 2), y = Math.round(opt.y || (G.H / 2 - h / 2));
     G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: opt.accent || P.gold });
     G.text(title, G.W / 2, y + 13, opt.titleColor || P.gold, 'big', 'center', 1, P.black);
-    lines.forEach((l, i) => G.text(l.text, G.W / 2, y + 34 + i * 12, l.color || P.white, l.font || 'small', 'center'));
+    rows.forEach((l, i) => G.text(l.text, G.W / 2, y + 34 + i * 12, l.color || P.white, l.font || 'small', 'center'));
     let act = null;
-    const bw = Math.min(110, Math.floor((w - 20 - (buttons.length - 1) * 6) / buttons.length));
-    const total = buttons.length * bw + (buttons.length - 1) * 6;
+    const bw = Math.min(PT ? 160 : 110, Math.floor((w - 20 - (buttons.length - 1) * gap) / buttons.length));
+    const total = buttons.length * bw + (buttons.length - 1) * gap;
     buttons.forEach((b, i) => {
-      if (ui.button(b.label, G.W / 2 - total / 2 + i * (bw + 6), y + h - 28, bw, 20, { modal: true, theme: b.theme || 'gold', key: b.key, showKey: false })) act = b.act;
+      if (ui.button(b.label, G.W / 2 - total / 2 + i * (bw + gap), y + h - bh - 8, bw, bh, { modal: true, theme: b.theme || 'gold', key: b.key, showKey: false })) act = b.act;
     });
     return act;
   };

@@ -9,7 +9,7 @@
   // ten overlapping columns across the screen, stock + completed runs above, buttons below
   let COLW, X0, TOP, STOCK, BOTTOM, RUNS;
   function lay() {
-    if (G.portrait) { COLW = 35; X0 = 1; TOP = 118; STOCK = { x: 6, y: 40 }; BOTTOM = 56; RUNS = { x: 100, y: 52, pitch: 30 }; }
+    if (G.portrait) { COLW = 35; X0 = 1; TOP = 118; STOCK = { x: 6, y: 40 }; BOTTOM = 92; RUNS = { x: 100, y: 52, pitch: 30 }; }
     else { COLW = 48; X0 = 146; TOP = 28; STOCK = { x: 14, y: 256 }; BOTTOM = 6; RUNS = null; }
   }
   lay();
@@ -278,18 +278,18 @@
       }
       G.text('WINS ' + G.store.get('spider_won', 0) + '/' + G.store.get('spider_played', 0) + '   BEST ' + G.store.get('spider_best' + this.suits, 0), RUNS.x, RUNS.y + 30, P.silver, 'small');
       // bottom: next-game suits, then the four buttons
-      const y2 = G.H - 50, y1 = G.H - 26;
-      G.rect(0, y2 - 6, G.W, G.H - (y2 - 6), P.ink); G.rect(0, y2 - 6, G.W, 1, P.dusk); G.rect(0, y2 - 6 - 1, G.W, 1, P.black);
-      ui.block(0, y2 - 6, G.W, G.H - y2 + 6);
-      G.text('NEXT GAME SUITS', 8, y2 + 5, P.silver, 'small');
+      const y2 = G.H - 80, y1 = G.H - 44, X0b = -G.ox, BW = G.W + G.ox * 2;
+      G.rect(X0b, y2 - 6, BW, G.H - (y2 - 6), P.ink); G.rect(X0b, y2 - 6, BW, 1, P.dusk); G.rect(X0b, y2 - 7, BW, 1, P.black);
+      ui.block(X0b, y2 - 7, BW, G.H - y2 + 7);
+      G.text('NEXT GAME SUITS', 8, y2 + 10, P.silver, 'small');
       const cur = SUIT_OPTS.indexOf(G.settings.spiderSuits || 1);
-      const ch = ui.choice(['1', '2', '4'], cur < 0 ? 0 : cur, 100, y2, 120, 16, { id: 'suits' });
+      const ch = ui.choice(['1', '2', '4'], cur < 0 ? 0 : cur, 100, y2, 252, 28, { id: 'suits' });
       if (SUIT_OPTS[ch] !== (G.settings.spiderSuits || 1)) { G.settings.spiderSuits = SUIT_OPTS[ch]; G.saveSettings(); }
       const bw = 84, bx = (i) => 6 + i * 88;
-      if (ui.button('NEW', bx(0), y1, bw, 20, { key: 'n', theme: 'gold' })) { this.newGame(); return; }
-      if (ui.button('UNDO', bx(1), y1, bw, 20, { key: 'z', theme: 'blue', enabled: this.undoStack.length > 0 && !this.won })) this.undo();
-      if (ui.button('HINT', bx(2), y1, bw, 20, { key: 'h', theme: 'dark', enabled: !this.won })) this.hint();
-      if (ui.button('DEAL ROW', bx(3), y1, bw, 20, { key: 'd', theme: 'green', enabled: this.stock.cards.length > 0 && !this.won })) this.deal();
+      if (ui.button('NEW', bx(0), y1, bw, 36, { key: 'n', theme: 'gold' })) { this.newGame(); return; }
+      if (ui.button('UNDO', bx(1), y1, bw, 36, { key: 'z', theme: 'blue', enabled: this.undoStack.length > 0 && !this.won })) this.undo();
+      if (ui.button('HINT', bx(2), y1, bw, 36, { key: 'h', theme: 'dark', enabled: !this.won })) this.hint();
+      if (ui.button('DEAL ROW', bx(3), y1, bw, 36, { key: 'd', theme: 'green', enabled: this.stock.cards.length > 0 && !this.won })) this.deal();
     },
     drawSide() {
       if (G.portrait) return this.drawSidePortrait();

@@ -10,7 +10,8 @@
     if (G.portrait) {
       const E = G.EX(), m = Math.round(E / 2);
       YOU_PILE = { x: 158, y: 376 + m }; YOU_BAT = { x: 80, y: 290 + m }; YOU_WON = { x: 92, y: 376 + m };
-      LOG = { x: 154, y: 462 + E, w: 198, h: 144 }; BOARD = { x: 8, y: 462 + E, w: 140, h: 144 };
+      // bottom of the screen: a compact card count, a one-tap table-talk strip and big buttons
+      LOG = { x: 8, y: G.H - 82, w: 344, h: 32, strip: true }; BOARD = { x: 8, y: G.H - 170, w: 344, h: 82, grid: true };
     } else {
       YOU_PILE = { x: 196, y: 224 }; YOU_BAT = { x: 256, y: 224 }; YOU_WON = { x: 136, y: 224 };
       LOG = { x: 470, y: 134, w: 162, h: 168 }; BOARD = { x: 10, y: 134, w: 120, h: 168 };
@@ -251,10 +252,24 @@
       if (this.over) this.drawResult();
     },
     drawBoard() {
+      if (BOARD.grid) { BOARD.h = 22 + Math.ceil(this.players.length / 2) * 26; BOARD.y = LOG.y - 6 - BOARD.h; }
       const { x, y, w, h } = BOARD;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
       G.text('CARD COUNT', x + 6, y + 5, P.gold, 'small');
       const total = 52 - this.spare.length;
+      if (BOARD.grid) {
+        this.players.forEach((p, i) => {
+          const cx = x + 6 + (i % 2) * 168, yy = y + 18 + Math.floor(i / 2) * 26, bw = 128;
+          G.drawAvatar(p.id, cx, yy);
+          G.text(G.dn(p).length > 12 ? G.dn(p).replace('THE ', '').replace('CAPT ', '') : G.dn(p), cx + 28, yy + 2, p.out ? P.slate : P.white, 'small');
+          const n = this.count(p);
+          G.rect(cx + 28, yy + 12, bw, 6, P.dusk);
+          G.rect(cx + 28, yy + 12, Math.round(bw * n / total), 6, p.human ? P.gold : P.sky);
+          G.text(String(n), cx + 28 + bw, yy + 2, P.gold, 'small', 'right');
+        });
+        G.text('WINS ' + G.store.get('war_won', 0) + '/' + G.store.get('war_played', 0), x + w - 6, y + 5, P.slate, 'small', 'right');
+        return;
+      }
       this.players.forEach((p, i) => {
         const yy = y + 18 + i * 28;
         G.drawAvatar(p.id, x + 5, yy);
@@ -269,12 +284,12 @@
     drawControls() {
       const can = this.phase === 'ready' && !this.over;
       if (G.portrait) {
-        const y = G.H - 26;
-        if (this.spectate) { if (ui.button(this.skipReq ? 'SKIPPING...' : 'SKIP TO RESULT', 8, y, 130, 22, { key: 'k', theme: 'gold', font: 'small' })) { if (can) this.endGame(); else this.skipReq = true; } }
-        else if (ui.button('FLIP', 8, y, 130, 22, { theme: 'gold', keyLabel: 'SPACE', enabled: can && !this.auto })) this.flip();
-        if (ui.button(this.auto ? 'AUTO ON' : 'AUTO OFF', 144, y, 100, 22, { key: 'a', theme: this.auto ? 'green' : 'dark', font: 'small' })) { this.auto = !this.auto; this.autoT = 0; }
+        const y = G.H - 44, bh = 36;
+        if (this.spectate) { if (ui.button(this.skipReq ? 'SKIPPING...' : 'SKIP TO END', 8, y, 160, bh, { key: 'k', theme: 'gold' })) { if (can) this.endGame(); else this.skipReq = true; } }
+        else if (ui.button('FLIP', 8, y, 160, bh, { theme: 'gold', keyLabel: 'SPACE', enabled: can && !this.auto })) this.flip();
+        if (ui.button(this.auto ? 'AUTO ON' : 'AUTO', 176, y, 84, bh, { key: 'a', theme: this.auto ? 'green' : 'dark' })) { this.auto = !this.auto; this.autoT = 0; }
         const sp = [1, 3, 8];
-        if (ui.button('SPEED X' + this.speed, 250, y, 102, 22, { key: 's', theme: 'blue', font: 'small' })) this.speed = sp[(sp.indexOf(this.speed) + 1) % sp.length];
+        if (ui.button('SPEED X' + this.speed, 268, y, 84, bh, { key: 's', theme: 'blue' })) this.speed = sp[(sp.indexOf(this.speed) + 1) % sp.length];
         let s = '';
         if (this.spectate && !this.over) s = 'YOU ARE OUT - WATCHING (' + this.active().length + ' LEFT)';
         else if (this.phase === 'ready' && !this.auto) s = 'TAP YOUR DECK TO FLIP';

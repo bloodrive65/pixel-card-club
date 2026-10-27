@@ -18,8 +18,8 @@
       DECK = { x: 14, y: BOARD_Y + 80 }; BURN = { x: 4, y: DECK.y + 2 };
       YOU_CARDS = { x: 250, y: DECK.y }; INFO = { x: 70, y: DECK.y + 8, w: 102, h: 34 };
       YOU = { x: 8, y: DECK.y + CH + 18, w: 190, h: 28 };
-      ACT_Y = G.H - 104;
-      LOG = { x: 8, y: YOU.y + 52, w: 344 }; LOG.h = ACT_Y - 8 - LOG.y;
+      ACT_Y = G.H - 118;
+      LOG = { x: 8, y: ACT_Y - 62, w: 344, h: 34, strip: true };
       OPP_TAG = 134;
     } else {
       DECK = { x: 140, y: 148 }; BURN = { x: 128, y: 150 }; BOARD_X = 202; BOARD_Y = 148; POT_Y = 134;
@@ -556,7 +556,7 @@
         G.text(nm, YOU_CARDS.x + 46, YOU_CARDS.y + CH + 4, this.handDone && this.winners.includes(me) ? P.lime : P.white, 'small', 'center');
       }
       // odds helper
-      if (ui.button(this.showOdds ? 'ODDS ON' : 'ODDS OFF', YOU.x, YOU.y + 32, 92, 15, { key: 'o', theme: this.showOdds ? 'blue' : 'dark', font: 'small', id: 'odds' })) { this.showOdds = !this.showOdds; G.settings.pokerOdds = this.showOdds; G.saveSettings(); }
+      if (ui.button(this.showOdds ? 'ODDS ON' : 'ODDS OFF', YOU.x, YOU.y + 32, 92, G.portrait ? 26 : 15, { key: 'o', theme: this.showOdds ? 'blue' : 'dark', font: 'small', id: 'odds' })) { this.showOdds = !this.showOdds; G.settings.pokerOdds = this.showOdds; G.saveSettings(); }
       if (this.showOdds && turn) {
         const live = this.live().length - 1;
         const key = this.board.length + '_' + live;
@@ -569,8 +569,9 @@
     },
     drawActionsPortrait() {
       const y = ACT_Y;
-      G.rect(0, y - 6, G.W, G.H - y + 6, P.ink); G.rect(0, y - 6, G.W, 1, P.dusk);
-      ui.block(0, y - 6, G.W, G.H - y + 6);
+      // full-width bar (reaches the screen edges on wider screens) with big, well-spaced buttons
+      G.rect(-G.ox, y - 22, G.W + G.ox * 2, G.H - y + 22, P.ink); G.rect(-G.ox, y - 22, G.W + G.ox * 2, 1, P.dusk);
+      ui.block(-G.ox, y - 22, G.W + G.ox * 2, G.H - y + 22);
       const me = this.players[0];
       const my = this.phase === 'you' && !this.paused && !this.over;
       const toCall = my ? this.toCall(me) : 0;
@@ -579,31 +580,31 @@
       if (my) this.raiseTo = G.clamp(this.raiseTo || minTo, minTo, maxTo);
       const step = this.bb || 20;
       if (this.spectate && !this.over) {
-        G.text('YOU ARE OUT - WATCHING THE CLUB', G.W / 2, y + 8, P.cyan, 'small', 'center');
-        G.text(this.alive().length + ' PLAYERS LEFT', G.W / 2, y + 20, P.silver, 'small', 'center');
-        if (ui.button('SKIP TO RESULT', 8, y + 60, G.W - 16, 26, { key: 'k', theme: 'blue' })) this.skipWatch();
+        G.text('YOU ARE OUT - WATCHING THE CLUB', G.W / 2, y + 4, P.cyan, 'small', 'center');
+        G.text(this.alive().length + ' PLAYERS LEFT', G.W / 2, y + 18, P.silver, 'small', 'center');
+        if (ui.button('SKIP TO RESULT', 8, y + 42, G.W - 16, 36, { key: 'k', theme: 'blue' })) this.skipWatch();
         return;
       }
-      if (ui.button('FOLD', 8, y, 84, 24, { key: 'f', theme: 'red', enabled: my && toCall > 0 })) this.act(0, 'fold');
+      if (ui.button('FOLD', 8, y, 84, 34, { key: 'f', theme: 'red', enabled: my && toCall > 0 })) this.act(0, 'fold');
       const callLbl = toCall === 0 ? 'CHECK' : toCall >= me.chips ? 'ALL IN ' + me.chips : 'CALL ' + toCall;
-      if (ui.button(callLbl, 98, y, 140, 24, { key: 'c', theme: 'green', enabled: my })) this.act(0, toCall ? 'call' : 'check');
-      if (ui.button('ALL IN', 244, y, 108, 24, { key: 'a', theme: 'red', enabled: canRaise })) this.act(0, 'raise', maxTo);
-      if (ui.button('-', 8, y + 30, 34, 24, { key: '-', theme: 'dark', enabled: canRaise, showKey: false })) this.raiseTo = Math.max(minTo, this.raiseTo - step);
+      if (ui.button(callLbl, 100, y, 160, 34, { key: 'c', theme: 'green', enabled: my })) this.act(0, toCall ? 'call' : 'check');
+      if (ui.button('ALL IN', 268, y, 84, 34, { key: 'a', theme: 'red', enabled: canRaise })) this.act(0, 'raise', maxTo);
+      if (ui.button('-', 8, y + 42, 48, 34, { key: '-', theme: 'dark', enabled: canRaise, showKey: false })) this.raiseTo = Math.max(minTo, this.raiseTo - step);
       const lbl = (this.curBet === 0 ? 'BET ' : 'RAISE TO ') + (my ? this.raiseTo : '');
-      if (ui.button(lbl, 48, y + 30, 264, 24, { key: 'r', theme: 'gold', enabled: canRaise })) this.act(0, 'raise', this.raiseTo);
-      if (ui.button('+', 318, y + 30, 34, 24, { key: ['=', '+'], theme: 'dark', enabled: canRaise, showKey: false })) this.raiseTo = Math.min(maxTo, this.raiseTo + step);
+      if (ui.button(lbl, 64, y + 42, 232, 34, { key: 'r', theme: 'gold', enabled: canRaise })) this.act(0, 'raise', this.raiseTo);
+      if (ui.button('+', 304, y + 42, 48, 34, { key: ['=', '+'], theme: 'dark', enabled: canRaise, showKey: false })) this.raiseTo = Math.min(maxTo, this.raiseTo + step);
       const pot = this.pot();
       const potTo = (f) => Math.round((this.curBet + (pot + toCall) * f) / (this.sb || 10)) * (this.sb || 10);
-      if (ui.button('MIN', 8, y + 60, 110, 20, { theme: 'blue', enabled: canRaise, font: 'small' })) this.raiseTo = minTo;
-      if (ui.button('1/2 POT', 125, y + 60, 110, 20, { theme: 'blue', enabled: canRaise, font: 'small' })) this.raiseTo = G.clamp(potTo(0.5), minTo, maxTo);
-      if (ui.button('POT', 242, y + 60, 110, 20, { theme: 'blue', enabled: canRaise, font: 'small' })) this.raiseTo = G.clamp(potTo(1), minTo, maxTo);
+      if (ui.button('MIN', 8, y + 84, 108, 28, { theme: 'blue', enabled: canRaise })) this.raiseTo = minTo;
+      if (ui.button('1/2 POT', 126, y + 84, 108, 28, { theme: 'blue', enabled: canRaise })) this.raiseTo = G.clamp(potTo(0.5), minTo, maxTo);
+      if (ui.button('POT', 244, y + 84, 108, 28, { theme: 'blue', enabled: canRaise })) this.raiseTo = G.clamp(potTo(1), minTo, maxTo);
       let s, col = P.silver;
       if (my) { s = 'YOUR MOVE (' + STREET[this.street] + ')  TO CALL ' + toCall + '  POT ' + pot; col = P.gold; }
       else if (this.handDone) s = 'HAND OVER';
       else if (this.phase === 'ai') s = this.players[this.turn].name + ' IS THINKING...';
       else if (me.folded && !me.out) s = 'YOU FOLDED - WATCHING THE HAND';
       else s = STREET[this.street || 0];
-      G.text(s, G.W / 2, y + 88, col, 'small', 'center');
+      G.text(s, G.W / 2, y - 14, col, 'small', 'center');
     },
     drawActions() {
       if (G.portrait) return this.drawActionsPortrait();

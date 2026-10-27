@@ -38,11 +38,13 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
-## What's new in 1.7.3
+## What's new in 1.7.4
 
-- **Portrait and landscape on iPhone and iPad**: hold the device upright or sideways and the game re-lays itself to fit, even in the middle of a hand. In portrait, every game has its own tall table with the main buttons in easy thumb reach along the bottom. The menu, setup screens, profile, customize screen, options and rulebook have upright layouts too.
-- **Sound with the ringer off**: on iPhone and iPad the game's sound now plays even when the Ring/Silent switch is set to silent, the same way video audio does. Use the volume buttons, or turn sound off in Options.
-- Crazy Eights no longer shows the keyboard hint "(D DRAWS)" on touch screens.
+- **Easier portrait controls on iPhone**: every button in portrait is bigger and more spread out, so it is hard to hit the wrong one. This covers the game tables, setup screens, main menu, profile, customize, options, pause menu, end-of-game windows and the rulebook.
+- **Buttons fire when you lift your finger**: on touch screens a button only triggers if your finger is still on it when you let go. Slide off a button to cancel.
+- **Compact table talk**: in portrait the chat log is now a slim strip showing the last two lines. Tap it to read the whole conversation, then tap anywhere to close it.
+- **Bigger hands split into two rows** in Crazy Eights and Go Fish once you hold more than 9 cards, so every card stays wide enough to tap.
+- Hold'em, Blackjack, War, Solitaire and Spider have larger bottom button bars in portrait; War's card count is now a compact two-column panel.
 
 Older versions are listed in [**CHANGELOG.md**](CHANGELOG.md).
 

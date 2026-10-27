@@ -40,6 +40,7 @@
       return { x: Math.round(xs[i - 1]), y: 24, w, h: 28 };
     },
     drawLog(L, rows = 8) {
+      if (G.portrait && L.strip) return ui.talkStrip(this, L, this.log);
       const { x, y, w, h } = L;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
       G.text('TABLE TALK', x + 6, y + 5, P.gold, 'small');
@@ -128,28 +129,29 @@
       G.text(cfg.title, 22, 18, P.gold, 'big', 'left', 2, P.black);
       const half = cfg.option ? 150 : 316;
       G.text('OPPONENTS', 22, 40, P.silver, 'small');
-      const o = ui.choice(['1', '2', '3'], this.nOpp() - 1, 22, 48, half, 16, { id: 'opp' });
+      const o = ui.choice(['1', '2', '3'], this.nOpp() - 1, 22, 48, half, 26, { id: 'opp' });
       if (o !== this.nOpp() - 1) { S[cfg.prefix + 'Opp'] = o + 1; G.saveSettings(); }
       if (cfg.option) {
         G.text(cfg.option.label, 188, 40, P.silver, 'small');
-        const v = ui.choice(cfg.option.items, this.opt(), 188, 48, 150, 16, { id: 'opt', font: 'small' });
+        const v = ui.choice(cfg.option.items, this.opt(), 188, 48, 150, 26, { id: 'opt', font: 'small' });
         if (v !== this.opt()) { S[cfg.prefix + 'Opt'] = v; G.saveSettings(); }
       }
       const st = this.pickState, n = this.nOpp();
       const labels = n === 1 ? ['OPPONENT - ACROSS'] : n === 2 ? ['OPPONENT 1 - LEFT', 'OPPONENT 2 - RIGHT'] : ['OPPONENT 1 - LEFT', 'OPPONENT 2 - ACROSS', 'OPPONENT 3 - RIGHT'];
       st.slots = labels.map((l) => ({ label: l, color: P.orange }));
       st.focus = Math.min(st.focus, n - 1);
-      const view = { slots: st.slots, picks: st.picks.slice(0, n), focus: st.focus, seatY: 72, gridY: 206 + Math.round(E / 3), hoverChar: st.hoverChar };
+      const view = { slots: st.slots, picks: st.picks.slice(0, n), focus: st.focus, seatY: 84, gridY: 218 + Math.round(E / 3), hoverChar: st.hoverChar };
       G.rosterPicker(view);
       st.picks.splice(0, n, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar;
       const desc = typeof cfg.desc === 'function' ? cfg.desc(this.opt()) : cfg.desc;
-      G.wrap(desc.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, 506 + E + i * 9, P.cyan, 'small'));
-      if (ui.button('RANDOM PICKS', 22, 538 + E, 155, 20, { id: 'rnd', theme: 'dark' })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, n, ...v.picks); }
-      if (ui.button('BACK', 183, 538 + E, 155, 20, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
-      if (ui.button('START', 22, 566 + E, 316, 26, { theme: 'green', key: ['Enter', ' '], showKey: false })) { this.start(); return; }
+      G.wrap(desc.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, G.H - 114 + i * 9, P.cyan, 'small'));
+      if (ui.button('RANDOM PICKS', 22, G.H - 82, 155, 30, { id: 'rnd', theme: 'dark' })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, n, ...v.picks); }
+      if (ui.button('BACK', 183, G.H - 82, 155, 30, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
+      if (ui.button('START', 22, G.H - 46, 316, 34, { theme: 'green', key: ['Enter', ' '], showKey: false })) { this.start(); return; }
     },
     // shared pause handling; returns true while paused
     handlePause(title, stats, restartFn) {
+      ui.talkOverlay(this, this.log);
       const menu = ui.topBar(title, stats);
       if (menu && !this.paused) { this.paused = true; ui.modal = true; }
       if (this.paused) {

@@ -484,18 +484,18 @@
       }
       // turn buttons under the book
       const by = BY + PH + 22;
-      if (ui.button('< BACK', BX - 4, by, 110, 22, { theme: 'dark', id: 'pbk', enabled: cur > 0 })) goP(this.pidx - 1);
-      if (ui.button('NEXT >', BX + PW - 106, by, 110, 22, { theme: 'gold', id: 'pnx', enabled: cur < n - 1 })) goP(this.pidx + 1);
-      G.text('PAGE ' + cur + ' OF ' + (n - 1), G.W / 2, by + 32, P.gold, 'small', 'center');
-      G.text('TAP THE PAGE EDGES OR SWIPE TO TURN', G.W / 2, by + 44, P.wood3, 'small', 'center');
+      if (ui.button('< BACK', BX - 4, by, 120, 34, { theme: 'dark', id: 'pbk', enabled: cur > 0 })) goP(this.pidx - 1);
+      if (ui.button('NEXT >', BX + PW - 116, by, 120, 34, { theme: 'gold', id: 'pnx', enabled: cur < n - 1 })) goP(this.pidx + 1);
+      G.text('PAGE ' + cur + ' OF ' + (n - 1), G.W / 2, by + 44, P.gold, 'small', 'center');
+      G.text('TAP THE PAGE EDGES OR SWIPE TO TURN', G.W / 2, by + 56, P.wood3, 'small', 'center');
       // swipe
       const inp = input;
       if (inp.pressed && G.inRect(inp.x, inp.y, BX, BY, PW, PH)) this.sw = { x: inp.x, y: inp.y };
       if (this.sw && inp.down) { const dx = inp.x - this.sw.x; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(inp.y - this.sw.y) * 1.5) { goP(this.pidx + (dx < 0 ? 1 : -1)); this.sw = null; } }
       if (!inp.down) this.sw = null;
-      G.rect(0, 0, G.W, 22, P.ink); G.rect(0, 22, G.W, 1, P.black);
-      G.text('RULEBOOK', G.W / 2, 7, P.gold, 'big', 'center');
-      if (ui.button('CLOSE', 3, 3, 46, 15, { key: 'Escape', theme: 'dark', font: 'small', showKey: false, id: 'bookclose' })) this.close();
+      G.rect(-G.ox, 0, G.W + G.ox * 2, 32, P.ink); G.rect(-G.ox, 32, G.W + G.ox * 2, 1, P.black);
+      G.text('RULEBOOK', G.W / 2, 12, P.gold, 'big', 'center');
+      if (ui.button('CLOSE', 4, 3, 64, 26, { key: 'Escape', theme: 'dark', showKey: false, id: 'bookclose' })) this.close();
     },
     pageInputP(BX, BY) {
       if (ui.modal) return;

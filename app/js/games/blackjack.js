@@ -12,7 +12,7 @@
       SHOE = { x: G.W - 62, y: 46 }; DISCARD = { x: 10, y: 46 }; DEALER_Y = 46;
       M = { panel: 140 + Math.round(m / 2), seat: [244, 8], spread: 64 }; M.cards = M.panel + 48; M.bet = M.cards + CH + 16; M.tag = M.cards - 15; M.bubble = M.panel - 18;
       PLAYER_Y = 312 + m; PLATE = { x: 8, y: PLAYER_Y + CH + 16, w: 112 };
-      CTRL_Y = G.H - 92; BANNER_Y = PLAYER_Y - 36; FELT_Y = 102;
+      CTRL_Y = G.H - 128; BANNER_Y = PLAYER_Y - 36; FELT_Y = 102;
     } else {
       SHOE = { x: 566, y: 30 }; DISCARD = { x: 30, y: 30 }; DEALER_Y = 40; PLAYER_Y = 186;
       M = { panel: 138, seat: [520, 16], spread: 76, cards: 186, bet: 186 + CH + 30, tag: 186 - 15, bubble: 120 };
@@ -638,18 +638,18 @@
       G.text('BLACKJACK', 22, 18, P.gold, 'big', 'left', 2, P.black);
       const n = S.bjMates === undefined ? 1 : S.bjMates;
       G.text('TABLE-MATES', 22, 40, P.silver, 'small');
-      const c = ui.choice(['NONE', '1', '2'], n, 22, 48, 150, 16, { id: 'mates' });
+      const c = ui.choice(['NONE', '1', '2'], n, 22, 48, 150, 26, { id: 'mates' });
       if (c !== n) { S.bjMates = c; G.saveSettings(); }
-      G.wrap('THEY PLAY THEIR OWN HANDS VS THE DEALER', 150, 'small').forEach((l, i) => G.text(l, 188, 46 + i * 9, P.cyan, 'small'));
+      G.wrap('THEY PLAY THEIR OWN HANDS VS THE DEALER', 150, 'small').forEach((l, i) => G.text(l, 188, 50 + i * 9, P.cyan, 'small'));
       const st = this.pick;
       st.slots.forEach((sl, i) => (sl.color = i < c ? P.lime : P.slate));
-      const view = { slots: st.slots.slice(0, Math.max(1, c)), picks: st.picks.slice(0, Math.max(1, c)), focus: Math.min(st.focus, Math.max(0, c - 1)), seatY: 72, gridY: 206 + Math.round(E / 3), hoverChar: st.hoverChar };
-      if (c === 0) { G.alpha(0.4, () => G.rosterPicker(view)); G.text('JUST YOU AND THE DEALER', G.W / 2, 134, P.gold, 'small', 'center'); }
+      const view = { slots: st.slots.slice(0, Math.max(1, c)), picks: st.picks.slice(0, Math.max(1, c)), focus: Math.min(st.focus, Math.max(0, c - 1)), seatY: 84, gridY: 218 + Math.round(E / 3), hoverChar: st.hoverChar };
+      if (c === 0) { G.alpha(0.4, () => G.rosterPicker(view)); G.text('JUST YOU AND THE DEALER', G.W / 2, 140, P.gold, 'small', 'center'); }
       else { G.rosterPicker(view); st.picks.splice(0, view.picks.length, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar; }
-      G.wrap('Each member keeps their own chip stack. Their bets, mood and nerve shift with every win and loss.'.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, 506 + E + i * 9, P.cyan, 'small'));
-      if (ui.button('RANDOM PICKS', 22, 538 + E, 155, 20, { id: 'rnd', theme: 'dark', enabled: c > 0 })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, v.picks.length, ...v.picks); }
-      if (ui.button('BACK', 183, 538 + E, 155, 20, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
-      if (ui.button('TAKE A SEAT', 22, 566 + E, 316, 26, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.startTable();
+      G.wrap('Each member keeps their own chip stack. Their bets, mood and nerve shift with every win and loss.'.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, G.H - 114 + i * 9, P.cyan, 'small'));
+      if (ui.button('RANDOM PICKS', 22, G.H - 82, 155, 30, { id: 'rnd', theme: 'dark', enabled: c > 0 })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, v.picks.length, ...v.picks); }
+      if (ui.button('BACK', 183, G.H - 82, 155, 30, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
+      if (ui.button('TAKE A SEAT', 22, G.H - 46, 316, 34, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.startTable();
     },
     drawSetup() {
       ui.felt();
@@ -712,22 +712,25 @@
     },
     drawControlsPortrait() {
       const y = CTRL_Y;
-      G.rect(0, y - 6, G.W, G.H - y + 6, P.ink); G.rect(0, y - 6, G.W, 1, P.dusk); G.rect(0, y - 7, G.W, 1, P.black);
-      ui.block(0, y - 7, G.W, G.H - y + 7);
+      // full-width bar with big, well-spaced buttons
+      const X0 = -G.ox, BW = G.W + G.ox * 2;
+      G.rect(X0, y - 8, BW, G.H - y + 8, P.ink); G.rect(X0, y - 8, BW, 1, P.dusk); G.rect(X0, y - 9, BW, 1, P.black);
+      ui.block(X0, y - 9, BW, G.H - y + 9);
       if (this.watch && !this.watch.done) {
         const left = this.mates.filter((m) => !m.out).length;
         G.text('OUT OF CHIPS - WATCHING THE TABLE', 12, y + 6, P.cyan, 'small');
         G.text('HAND ' + Math.max(1, this.watch.n) + ' OF ' + WATCH_HANDS + '   ' + left + ' STILL PLAYING', 12, y + 18, P.silver, 'small');
-        if (ui.button('SKIP TO RESULT', 8, y + 58, G.W - 16, 26, { key: 'k', theme: 'blue' })) this.endWatch();
+        if (ui.button('SKIP TO RESULT', 8, y + 84, G.W - 16, 38, { key: 'k', theme: 'blue' })) this.endWatch();
         return;
       }
       if (this.phase === 'bet' || this.phase === 'done') {
-        G.text('BET', 12, y + 10, P.silver, 'small');
+        G.text('BET', 12, y + 14, P.silver, 'small');
         CHIP_VALUES.forEach((v, i) => {
-          const cx = 62 + i * 52, cy = y + 11;
+          const cx = 100 + i * 72, cy = y + 13;
           const enabled = this.bet + v <= this.chips;
-          const hover = enabled && !ui.modal && G.inRect(G.input.x, G.input.y, cx - 18, cy - 12, 36, 28);
-          ui.block(cx - 18, cy - 12, 36, 28);
+          const hover = enabled && !ui.modal && G.inRect(G.input.x, G.input.y, cx - 30, y, 60, 36);
+          ui.block(cx - 30, y, 60, 36);
+          G.rect(cx - 30, y, 60, 36, hover ? P.navy : P.dusk); G.outline(cx - 30, y, 60, 36, P.black);
           if (hover) ui.cursorHand = true;
           G.ctx.globalAlpha = enabled ? 1 : 0.35;
           G.ctx.drawImage(chipSprite(v), cx - 8, cy - 8 - (hover ? 2 : 0), 16, 16);
@@ -735,20 +738,20 @@
           G.text(String(v), cx, cy + 11, enabled ? P.white : P.slate, 'small', 'center');
           if (hover && G.input.pressed) { this.bet += v; G.audio.sfx('chip'); G.input.pressed = false; if (this.phase === 'done') this.msg = ''; }
         });
-        if (ui.button('CLEAR', 8, y + 30, 110, 22, { key: 'c', theme: 'dark', enabled: this.bet > 0 })) this.bet = 0;
-        if (ui.button('ALL IN', 125, y + 30, 110, 22, { key: 'a', theme: 'red', enabled: this.chips >= 5 })) { this.bet = Math.floor(this.chips / 5) * 5; G.audio.sfx('chip'); }
-        if (ui.button('SEATS', 242, y + 30, 110, 22, { key: 't', theme: 'blue' })) this.setup = true;
-        if (ui.button('DEAL', 8, y + 58, G.W - 16, 26, { key: [' ', 'Enter'], keyLabel: 'SPACE', theme: 'green', enabled: this.bet >= 5 && this.bet <= this.chips })) this.deal();
+        if (ui.button('CLEAR', 8, y + 44, 108, 32, { key: 'c', theme: 'dark', enabled: this.bet > 0 })) this.bet = 0;
+        if (ui.button('ALL IN', 126, y + 44, 108, 32, { key: 'a', theme: 'red', enabled: this.chips >= 5 })) { this.bet = Math.floor(this.chips / 5) * 5; G.audio.sfx('chip'); }
+        if (ui.button('SEATS', 244, y + 44, 108, 32, { key: 't', theme: 'blue' })) this.setup = true;
+        if (ui.button('DEAL', 8, y + 84, G.W - 16, 38, { key: [' ', 'Enter'], keyLabel: 'SPACE', theme: 'green', enabled: this.bet >= 5 && this.bet <= this.chips })) this.deal();
       } else {
         const playing = this.phase === 'play', bw = 170;
-        if (ui.button('HIT', 8, y, bw, 26, { key: 'h', theme: 'green', enabled: playing })) this.hit();
-        if (ui.button('STAND', 182, y, bw, 26, { key: 's', theme: 'red', enabled: playing })) this.stand();
-        if (ui.button('DOUBLE', 8, y + 30, bw, 24, { key: 'd', theme: 'gold', enabled: playing && this.canDouble() })) this.double();
-        if (ui.button('SPLIT', 182, y + 30, bw, 24, { key: 'p', theme: 'blue', enabled: playing && this.canSplit() })) this.split();
-        if (ui.button('HINT', 8, y + 60, bw, 24, { key: ['?', '/'], keyLabel: '?', theme: 'dark', enabled: playing })) this.hint = basicStrategy(this.cur(), this.dealer[0], this.canDouble(), this.canSplit());
+        if (ui.button('HIT', 8, y, bw, 40, { key: 'h', theme: 'green', enabled: playing })) this.hit();
+        if (ui.button('STAND', 182, y, bw, 40, { key: 's', theme: 'red', enabled: playing })) this.stand();
+        if (ui.button('DOUBLE', 8, y + 48, bw, 34, { key: 'd', theme: 'gold', enabled: playing && this.canDouble() })) this.double();
+        if (ui.button('SPLIT', 182, y + 48, bw, 34, { key: 'p', theme: 'blue', enabled: playing && this.canSplit() })) this.split();
+        if (ui.button('HINT', 8, y + 90, bw, 32, { key: ['?', '/'], keyLabel: '?', theme: 'dark', enabled: playing })) this.hint = basicStrategy(this.cur(), this.dealer[0], this.canDouble(), this.canSplit());
         if (this.hint && playing) {
-          G.text('ADVISOR', 267, y + 60, P.silver, 'small', 'center');
-          G.text(this.hint, 267, y + 71, P.cyan, 'big', 'center');
+          G.text('ADVISOR', 267, y + 92, P.silver, 'small', 'center');
+          G.text(this.hint, 267, y + 104, P.cyan, 'big', 'center');
         }
       }
     },
