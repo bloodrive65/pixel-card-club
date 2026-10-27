@@ -9,12 +9,12 @@
   function lay() {
     if (G.portrait) {
       const E = G.EX(), m = Math.round(E / 2);
-      STOCK = { x: 92, y: 172 + Math.round(m / 2) }; DISC = { x: 178, y: STOCK.y };
-      // a big hand splits into two rows so every card stays wide enough to tap
-      HAND_Y = 338 + m; PLATE = { x: 8, y: HAND_Y + CH + 44 };
-      BOARD = { x: 142, y: PLATE.y, w: 210, h: 92 };
-      LOG = { x: 8, y: G.H - 42, w: 344, h: 34, strip: true };
-      TAG_Y = STOCK.y + CH + 50;
+      // big cards: the piles and table talk sit in the middle, your hand sits low where your thumbs are
+      STOCK = { x: 12, y: 162 + Math.round(E / 3) }; DISC = { x: 86, y: STOCK.y };
+      HAND_Y = G.H - 112; PLATE = { x: 8, y: G.H - 226 };
+      BOARD = { x: 142, y: PLATE.y, w: 210, h: 52, grid: true };
+      LOG = { x: 212, y: STOCK.y, w: 140, h: 93, strip: true };
+      TAG_Y = STOCK.y + 93 + 62;
     } else {
       STOCK = { x: 246, y: 150 }; DISC = { x: 336, y: 150 }; HAND_Y = 268;
       LOG = { x: 470, y: 172, w: 162, h: 88 }; BOARD = { x: 10, y: 150, w: 128, h: 92 };
@@ -60,7 +60,7 @@
     newHand() {
       this.handNo++;
       this.cards = G.shuffle(G.makeDeck(1));
-      this.cards.forEach((c) => { c.x = STOCK.x; c.y = STOCK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.lift = 0; c.hidden = false; });
+      this.cards.forEach((c) => { c.x = STOCK.x; c.y = STOCK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.lift = 0; c.hidden = false; c.sc = undefined; });
       this.stock = this.cards.slice(); this.disc = [];
       this.players.forEach((p) => { p.hand = []; p.lacks = {}; p.drew = 0; });
       this.handOver = null; this.phase = 'deal'; this.passes = 0; this.pending8 = null; this.bubbles = [];
@@ -239,18 +239,22 @@
     },
     // ---------- layout ----------
     layout() {
+      const PT = G.portrait, S = PT ? 1.5 : 1, BW = Math.round(CW * S);
+      G.cardScale = S;
       this.stock.forEach((c, i) => G.place(c, STOCK.x - Math.floor(i / 6), STOCK.y - Math.floor(i / 6), i, false));
       this.disc.forEach((c, i) => { G.place(c, DISC.x + (c._dx || 0), DISC.y + (c._dy || 0), 60 + i, true); c.lift = 0; });
       const me = this.players[0], n = me.hand.length;
-      const two = G.portrait && n > 9, k1 = two ? Math.ceil(n / 2) : n;
-      const rowOff = (k) => (k > 1 ? Math.min(G.portrait ? 38 : 32, Math.floor(((G.portrait ? G.W - 16 : 560) - CW) / (k - 1))) : 0);
+      // a big hand splits into two rows so every card stays wide enough to tap
+      const two = PT && n > 8, k1 = two ? Math.ceil(n / 2) : n, hy = two ? G.H - 160 : HAND_Y;
+      const rowOff = (k) => (k > 1 ? Math.min(PT ? 46 : 32, Math.floor(((PT ? G.W - 12 : 560) - BW) / (k - 1))) : 0);
       const myTurn = this.phase === 'you' && !this.pending8;
       me.hand.forEach((c, i) => {
-        const row = i < k1 ? 0 : 1, j = row ? i - k1 : i, k = row ? n - k1 : k1, off = rowOff(k), hw = CW + (k - 1) * off;
-        G.place(c, G.W / 2 - hw / 2 + j * off, HAND_Y + row * 38, 100 + i, true);
+        const row = i < k1 ? 0 : 1, j = row ? i - k1 : i, k = row ? n - k1 : k1, off = rowOff(k), hw = BW + (k - 1) * off;
+        G.place(c, G.W / 2 - hw / 2 + j * off, hy + row * 50, 100 + i, true);
         const target = myTurn && this.legal(c) ? (this.hoverCard === c ? 12 : 5) : 0;
         c.lift = G.lerp(c.lift || 0, target, 0.35);
       });
+      G.cardScale = 1;
       for (let pi = 1; pi < this.players.length; pi++) {
         const p = this.players[pi], s = this.oppSlot(pi);
         const m = p.hand.length; const o = m > 1 ? Math.min(10, Math.floor((s.w - CW) / (m - 1))) : 0;
@@ -260,7 +264,7 @@
     },
     handHit() {
       let hit = null;
-      for (const c of this.players[0].hand) if (G.inRect(input.x, input.y, c.tx, c.ty - (c.lift || 0), CW, CH + (c.lift || 0))) hit = c;
+      for (const c of this.players[0].hand) if (G.inRect(input.x, input.y, c.tx, c.ty - (c.lift || 0), G.cw(c), G.ch(c) + (c.lift || 0))) hit = c;
       return hit;
     },
     humanDraw() {
@@ -279,7 +283,8 @@
       const me = this.players[0];
       const myTurn = this.phase === 'you' && !this.pending8 && !ui.modal;
       this.hoverCard = myTurn && !ui.blocked() ? this.handHit() : null;
-      const overStock = myTurn && !ui.blocked() && G.inRect(input.x, input.y, STOCK.x - 8, STOCK.y - 8, CW + 8, CH + 8);
+      const PS = G.portrait ? 1.5 : 1, PW = Math.round(CW * PS), PH = Math.round(CH * PS);
+      const overStock = myTurn && !ui.blocked() && G.inRect(input.x, input.y, STOCK.x - 8, STOCK.y - 8, PW + 8, PH + 8);
       if (this.hoverCard && this.legal(this.hoverCard)) ui.cursorHand = true;
       if (overStock && this.canDraw()) ui.cursorHand = true;
       if (myTurn && input.pressed) {
@@ -295,9 +300,9 @@
       G.updateCards(this.cards, dt, 12);
 
       ui.felt();
-      G.drawSlot(STOCK.x, STOCK.y, 'EMPTY');
-      G.text('STOCK ' + this.stock.length, STOCK.x + CW / 2, STOCK.y + CH + 5, P.felt4, 'small', 'center');
-      G.text('PLAY PILE', DISC.x + CW / 2, DISC.y + CH + 5, P.felt4, 'small', 'center');
+      G.drawSlot(STOCK.x, STOCK.y, 'EMPTY', undefined, PS);
+      G.text('STOCK ' + this.stock.length, STOCK.x + PW / 2, STOCK.y + PH + 5, P.felt4, 'small', 'center');
+      G.text('PLAY PILE', DISC.x + PW / 2, DISC.y + PH + 5, P.felt4, 'small', 'center');
       this.drawSuitBox();
       for (let pi = 1; pi < this.players.length; pi++) {
         const p = this.players[pi], s = this.oppSlot(pi);
@@ -308,7 +313,7 @@
         if (this.phase === 'you' && !this.pending8) return this.legal(c) ? (c === this.hoverCard ? { highlight: P.gold } : null) : { dim: true };
         return null;
       });
-      if (overStock && this.canDraw()) G.outline(STOCK.x - 2, STOCK.y - 2, CW + 4, CH + 4, P.gold, 1);
+      if (overStock && this.canDraw()) G.outline(STOCK.x - 2, STOCK.y - 2, PW + 4, PH + 4, P.gold, 1);
       this.drawBoard();
       G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS' + (this.match ? '  ' + me.score + ' PTS' : ''), P.silver, this.turn === 0 && !this.handOver && !this.over);
       this.drawLog(LOG, G.portrait ? Math.floor((LOG.h - 20) / 9) : 8);
@@ -324,7 +329,7 @@
       else if (this.handOver && !this.handOver.matchWon && this.phase === 'handover') this.drawHandResult();
     },
     drawSuitBox() {
-      const x = DISC.x + CW + 12, y = DISC.y + 8;
+      const x = G.portrait ? 160 : DISC.x + CW + 12, y = G.portrait ? DISC.y + 23 : DISC.y + 8;
       G.panel(x, y, 44, 46, { fill: P.ink, hi: P.dusk });
       G.text('SUIT', x + 22, y + 5, P.silver, 'small', 'center');
       const s = this.suit;
@@ -335,6 +340,19 @@
       if (t && t.rank === 8) G.text('NAMED', x + 22, y + 34, P.gold, 'small', 'center');
     },
     drawBoard() {
+      if (BOARD.grid) {
+        // compact two-column scores beside your plate
+        const { x, y, w } = BOARD, h = 20 + Math.ceil(this.players.length / 2) * 14 + 2;
+        G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
+        G.text(this.match ? 'POINTS - TO ' + TARGET : 'CARDS LEFT', x + 6, y + 5, P.gold, 'small');
+        G.text('WINS ' + G.store.get('c8_won', 0) + '/' + G.store.get('c8_played', 0), x + w - 6, y + 5, P.slate, 'small', 'right');
+        this.players.forEach((p, i) => {
+          const cx = x + 6 + (i % 2) * 104, yy = y + 18 + Math.floor(i / 2) * 14, nm = G.dn(p).replace('THE ', '').replace('CAPT ', '');
+          G.text(nm.length > 10 ? nm.slice(0, 10) : nm, cx, yy, this.turn === i && !this.handOver ? P.gold : P.white, 'small');
+          G.text(String(this.match ? p.score : p.hand.length), cx + 94, yy, p.human ? P.gold : P.silver, 'small', 'right');
+        });
+        return;
+      }
       const { x, y, w } = BOARD;
       const h = 20 + this.players.length * 14 + 6;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
@@ -350,9 +368,9 @@
       const me = this.players[0];
       const myTurn = this.phase === 'you' && !this.pending8;
       const noPlay = myTurn && !this.legalCards(me).length;
-      const PT = G.portrait, bw = PT ? 76 : CW + 4, bh = PT ? 30 : 16, by = STOCK.y + CH + (PT ? 13 : 14), bf = PT ? 'big' : 'small';
-      if (myTurn && ui.button('DRAW', STOCK.x + CW / 2 - bw / 2, by, bw, bh, { key: 'd', theme: noPlay ? 'gold' : 'dark', font: bf, enabled: this.canDraw(), showKey: false })) this.humanDraw();
-      if (myTurn && noPlay && !this.canDraw() && ui.button('PASS', DISC.x + CW / 2 - bw / 2, by, bw, bh, { key: 'p', theme: 'red', font: bf, showKey: false })) this.pass(0);
+      const PT = G.portrait, bw = PT ? 66 : CW + 4, bh = PT ? 32 : 16, by = STOCK.y + (PT ? 93 + 16 : CH + 14), bf = PT ? 'big' : 'small', pc = PT ? 33 : CW / 2;
+      if (myTurn && ui.button('DRAW', STOCK.x + pc - bw / 2, by, bw, bh, { key: 'd', theme: noPlay ? 'gold' : 'dark', font: bf, enabled: this.canDraw(), showKey: false })) this.humanDraw();
+      if (myTurn && noPlay && !this.canDraw() && ui.button('PASS', DISC.x + pc - bw / 2, by, bw, bh, { key: 'p', theme: 'red', font: bf, showKey: false })) this.pass(0);
       let s = '', col = P.gold;
       if (myTurn) s = noPlay ? (this.canDraw() ? (G.touch ? 'NO MATCH - TAP THE STOCK TO DRAW' : 'NO MATCH - CLICK THE STOCK TO DRAW') : 'NO MATCH AND NO CARDS TO DRAW - PASS') : 'YOUR TURN - PLAY ' + SUIT_WORD[this.suit] + ', ' + (this.top().rank === 8 ? 'OR ANOTHER 8' : ([1, 8].includes(this.top().rank) ? 'AN ' : 'A ') + G.RANK_NAME[this.top().rank].toUpperCase() + ', OR AN 8') + (G.touch ? '' : '   (D DRAWS)');
       else if (this.phase === 'deal') { s = 'DEALING...'; col = P.white; }

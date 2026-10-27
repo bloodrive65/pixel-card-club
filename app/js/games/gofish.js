@@ -7,11 +7,11 @@
   function lay() {
     if (G.portrait) {
       const E = G.EX(), m = Math.round(E / 2);
-      DECK = { x: 158, y: 196 + Math.round(m / 2) }; HAND_Y = 338 + m;
-      // a big hand splits into two rows so every card stays wide enough to tap
-      PLATE = { x: 8, y: HAND_Y + CH + 44 }; BOOK = { x: 146, y: PLATE.y + 12 }; BOOK_ROW = 7;
-      LOG = { x: 8, y: G.H - 42, w: 344, h: 34, strip: true };
-      TAG_Y = DECK.y + CH + 22;
+      // big cards: the pond and table talk sit in the middle, your hand sits low where your thumbs are
+      DECK = { x: 20, y: 170 + Math.round(E / 3) }; HAND_Y = G.H - 112;
+      PLATE = { x: 8, y: G.H - 214 }; BOOK = { x: 140, y: PLATE.y - 2 }; BOOK_ROW = 7;
+      LOG = { x: 102, y: DECK.y, w: 250, h: 93, strip: true };
+      TAG_Y = DECK.y + 93 + 22;
     } else {
       DECK = { x: 298, y: 176 }; HAND_Y = 268; BOOK = { x: 14, y: 190 }; BOOK_ROW = 7;
       LOG = { x: 470, y: 172, w: 162, h: 88 }; PLATE = { x: 8, y: 312 }; TAG_Y = 340;
@@ -46,7 +46,7 @@
       else { const n = G.settings.fishOpponents; const st = this.ffa; const sub = { picks: st.picks.slice(0, n) }; G.fillRandom(sub); st.picks.splice(0, n, ...sub.picks); ids = sub.picks; G.settings.fishPicks = st.picks.slice(); }
       G.saveSettings();
       this.cards = G.shuffle(G.makeDeck(1));
-      this.cards.forEach((c) => { c.x = DECK.x; c.y = DECK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.lift = 0; c.hidden = false; });
+      this.cards.forEach((c) => { c.x = DECK.x; c.y = DECK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.lift = 0; c.hidden = false; c.sc = undefined; });
       this.deck = this.cards.slice();
       this.players = [{ name: 'YOU', human: true, hand: [], books: [], id: 'you', team: 0 }];
       ids.forEach((id, i) => {
@@ -282,18 +282,22 @@
       return { x: s.x + 1 + (bi % per) * 27, y: (G.portrait ? s.y + 104 : 122) + Math.floor(bi / per) * (G.portrait ? 12 : 23) };
     },
     layout() {
+      const PT = G.portrait, S = PT ? 1.5 : 1, BW = Math.round(CW * S);
+      G.cardScale = S;
       this.deck.forEach((c, i) => G.place(c, DECK.x - Math.floor(i / 6), DECK.y - Math.floor(i / 6), i, false));
       const me = this.players[0];
       const n = me.hand.length;
-      const two = G.portrait && n > 9, k1 = two ? Math.ceil(n / 2) : n;
-      const rowOff = (k) => (k > 1 ? Math.min(G.portrait ? 38 : 32, Math.floor(((G.portrait ? G.W - 16 : 560) - CW) / (k - 1))) : 0);
+      // a big hand splits into two rows so every card stays wide enough to tap
+      const two = PT && n > 8, k1 = two ? Math.ceil(n / 2) : n, hy = two ? G.H - 160 : HAND_Y;
+      const rowOff = (k) => (k > 1 ? Math.min(PT ? 46 : 32, Math.floor(((PT ? G.W - 12 : 560) - BW) / (k - 1))) : 0);
       const hov = this.hoverCard;
       me.hand.forEach((c, i) => {
-        const row = i < k1 ? 0 : 1, j = row ? i - k1 : i, k = row ? n - k1 : k1, off = rowOff(k), hw = CW + (k - 1) * off;
-        G.place(c, G.W / 2 - hw / 2 + j * off, HAND_Y + row * 38, 100 + i, true);
+        const row = i < k1 ? 0 : 1, j = row ? i - k1 : i, k = row ? n - k1 : k1, off = rowOff(k), hw = BW + (k - 1) * off;
+        G.place(c, G.W / 2 - hw / 2 + j * off, hy + row * 50, 100 + i, true);
         const target = this.selRank === c.rank ? 12 : hov && hov.rank === c.rank && this.phase === 'choose' ? 5 : 0;
         c.lift = G.lerp(c.lift || 0, target, 0.35);
       });
+      G.cardScale = 1;
       for (let pi = 1; pi < this.players.length; pi++) {
         const p = this.players[pi], s = this.oppSlot(pi);
         const m = p.hand.length; const o = m > 1 ? Math.min(10, Math.floor((s.w - CW) / (m - 1))) : 0;
@@ -312,7 +316,7 @@
     },
     handHit() {
       const me = this.players[0]; let hit = null;
-      for (const c of me.hand) if (G.inRect(input.x, input.y, c.tx, c.ty - (c.lift || 0), CW, CH + (c.lift || 0))) hit = c;
+      for (const c of me.hand) if (G.inRect(input.x, input.y, c.tx, c.ty - (c.lift || 0), G.cw(c), G.ch(c) + (c.lift || 0))) hit = c;
       return hit;
     },
     frame(dt) {
@@ -336,8 +340,9 @@
       G.updateCards(this.cards, dt, 12);
 
       ui.felt();
-      G.drawSlot(DECK.x, DECK.y, 'EMPTY');
-      G.text('POND ' + this.deck.length, DECK.x + CW / 2, DECK.y + CH + 5, P.felt4, 'small', 'center');
+      const DS = G.portrait ? 1.5 : 1;
+      G.drawSlot(DECK.x, DECK.y, 'EMPTY', undefined, DS);
+      G.text('POND ' + this.deck.length, DECK.x + CW * DS / 2, DECK.y + CH * DS + 5, P.felt4, 'small', 'center');
       // your book area
       const me = this.players[0];
       G.text('YOUR BOOKS ' + me.books.length, BOOK.x, BOOK.y - 11, this.teamMode ? P.sky : P.felt4, 'small');

@@ -19,11 +19,18 @@
     const hover = !ui.modal && !ui.shieldPrev && G.inRect(input.x, input.y, x, y, w, h);
     G.panel(x, y, w, h, { fill: hover ? P.navy : P.ink, hi: P.dusk });
     ui.block(x, y, w, h);
-    G.text('TALK', x + 5, y + 5, P.gold, 'small');
-    G.text('MORE', x + w - 6, y + h - 10, P.slate, 'small', 'right');
-    G.rect(x + w - 15, y + 5, 7, 1, P.slate); G.rect(x + w - 14, y + 6, 5, 1, P.slate); G.rect(x + w - 13, y + 7, 3, 1, P.slate); G.rect(x + w - 12, y + 8, 1, 1, P.slate);
-    const rows = Math.max(1, Math.floor((h - 8) / 10));
-    talkLines(log, w - 64).slice(-rows).forEach((l, i) => G.text(l.t, x + 30, y + 5 + i * 10, l.color, 'small'));
+    const box = h > 44;
+    G.text(box ? 'TABLE TALK' : 'TALK', x + 5, y + 5, P.gold, 'small');
+    G.text(box ? 'TAP FOR MORE' : 'MORE', x + w - 6, box ? y + 5 : y + h - 10, P.slate, 'small', 'right');
+    if (!box) { G.rect(x + w - 15, y + 5, 7, 1, P.slate); G.rect(x + w - 14, y + 6, 5, 1, P.slate); G.rect(x + w - 13, y + 7, 3, 1, P.slate); G.rect(x + w - 12, y + 8, 1, 1, P.slate); }
+    if (box) {
+      // a taller box beside the table: the latest lines under a header
+      const rows = Math.max(1, Math.floor((h - 20) / 9));
+      talkLines(log, w - 12).slice(-rows).forEach((l, i) => G.text(l.t, x + 6, y + 17 + i * 9, l.color, 'small'));
+    } else {
+      const rows = Math.max(1, Math.floor((h - 8) / 10));
+      talkLines(log, w - 64).slice(-rows).forEach((l, i) => G.text(l.t, x + 30, y + 5 + i * 10, l.color, 'small'));
+    }
     if (hover) { ui.hoverId = 'talk'; ui.cursorHand = true; }
     if (hover && input.pressed) { input.pressed = false; owner._logOpen = true; G.audio.sfx('click'); }
   };

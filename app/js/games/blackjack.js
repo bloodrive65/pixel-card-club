@@ -6,12 +6,15 @@
   // wide (landscape) table by default; lay() swaps in the upright (portrait) layout:
   // dealer on top, table-mates in a row under the dealer, your hand below them, controls along the bottom
   let SHOE, DISCARD, DEALER_Y, PLAYER_Y, M, CTRL_Y, PLATE, BANNER_Y, FELT_Y;
+  // portrait shows the dealer's cards and yours 1.5x bigger (normal size once you split past two hands)
+  let BS = 1, BCW = CW, BCH = CH, BFAN = FAN;
+  const bigCards = (on) => { BS = on ? 1.5 : 1; BCW = Math.round(CW * BS); BCH = Math.round(CH * BS); BFAN = on ? 22 : FAN; };
   function lay() {
     if (G.portrait) {
       const E = G.EX(), m = Math.round(E / 2);
       SHOE = { x: G.W - 62, y: 46 }; DISCARD = { x: 10, y: 46 }; DEALER_Y = 46;
-      M = { panel: 140 + Math.round(m / 2), seat: [244, 8], spread: 64 }; M.cards = M.panel + 48; M.bet = M.cards + CH + 16; M.tag = M.cards - 15; M.bubble = M.panel - 18;
-      PLAYER_Y = 312 + m; PLATE = { x: 8, y: PLAYER_Y + CH + 16, w: 112 };
+      M = { panel: 168 + Math.round(E / 3), seat: [244, 8], spread: 64 }; M.cards = M.panel + 48; M.bet = M.cards + CH + 16; M.tag = M.cards - 15; M.bubble = M.panel - 18;
+      PLAYER_Y = G.H - 306; PLATE = { x: 8, y: PLAYER_Y + 93 + 16, w: 112 };
       CTRL_Y = G.H - 128; BANNER_Y = PLAYER_Y - 36; FELT_Y = 102;
     } else {
       SHOE = { x: 566, y: 30 }; DISCARD = { x: 30, y: 30 }; DEALER_Y = 40; PLAYER_Y = 186;
@@ -301,7 +304,7 @@
     draw1(faceUp = true) {
       if (!this.shoe.length) this.newShoe();
       const c = this.shoe.pop();
-      c.x = SHOE.x; c.y = SHOE.y; c.faceUp = faceUp; c.shownFace = false; c.flip = 1; c.delay = 0;
+      c.x = SHOE.x; c.y = SHOE.y; c.faceUp = faceUp; c.shownFace = false; c.flip = 1; c.delay = 0; c.sc = 1;
       this.table.push(c);
       G.audio.sfx('deal');
       return c;
@@ -412,7 +415,7 @@
     checkAuto() {
       const h = this.cur(); if (!h) return;
       const t = handTotal(h.cards).total;
-      if (t > 21) { h.done = true; h.result = 'bust'; G.audio.sfx('error'); G.floatText('BUST', this.handX(this.active) + CW / 2, PLAYER_Y + 34, P.orange, 'big', 12); this.after(0.5, () => this.nextHand()); this.phase = 'wait'; }
+      if (t > 21) { h.done = true; h.result = 'bust'; G.audio.sfx('error'); G.floatText('BUST', this.handX(this.active) + BCW / 2, PLAYER_Y + 34, P.orange, 'big', 12); this.after(0.5, () => this.nextHand()); this.phase = 'wait'; }
       else if (t === 21) { h.done = true; this.after(0.35, () => this.nextHand()); this.phase = 'wait'; }
     },
     nextHand() {
@@ -453,7 +456,7 @@
         this.chips += pay; net += pay - h.bet;
         if (res === 'PUSH') pushes++; else if (pay > 0) wins++; else losses++;
         const fx = this.handX(i) + this.handW(h) / 2;
-        G.floatText(pay > h.bet ? '+' + (pay - h.bet) : pay === h.bet ? 'PUSH' : '-' + h.bet, fx, PLAYER_Y + CH + 13, pay > h.bet ? P.lime : pay === h.bet ? P.white : P.orange, 'big', 7);
+        G.floatText(pay > h.bet ? '+' + (pay - h.bet) : pay === h.bet ? 'PUSH' : '-' + h.bet, fx, PLAYER_Y + BCH + 13, pay > h.bet ? P.lime : pay === h.bet ? P.white : P.orange, 'big', 7);
       });
       const bank = G.store.get('bj_mates', {}) || {};
       this.mates.forEach((m) => {
@@ -520,19 +523,24 @@
       this.watch = null; this.msg = 'PLACE YOUR BET';
     },
     // ---------- layout ----------
-    handW(h) { return CW + Math.max(0, h.cards.length - 1) * FAN; },
+    handW(h) { return BCW + Math.max(0, h.cards.length - 1) * BFAN; },
     handX(i) {
-      const gap = G.portrait ? 12 : 26; const widths = this.hands.map((h) => Math.max(this.handW(h), CW + 2 * FAN));
+      const gap = G.portrait ? 12 : 26; const widths = this.hands.map((h) => Math.max(this.handW(h), BCW + 2 * BFAN));
       const total = widths.reduce((a, b) => a + b, 0) + gap * (this.hands.length - 1);
       let x = G.W / 2 - total / 2;
       for (let k = 0; k < i; k++) x += widths[k] + gap;
       return Math.round(x + (widths[i] - this.handW(this.hands[i])) / 2);
     },
     layout() {
-      const dw = CW + Math.max(0, this.dealer.length - 1) * FAN;
-      this.dealer.forEach((c, i) => G.place(c, G.W / 2 - dw / 2 + i * FAN, DEALER_Y, 100 + i));
+      bigCards(G.portrait && this.hands.length <= 2);
+      G.cardScale = BS;
+      const dw = BCW + Math.max(0, this.dealer.length - 1) * BFAN;
+      this.dealer.forEach((c, i) => G.place(c, G.W / 2 - dw / 2 + i * BFAN, DEALER_Y, 100 + i));
+      G.cardScale = 1;
       this.mates.forEach((m) => { const n = m.cards.length, off = n > 1 ? Math.min(FAN, Math.floor(M.spread / (n - 1))) : 0; m.cards.forEach((c, i) => G.place(c, this.seatX(m) + i * off, M.cards, 300 + m.seat * 20 + i)); });
-      this.hands.forEach((h, hi) => { const x = this.handX(hi); h.cards.forEach((c, i) => G.place(c, x, PLAYER_Y, 200 + hi * 20 + i)); h.cards.forEach((c, i) => { c.tx = x + i * FAN; }); });
+      G.cardScale = BS;
+      this.hands.forEach((h, hi) => { const x = this.handX(hi); h.cards.forEach((c, i) => G.place(c, x, PLAYER_Y, 200 + hi * 20 + i)); h.cards.forEach((c, i) => { c.tx = x + i * BFAN; }); });
+      G.cardScale = 1;
     },
     // ---------- frame ----------
     frame(dt) {
@@ -601,8 +609,8 @@
       for (let i = 0; i < dl; i++) G.ctx.drawImage(G.backImg(), DISCARD.x - i, DISCARD.y - i);
       // bet spots
       if (this.phase === 'bet' || this.phase === 'done' || !this.hands.length) {
-        this.drawBetSpot(G.W / 2, PLAYER_Y + CH + 30, this.bet);
-      } else this.hands.forEach((h, i) => this.drawBetSpot(this.handX(i) + this.handW(h) / 2, PLAYER_Y + CH + 30, h.bet, i === this.active && this.phase === 'play'));
+        this.drawBetSpot(G.W / 2, PLAYER_Y + BCH + 30, this.bet);
+      } else this.hands.forEach((h, i) => this.drawBetSpot(this.handX(i) + this.handW(h) / 2, PLAYER_Y + BCH + 30, h.bet, i === this.active && this.phase === 'play'));
       if (this.phase === 'bet' && !this.table.length) {
         G.text('YOUR HAND', G.W / 2, PLAYER_Y + 26, P.felt4, 'big', 'center');
         G.text('DEALER', G.W / 2, DEALER_Y + 26, P.felt4, 'big', 'center');
@@ -686,7 +694,7 @@
         const hidden = this.dealer.some((c) => !c.faceUp);
         const t = hidden ? handTotal(this.dealer.filter((c) => c.faceUp)) : handTotal(this.dealer);
         const lbl = hidden ? String(t.total) + ' + ?' : (t.total > 21 ? 'BUST ' + t.total : isNatural(this.dealer) ? 'BLACKJACK' : String(t.total));
-        if (this.dealer.every((c) => c.delay <= 0)) ui.tag('DEALER ' + lbl, G.W / 2, DEALER_Y + CH + 5, t.total > 21 ? P.orange : P.white);
+        if (this.dealer.every((c) => c.delay <= 0)) ui.tag('DEALER ' + lbl, G.W / 2, DEALER_Y + BCH + 5, t.total > 21 ? P.orange : P.white);
       }
       this.mates.forEach((m) => {
         if (!m.cards.length || m.cards.some((c) => c.delay > 0)) return;

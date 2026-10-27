@@ -38,13 +38,12 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
-## What's new in 1.7.4
+## What's new in 1.7.5
 
-- **Easier portrait controls on iPhone**: every button in portrait is bigger and more spread out, so it is hard to hit the wrong one. This covers the game tables, setup screens, main menu, profile, customize, options, pause menu, end-of-game windows and the rulebook.
-- **Buttons fire when you lift your finger**: on touch screens a button only triggers if your finger is still on it when you let go. Slide off a button to cancel.
-- **Compact table talk**: in portrait the chat log is now a slim strip showing the last two lines. Tap it to read the whole conversation, then tap anywhere to close it.
-- **Bigger hands split into two rows** in Crazy Eights and Go Fish once you hold more than 9 cards, so every card stays wide enough to tap.
-- Hold'em, Blackjack, War, Solitaire and Spider have larger bottom button bars in portrait; War's card count is now a compact two-column panel.
+- **Bigger cards in portrait**: your hand, the centre piles, the Hold'em board and the Blackjack dealer's cards are now 1.5x larger when the phone is held upright, so they are easier to see and to tap. The portrait screen is drawn at double resolution, so the bigger cards stay sharp.
+- **Your hand sits at the bottom**: in Go Fish and Crazy Eights your cards are low on the screen, next to your thumbs. Above 8 cards the hand splits into two rows.
+- **Table talk moved to open space**: Go Fish, Crazy Eights and War show table talk as a box in the middle of the table, beside the pond or piles. Hold'em uses the gap above the action buttons. Tap the box to read the whole conversation.
+- War puts your deck and battle cards low on the screen. The card count and table talk share the middle.
 
 Older versions are listed in [**CHANGELOG.md**](CHANGELOG.md).
 

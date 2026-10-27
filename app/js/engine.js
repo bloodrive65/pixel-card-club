@@ -24,6 +24,8 @@
   canvas.width = W; canvas.height = H;
   ctx.imageSmoothingEnabled = false;
   G.canvas = canvas; G.ctx = ctx;
+  // render scale: the upright (portrait) canvas is drawn at 2x so cards can be shown 1.5x bigger and stay crisp
+  G.RS = 1;
   G.settings = { sound: true, back: 0, pixelPerfect: false, fitV: 2, drawThree: false, fishOpponents: 2, fishLevel: 1, bjDecks: 4, surface: 0, cardColour: 0 };
 
   // touch devices (iPhone / iPad / tablets): fill the screen, hide keyboard hints, show tap wording
@@ -94,7 +96,8 @@
     if (G.portrait) { H = G.H = Math.min(900, ch); }
     if (cw !== G.SW || ch !== G.SH) {
       G.SW = cw; G.SH = ch; G.ox = Math.floor((cw - W) / 2); G.oy = Math.floor((ch - H) / 2); G.sizeKey = cw + 'x' + ch;
-      canvas.width = cw; canvas.height = ch; ctx.imageSmoothingEnabled = false;
+      G.RS = G.portrait ? 2 : 1;
+      canvas.width = cw * G.RS; canvas.height = ch * G.RS; ctx.imageSmoothingEnabled = false;
     }
     canvas.style.width = Math.floor(cw * s) + 'px';
     canvas.style.height = Math.floor(ch * s) + 'px';
@@ -104,9 +107,10 @@
   // start each frame: clear the whole canvas, then draw the 640x360 stage at its offset
   G.beginFrame = () => {
     if (frozen) { if (!G.typer.el || document.activeElement !== G.typer.el) G.freezeView(false); else liftForKeyboard(); }
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+    const k = G.RS || 1;
+    ctx.setTransform(k, 0, 0, k, 0, 0); ctx.globalAlpha = 1;
     ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, G.SW, G.SH);
-    ctx.setTransform(1, 0, 0, 1, G.ox, G.oy);
+    ctx.setTransform(k, 0, 0, k, G.ox * k, G.oy * k);
   };
   G.resize = resize;
   addEventListener('resize', resize);

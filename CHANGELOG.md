@@ -2,6 +2,13 @@
 
 Every version of Pixel Card Club, newest first. The current version is also summarized at the top of the [README](README.md). Downloads for each version are on the [Releases page](https://github.com/bloodrive65/pixel-card-club/releases).
 
+## 1.7.5
+
+- **Bigger cards in portrait**: your hand, the centre piles, the Hold'em board and the Blackjack dealer's cards are now 1.5x larger when the phone is held upright, so they are easier to see and to tap. The portrait screen is drawn at double resolution, so the bigger cards stay sharp.
+- **Your hand sits at the bottom**: in Go Fish and Crazy Eights your cards are low on the screen, next to your thumbs. Above 8 cards the hand splits into two rows.
+- **Table talk moved to open space**: Go Fish, Crazy Eights and War show table talk as a box in the middle of the table, beside the pond or piles. Hold'em uses the gap above the action buttons. Tap the box to read the whole conversation.
+- War puts your deck and battle cards low on the screen. The card count and table talk share the middle.
+
 ## 1.7.4
 
 - **Easier portrait controls on iPhone**: every button in portrait is bigger and more spread out, so it is hard to hit the wrong one. This covers the game tables, setup screens, main menu, profile, customize, options, pause menu, end-of-game windows and the rulebook.

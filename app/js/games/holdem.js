@@ -7,21 +7,24 @@
   const START = 1000;
   const LEVELS = [[10, 20], [15, 30], [25, 50], [50, 100], [75, 150], [100, 200], [150, 300], [200, 400], [300, 600], [500, 1000]];
   const HANDS_PER_LEVEL = 10;
-  const BOARD_STEP = 48;
+  let BOARD_STEP = 48, CS = 1; // card step and size (portrait shows the board and your cards 1.5x bigger)
   // wide (landscape) table by default; lay() swaps in the upright (portrait) layout:
   // seats on top, the board in the middle, your seat + cards under it, table talk, then the action buttons
   let DECK, BURN, BOARD_X, BOARD_Y, YOU, YOU_CARDS, LOG, INFO, POT_Y, OPP_TAG, ACT_Y;
   function lay() {
     if (G.portrait) {
       const E = G.EX(), m2 = Math.round(E / 3);
-      BOARD_X = 62; BOARD_Y = 176 + m2; POT_Y = BOARD_Y - 16;
-      DECK = { x: 14, y: BOARD_Y + 80 }; BURN = { x: 4, y: DECK.y + 2 };
-      YOU_CARDS = { x: 250, y: DECK.y }; INFO = { x: 70, y: DECK.y + 8, w: 102, h: 34 };
-      YOU = { x: 8, y: DECK.y + CH + 18, w: 190, h: 28 };
+      BOARD_STEP = 70; CS = 1.5;
+      BOARD_X = 7; BOARD_Y = 168 + m2; POT_Y = BOARD_Y - 16;
+      DECK = { x: 14, y: BOARD_Y + 93 + 30 }; BURN = { x: 4, y: DECK.y + 2 };
+      YOU_CARDS = { x: 214, y: DECK.y }; INFO = { x: 70, y: DECK.y + 8, w: 102, h: 34 };
+      YOU = { x: 8, y: DECK.y + CH + 14, w: 190, h: 28 };
       ACT_Y = G.H - 118;
-      LOG = { x: 8, y: ACT_Y - 62, w: 344, h: 34, strip: true };
+      // table talk fills the gap between your seat and the action buttons
+      { const top = Math.max(YOU.y + 64, ACT_Y - 28 - 110); LOG = { x: 8, y: top, w: 344, h: ACT_Y - 28 - top, strip: true }; }
       OPP_TAG = 134;
     } else {
+      BOARD_STEP = 48; CS = 1;
       DECK = { x: 140, y: 148 }; BURN = { x: 128, y: 150 }; BOARD_X = 202; BOARD_Y = 148; POT_Y = 134;
       YOU = { x: 16, y: 240, w: 190, h: 28 }; YOU_CARDS = { x: 250, y: 228 };
       LOG = { x: 470, y: 140, w: 162, h: 160 }; INFO = { x: 10, y: 196, w: 102, h: 34 }; OPP_TAG = 121; ACT_Y = 312;
@@ -156,7 +159,7 @@
       this.button = this.nextAlive(this.button);
       this.players.forEach((p) => Object.assign(p, { hole: [], bet: 0, total: 0, folded: p.out, allin: false, acted: false, canRaise: true, act: '', show: false, hand: null, startChips: p.chips, won: 0, eqAllin: null }));
       this.cards = G.shuffle(G.makeDeck(1));
-      this.cards.forEach((c) => { c.x = DECK.x; c.y = DECK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.hidden = false; c.lift = 0; });
+      this.cards.forEach((c) => { c.x = DECK.x; c.y = DECK.y; c.faceUp = false; c.shownFace = false; c.flip = 1; c.hidden = false; c.lift = 0; c.sc = undefined; });
       this.deck = this.cards.slice(); this.board = []; this.burns = []; this.street = 0; this.winners = []; this.potList = []; this.handDone = false;
       this.oddsCache = null; this.speed = this.spectate ? 2.2 : 1;
       const n = this.alive().length;
@@ -450,7 +453,7 @@
     },
     // ---------- layout ----------
     holeXY(pi, k) {
-      if (pi === 0) return { x: YOU_CARDS.x + k * 48, y: YOU_CARDS.y };
+      if (pi === 0) return { x: YOU_CARDS.x + k * (CS > 1 ? 70 : 48), y: YOU_CARDS.y };
       const s = this.oppSlot(pi);
       return { x: s.x + s.w / 2 - 34 + k * 24, y: G.portrait ? s.y + 32 : 56 };
     },
@@ -458,10 +461,12 @@
       if (!this.deck) return;
       this.deck.forEach((c, i) => G.place(c, DECK.x - Math.floor(i / 10), DECK.y - Math.floor(i / 10), i, false));
       this.burns.forEach((c, i) => G.place(c, BURN.x - i * 4, BURN.y, -20 + i, false));
+      G.cardScale = CS;
       this.board.forEach((c, i) => G.place(c, BOARD_X + i * BOARD_STEP, BOARD_Y, 80 + i, true));
+      G.cardScale = 1;
       this.players.forEach((p, pi) => p.hole.forEach((c, k) => {
         if (c._muck) { G.place(c, DECK.x + 4, DECK.y + 4, 1, false); if (c.delay <= 0 && Math.abs(c.x - c.tx) < 2 && Math.abs(c.y - c.ty) < 2) c.hidden = true; return; }
-        const q = this.holeXY(pi, k); G.place(c, q.x, q.y, 100 + pi * 4 + k);
+        const q = this.holeXY(pi, k); if (pi === 0) G.cardScale = CS; G.place(c, q.x, q.y, 100 + pi * 4 + k); G.cardScale = 1;
         const lift = this.handDone && this.winners.includes(p) && p.show ? 4 : 0; c.lift = G.lerp(c.lift || 0, lift, 0.3);
       }));
     },
@@ -475,8 +480,8 @@
 
       ui.felt();
       // table centre
-      G.alpha(0.35, () => { G.rect(BOARD_X - 6, BOARD_Y - 4, BOARD_STEP * 5 + 8, CH + 8, P.felt0); });
-      for (let i = 0; i < 5; i++) if (!this.board[i]) G.drawSlot(BOARD_X + i * BOARD_STEP, BOARD_Y, ['FLOP', 'FLOP', 'FLOP', 'TURN', 'RIVER'][i]);
+      G.alpha(0.35, () => { G.rect(BOARD_X - 6, BOARD_Y - 4, BOARD_STEP * 4 + Math.round(CW * CS) + 12, Math.round(CH * CS) + 8, P.felt0); });
+      for (let i = 0; i < 5; i++) if (!this.board[i]) G.drawSlot(BOARD_X + i * BOARD_STEP, BOARD_Y, ['FLOP', 'FLOP', 'FLOP', 'TURN', 'RIVER'][i], undefined, CS);
       G.text('DECK', DECK.x + CW / 2, DECK.y + CH + 4, P.felt4, 'small', 'center');
       const pot = this.pot();
       if (pot) {
@@ -547,13 +552,13 @@
       const turn = this.phase === 'you';
       this.drawSeat(YOU, me, { turn, out: me.out || me.folded, line: me.out ? 'OUT - PLACE ' + me.place : me.folded ? 'FOLDED' : me.allin ? 'ALL IN' : 'YOUR STACK', lineColor: me.allin ? P.orange : P.silver, value: me.chips });
       if (this.button === 0) this.drawButton(YOU.x + YOU.w + 6, YOU.y + 8);
-      if (me.bet > 0) { const w = ui.tag(String(me.bet), YOU_CARDS.x + 54, YOU_CARDS.y - 14, P.gold, P.ink); this.drawChips(YOU_CARDS.x + 54 - w / 2 - 13, YOU_CARDS.y - 13, me.bet); }
-      else if (me.act === 'CHECK') ui.tag('CHECK', YOU_CARDS.x + 46, YOU_CARDS.y - 14, P.silver, P.ink);
+      if (me.bet > 0) { const bxm = CS > 1 ? 68 : 54; const w = ui.tag(String(me.bet), YOU_CARDS.x + bxm, YOU_CARDS.y - 14, P.gold, P.ink); this.drawChips(YOU_CARDS.x + bxm - w / 2 - 13, YOU_CARDS.y - 13, me.bet); }
+      else if (me.act === 'CHECK') ui.tag('CHECK', YOU_CARDS.x + (CS > 1 ? 68 : 46), YOU_CARDS.y - 14, P.silver, P.ink);
       // your best hand right now
       if (me.hole.length === 2 && !me.folded && me.hole.every((c) => c.shownFace)) {
         const sc = G.pokerEval(me.hole.concat(this.board));
         const nm = this.board.length ? handName(sc) : me.hole[0].rank === me.hole[1].rank ? 'POCKET ' + VPL[toInt(me.hole[0]) >> 2] : (me.hole[0].suit === me.hole[1].suit ? 'SUITED ' : '') + G.RANK_LABEL[me.hole[0].rank] + '-' + G.RANK_LABEL[me.hole[1].rank];
-        G.text(nm, YOU_CARDS.x + 46, YOU_CARDS.y + CH + 4, this.handDone && this.winners.includes(me) ? P.lime : P.white, 'small', 'center');
+        G.text(nm, YOU_CARDS.x + (CS > 1 ? 68 : 46), YOU_CARDS.y + Math.round(CH * CS) + 4, this.handDone && this.winners.includes(me) ? P.lime : P.white, 'small', 'center');
       }
       // odds helper
       if (ui.button(this.showOdds ? 'ODDS ON' : 'ODDS OFF', YOU.x, YOU.y + 32, 92, G.portrait ? 26 : 15, { key: 'o', theme: this.showOdds ? 'blue' : 'dark', font: 'small', id: 'odds' })) { this.showOdds = !this.showOdds; G.settings.pokerOdds = this.showOdds; G.saveSettings(); }

@@ -420,12 +420,16 @@
   G.cardShort = (c) => G.RANK_LABEL[c.rank] + ['S', 'H', 'D', 'C'][c.suit];
 
   // Place a card at a target; it animates there
+  // G.cardScale: size for the cards placed next (1 = normal; portrait tables use 1.5 for your hand and the centre piles)
+  G.cardScale = 1;
+  G.cw = (c) => Math.round(CW * (c.s || 1)); G.ch = (c) => Math.round(CH * (c.s || 1));
   G.place = (c, x, y, z, faceUp, delay) => {
-    c.tx = Math.round(x); c.ty = Math.round(y); c.z = z;
+    c.tx = Math.round(x); c.ty = Math.round(y); c.z = z; c.s = G.cardScale;
+    if (c.sc === undefined) c.sc = c.s;
     if (faceUp !== undefined) c.faceUp = faceUp;
     if (delay !== undefined) c.delay = Math.max(c.delay, delay);
   };
-  G.snap = (c) => { c.x = c.tx; c.y = c.ty; c.shownFace = c.faceUp; c.flip = 1; };
+  G.snap = (c) => { c.x = c.tx; c.y = c.ty; c.shownFace = c.faceUp; c.flip = 1; c.sc = c.s || 1; };
 
   // Update positions; returns true while anything is moving
   G.updateCards = (cards, dt, speed = 14) => {
@@ -440,6 +444,10 @@
         if (Math.abs(c.ty - c.y) < 0.5) c.y = c.ty;
         moving = true;
       }
+      // size eases toward its target while the card travels
+      if (c.sc === undefined) c.sc = c.s || 1;
+      const ts = c.s || 1;
+      if (c.sc !== ts) { c.sc += (ts - c.sc) * (1 - Math.exp(-speed * dt)); if (Math.abs(ts - c.sc) < 0.02) c.sc = ts; moving = true; }
       // flip animation
       if (c.shownFace !== c.faceUp) {
         c.flip -= dt * 9;
@@ -453,17 +461,19 @@
   G.drawCard = (c, opt = {}) => {
     const x = Math.round(c.x), y = Math.round(c.y - (c.lift || 0));
     const img = c.shownFace ? G.faceImg(c) : G.backImg();
-    const w = Math.max(1, Math.round(CW * c.flip));
-    const ox = Math.round((CW - w) / 2);
+    // scaled cards snap to half pixels, which the 2x portrait canvas draws exactly
+    const sc = c.sc || 1, cw = sc === 1 ? CW : Math.round(CW * sc * 2) / 2, chh = sc === 1 ? CH : Math.round(CH * sc * 2) / 2;
+    const w = Math.max(1, Math.round(cw * c.flip * 2) / 2);
+    const ox = Math.round((cw - w)) / 2;
     const ctx = G.ctx;
     // drop shadow
     const sh = opt.dragging ? 4 : (c.lift ? 2 + Math.round(c.lift / 3) : 1);
-    ctx.globalAlpha = 0.35; G.rect(x + ox + sh, y + sh + 1, w - 1, CH - 2, P.black); ctx.globalAlpha = 1;
-    ctx.drawImage(img, x + ox, y, w, CH);
-    if (opt.dim) { ctx.globalAlpha = 0.45; G.rect(x + ox + 1, y + 1, w - 2, CH - 2, P.ink); ctx.globalAlpha = 1; }
+    ctx.globalAlpha = 0.35; ctx.fillStyle = P.black; ctx.fillRect(x + ox + sh, y + sh + 1, w - 1, chh - 2); ctx.globalAlpha = 1;
+    ctx.drawImage(img, x + ox, y, w, chh);
+    if (opt.dim) { ctx.globalAlpha = 0.45; ctx.fillStyle = P.ink; ctx.fillRect(x + ox + 1, y + 1, w - 2, chh - 2); ctx.globalAlpha = 1; }
     if (opt.highlight) {
       const col = opt.highlight === true ? P.gold : opt.highlight;
-      G.outline(x - 1, y - 1, CW + 2, CH + 2, col, 2);
+      G.outline(x - 1, y - 1, Math.round(cw) + 2, Math.round(chh) + 2, col, 2);
     }
   };
 
@@ -478,8 +488,9 @@
   };
 
   // empty pile slot outline
-  G.drawSlot = (x, y, label, suitIdx) => {
+  G.drawSlot = (x, y, label, suitIdx, scale) => {
     x = Math.round(x); y = Math.round(y);
+    if (scale && scale !== 1) { const ctx = G.ctx; ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); G.drawSlot(0, 0, label, suitIdx); ctx.restore(); return; }
     G.ctx.globalAlpha = 0.5;
     G.rect(x + 2, y + 1, CW - 4, CH - 2, P.felt0); G.rect(x + 1, y + 2, CW - 2, CH - 4, P.felt0);
     G.ctx.globalAlpha = 1;

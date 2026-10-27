@@ -5,14 +5,19 @@
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
   // positions for the wide (landscape) table; portrait() swaps in the upright layout
-  let YOU_PILE, YOU_BAT, YOU_WON, LOG, BOARD;
-  function lay() {
+  let YOU_PILE, YOU_BAT, YOU_WON, LOG, BOARD, PS = 1, PW = CW, PH = CH;
+  function lay(nOpp) {
     if (G.portrait) {
-      const E = G.EX(), m = Math.round(E / 2);
-      YOU_PILE = { x: 158, y: 376 + m }; YOU_BAT = { x: 80, y: 290 + m }; YOU_WON = { x: 92, y: 376 + m };
-      // bottom of the screen: a compact card count, a one-tap table-talk strip and big buttons
-      LOG = { x: 8, y: G.H - 82, w: 344, h: 32, strip: true }; BOARD = { x: 8, y: G.H - 170, w: 344, h: 82, grid: true };
+      const E = G.EX();
+      // big cards: your deck and battle cards sit low where your thumbs are; the card count and
+      // table talk share the middle of the table
+      PS = 1.5; PW = 66; PH = 93;
+      YOU_PILE = { x: 147, y: G.H - 158 }; YOU_WON = { x: 50, y: YOU_PILE.y }; YOU_BAT = { x: 147, y: YOU_PILE.y - PH - 30 };
+      const top = (nOpp >= 3 ? 206 : 142) + Math.round(E / 4), bot = YOU_BAT.y - 56;
+      BOARD = { x: 8, y: top, w: 140, h: 84, list: true };
+      LOG = { x: 154, y: top, w: 198, h: Math.max(44, Math.min(120, bot - top)), strip: true };
     } else {
+      PS = 1; PW = CW; PH = CH;
       YOU_PILE = { x: 196, y: 224 }; YOU_BAT = { x: 256, y: 224 }; YOU_WON = { x: 136, y: 224 };
       LOG = { x: 470, y: 134, w: 162, h: 168 }; BOARD = { x: 10, y: 134, w: 120, h: 168 };
     }
@@ -45,7 +50,7 @@
       this.onePass = this.opt() === 1;
       this.resetTable();
       this.cards = G.shuffle(G.makeDeck(1));
-      this.cards.forEach((c) => { c.x = G.W / 2 - CW / 2; c.y = 150; c.faceUp = false; c.shownFace = false; c.flip = 1; c.hidden = false; c.lift = 0; });
+      this.cards.forEach((c) => { c.x = G.W / 2 - CW / 2; c.y = 150; c.faceUp = false; c.shownFace = false; c.flip = 1; c.hidden = false; c.lift = 0; c.sc = undefined; });
       this.players = [{ name: 'YOU', human: true, id: 'you', pile: [], won: [], battle: [], out: false, streak: 0 }];
       ids.forEach((id) => { const ch = G.char(id); this.players.push({ name: ch.name, human: false, id, ch, pile: [], won: [], battle: [], out: false, streak: 0 }); });
       // pagat: deal as many cards as possible so everyone has an equal number (26, 17 or 13)
@@ -123,7 +128,7 @@
         if (!w.human) this.say(wi, G.talk(w.ch, 'warWin', LINES));
         const loser = talkers.find((p) => p !== w);
         if (loser && Math.random() < 0.6) this.say(this.players.indexOf(loser), G.talk(loser.ch, 'warLose', LINES));
-        if (w.human) G.floatText('+' + n + ' CARDS', YOU_PILE.x + CW / 2, YOU_PILE.y + CH / 2 + 4, P.lime, 'big', 14);
+        if (w.human) G.floatText('+' + n + ' CARDS', YOU_PILE.x + PW / 2, YOU_PILE.y + PH / 2 + 4, P.lime, 'big', 14);
       } else if (talkers.length && Math.random() < 0.18) {
         const t = G.pick(talkers), ti = this.players.indexOf(t);
         if (t.streak >= 4) this.say(ti, G.talk(t.ch, 'hot', LINES));
@@ -188,7 +193,7 @@
     pileXY(pi) { if (pi === 0) return YOU_PILE; const s = this.oppSlot(pi); return { x: s.x + 4, y: s.y + (G.portrait ? 32 : 34) }; },
     wonXY(pi) { if (pi === 0) return YOU_WON; const s = this.oppSlot(pi); return { x: s.x + s.w - CW - 4, y: s.y + (G.portrait ? 32 : 34) }; },
     batXY(pi) {
-      if (pi === 0) return { ...YOU_BAT, w: 200 };
+      if (pi === 0) return { ...YOU_BAT, w: G.portrait ? 206 : 200 };
       const s = this.oppSlot(pi);
       // narrow portrait seats put the battle cards on a second row under the deck
       if (s.narrow) return { x: s.x + 4, y: s.y + 100, w: s.w - 8 };
@@ -197,22 +202,24 @@
     layout() {
       this.players.forEach((p, pi) => {
         const pp = this.pileXY(pi), wp = this.wonXY(pi), bp = this.batXY(pi);
+        G.cardScale = pi === 0 ? PS : 1;
         p.pile.forEach((c, i) => { G.place(c, pp.x - Math.floor(i / 7), pp.y - Math.floor(i / 7), i, false); c.lift = 0; });
         p.won.forEach((c, i) => G.place(c, wp.x - Math.floor(i / 7), wp.y - Math.floor(i / 7), i, false));
         const n = p.battle.length;
         const off = n > 1 ? Math.min(12, Math.floor((bp.w - CW) / (n - 1))) : 0;
         p.battle.forEach((c, i) => G.place(c, bp.x + i * off, bp.y, 200 + i, c._up));
+        G.cardScale = 1;
       });
     },
     frame(dt) {
-      lay();
+      lay(this.players ? this.players.length - 1 : 1);
       if (this.setup) return this.drawSetupScreen();
       if (this.paused || this.over) ui.modal = true;
       if (!this.paused) this.runQueue(dt);
       // flipping: click your deck, SPACE, or auto
       const me = this.players[0];
       const pp = YOU_PILE;
-      const overPile = !ui.modal && !ui.blocked() && G.inRect(input.x, input.y, pp.x - 4, pp.y - 4, CW + 4, CH + 4);
+      const overPile = !ui.modal && !ui.blocked() && G.inRect(input.x, input.y, pp.x - 6, pp.y - 6, PW + 12, PH + 12);
       if (this.phase === 'ready' && this.skipReq && !this.over) this.endGame();
       if (this.phase === 'ready' && !ui.modal) {
         if (overPile) ui.cursorHand = true;
@@ -225,11 +232,11 @@
       ui.felt();
       // slots
       this.players.forEach((p, pi) => {
-        const a = this.pileXY(pi); if (!p.pile.length) G.drawSlot(a.x, a.y, p.out ? 'OUT' : '');
-        if (this.onePass) { const w = this.wonXY(pi); if (!p.won.length) G.drawSlot(w.x, w.y, 'WON'); }
+        const a = this.pileXY(pi), sc = pi === 0 ? PS : 1; if (!p.pile.length) G.drawSlot(a.x, a.y, p.out ? 'OUT' : '', undefined, sc);
+        if (this.onePass) { const w = this.wonXY(pi); if (!p.won.length) G.drawSlot(w.x, w.y, 'WON', undefined, sc); }
       });
-      if (this.onePass) G.text('WON ' + me.won.length, YOU_WON.x + CW / 2, YOU_WON.y + CH + 5, P.felt4, 'small', 'center');
-      G.text('YOUR DECK ' + me.pile.length, pp.x + CW / 2, pp.y + CH + 5, P.gold, 'small', 'center');
+      if (this.onePass) G.text('WON ' + me.won.length, YOU_WON.x + PW / 2, YOU_WON.y + PH + 5, P.felt4, 'small', 'center');
+      G.text('YOUR DECK ' + me.pile.length, pp.x + PW / 2, pp.y + PH + 5, P.gold, 'small', 'center');
       for (let pi = 1; pi < this.players.length; pi++) {
         const p = this.players[pi], s = this.oppSlot(pi);
         this.drawSeat(s, p, { out: p.out, line: p.out ? 'OUT OF CARDS' : (this.onePass ? 'DECK ' + p.pile.length + '  WON ' + p.won.length : p.pile.length + ' CARDS'), value: this.count(p), valueColor: P.gold });
@@ -245,29 +252,29 @@
         G.text('WAR!', wx - 2, wy - 2 + b, P.orange, 'big', 'center', 3);
       }
       this.drawControls();
-      this.drawBubbles(dt, [YOU_PILE.x + CW / 2, YOU_PILE.y - 20], G.portrait ? 30 : 98);
+      this.drawBubbles(dt, [G.portrait ? 300 : YOU_PILE.x + CW / 2, G.portrait ? YOU_PILE.y + 20 : YOU_PILE.y - 20], G.portrait ? 30 : 98);
       G.drawFloaters(dt);
       const stats = [{ label: 'BATTLES', value: this.battles }, { label: 'WARS', value: this.wars, color: P.orange }, { label: 'YOUR CARDS', value: this.count(me), color: P.gold }];
       if (this.handlePause(this.onePass ? 'WAR - ONE PASS' : 'WAR', stats, () => { this.setup = true; })) return;
       if (this.over) this.drawResult();
     },
     drawBoard() {
-      if (BOARD.grid) { BOARD.h = 22 + Math.ceil(this.players.length / 2) * 26; BOARD.y = LOG.y - 6 - BOARD.h; }
+      if (BOARD.list) BOARD.h = 20 + this.players.length * 17;
       const { x, y, w, h } = BOARD;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
       G.text('CARD COUNT', x + 6, y + 5, P.gold, 'small');
       const total = 52 - this.spare.length;
-      if (BOARD.grid) {
+      if (BOARD.list) {
+        // compact list: name, count and a bar per player
         this.players.forEach((p, i) => {
-          const cx = x + 6 + (i % 2) * 168, yy = y + 18 + Math.floor(i / 2) * 26, bw = 128;
-          G.drawAvatar(p.id, cx, yy);
-          G.text(G.dn(p).length > 12 ? G.dn(p).replace('THE ', '').replace('CAPT ', '') : G.dn(p), cx + 28, yy + 2, p.out ? P.slate : P.white, 'small');
+          const yy = y + 17 + i * 17, bw = w - 12, nm = G.dn(p).replace('THE ', '').replace('CAPT ', '');
+          G.text(nm.length > 14 ? nm.slice(0, 14) : nm, x + 6, yy, p.out ? P.slate : P.white, 'small');
           const n = this.count(p);
-          G.rect(cx + 28, yy + 12, bw, 6, P.dusk);
-          G.rect(cx + 28, yy + 12, Math.round(bw * n / total), 6, p.human ? P.gold : P.sky);
-          G.text(String(n), cx + 28 + bw, yy + 2, P.gold, 'small', 'right');
+          G.text(String(n), x + w - 6, yy, P.gold, 'small', 'right');
+          G.rect(x + 6, yy + 8, bw, 4, P.dusk);
+          G.rect(x + 6, yy + 8, Math.round(bw * n / total), 4, p.human ? P.gold : P.sky);
         });
-        G.text('WINS ' + G.store.get('war_won', 0) + '/' + G.store.get('war_played', 0), x + w - 6, y + 5, P.slate, 'small', 'right');
+        G.text('WINS ' + G.store.get('war_won', 0) + '/' + G.store.get('war_played', 0), x + 6, y + h + 4, P.felt4, 'small');
         return;
       }
       this.players.forEach((p, i) => {
