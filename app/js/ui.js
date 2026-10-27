@@ -294,14 +294,27 @@
     return w;
   };
   // speech bubble with tail pointing down/up
-  ui.bubble = (str, x, y, up = false) => {
-    const w = G.textWidth(str, 'small') + 10, h = 13;
+  // speech bubble. up: tail points up (bubble hangs under the speaker). maxW wraps long lines;
+  // a downward bubble grows upward so its tail stays put
+  ui.bubble = (str, x, y, up = false, font = 'small', maxW = 0) => {
+    const big = font !== 'small', pad = big ? 12 : 10, lh = big ? 11 : 9;
+    let lines = [str];
+    if (maxW) {
+      lines = []; let cur = '';
+      for (const wd of str.split(' ')) {
+        const t = cur ? cur + ' ' + wd : wd;
+        if (cur && G.textWidth(t, font) + pad > maxW) { lines.push(cur); cur = wd; } else cur = t;
+      }
+      if (cur) lines.push(cur);
+    }
+    const w = Math.max(...lines.map((l) => G.textWidth(l, font))) + pad, h = (big ? 17 : 13) + (lines.length - 1) * lh;
+    if (!up) y -= (lines.length - 1) * lh;
     const bx = Math.round(G.clamp(x - w / 2, 2, G.W - w - 2));
     G.rect(bx + 1, y, w - 2, h, P.ink); G.rect(bx, y + 1, w, h - 2, P.ink);
     G.rect(bx + 1, y + 1, w - 2, h - 2, P.white);
     if (up) { G.rect(x - 2, y - 2, 4, 2, P.ink); G.rect(x - 1, y - 1, 2, 2, P.white); }
     else { G.rect(x - 3, y + h - 1, 6, 2, P.white); G.rect(x - 1, y + h + 1, 2, 2, P.white); G.rect(x - 4, y + h - 1, 1, 2, P.ink); G.rect(x + 3, y + h - 1, 1, 2, P.ink); G.rect(x - 2, y + h + 1, 1, 2, P.ink); G.rect(x + 1, y + h + 1, 1, 2, P.ink); G.rect(x - 1, y + h + 3, 2, 1, P.ink); }
-    G.text(str, bx + w / 2, y + 4, P.ink, 'small', 'center');
+    lines.forEach((l, k) => G.text(l, bx + w / 2, y + 4 + k * lh, P.ink, font, 'center'));
   };
 
   // ---------- Pause / rules overlay shared by games ----------
