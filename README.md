@@ -38,12 +38,11 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
-## What's new in 1.7.5
+## What's new in 1.7.6
 
-- **Bigger cards in portrait**: your hand, the centre piles, the Hold'em board and the Blackjack dealer's cards are now 1.5x larger when the phone is held upright, so they are easier to see and to tap. The portrait screen is drawn at double resolution, so the bigger cards stay sharp.
-- **Your hand sits at the bottom**: in Go Fish and Crazy Eights your cards are low on the screen, next to your thumbs. Above 8 cards the hand splits into two rows.
-- **Table talk moved to open space**: Go Fish, Crazy Eights and War show table talk as a box in the middle of the table, beside the pond or piles. Hold'em uses the gap above the action buttons. Tap the box to read the whole conversation.
-- War puts your deck and battle cards low on the screen. The card count and table talk share the middle.
+- **Cleaner Go Fish table in portrait**: the table now has three clear areas. Opponents sit across the top. The middle shows the current exchange (who asked whom for what, and the reply) with the pond right below it. Your prompt, card count, books and hand sit together at the bottom.
+- The table talk box in Go Fish is now one compact line under the pond. Tap it for the full history.
+- In portrait Go Fish, your own name plate and speech bubble are gone. Your books are laid in one row just above your hand.
 
 Older versions are listed in [**CHANGELOG.md**](CHANGELOG.md).
 

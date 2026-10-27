@@ -3,15 +3,18 @@
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
   // wide (landscape) table by default; lay() swaps in the upright (portrait) layout
-  let DECK, HAND_Y, BOOK, LOG, PLATE, TAG_Y, BOOK_ROW;
+  let DECK, HAND_Y, BOOK, LOG, PLATE, TAG_Y, BOOK_ROW, ACT;
   function lay() {
     if (G.portrait) {
-      const E = G.EX(), m = Math.round(E / 2);
-      // big cards: the pond and table talk sit in the middle, your hand sits low where your thumbs are
-      DECK = { x: 20, y: 170 + Math.round(E / 3) }; HAND_Y = G.H - 112;
-      PLATE = { x: 8, y: G.H - 214 }; BOOK = { x: 140, y: PLATE.y - 2 }; BOOK_ROW = 7;
-      LOG = { x: 102, y: DECK.y, w: 250, h: 93, strip: true };
-      TAG_Y = DECK.y + 93 + 22;
+      // opponents on top; the current ask and the pond in the middle; your prompt, books and hand at the bottom
+      // the middle group (ask panel, pond, talk line) is centred between the opponents and your prompt
+      const grp = 60 + 14 + Math.round(CH * 1.5) + 20 + 30, top = 148, bot = G.H - 160 - 84;
+      ACT = { x: 8, y: top + Math.max(0, Math.round((bot - top - grp) / 2)), w: G.W - 16, h: 60 };
+      DECK = { x: Math.round(G.W / 2 - (CW * 1.5) / 2), y: ACT.y + ACT.h + 14 };
+      LOG = { x: 8, y: DECK.y + Math.round(CH * 1.5) + 20, w: G.W - 16, h: 30, strip: true };
+      HAND_Y = G.H - 112; BOOK_ROW = 13;
+      // these follow the hand (it moves up when it splits into two rows); see placeMine()
+      BOOK = { x: 4, y: HAND_Y - 40 }; TAG_Y = HAND_Y - 74; PLATE = null;
     } else {
       DECK = { x: 298, y: 176 }; HAND_Y = 268; BOOK = { x: 14, y: 190 }; BOOK_ROW = 7;
       LOG = { x: 470, y: 172, w: 162, h: 88 }; PLATE = { x: 8, y: 312 }; TAG_Y = 340;
@@ -53,7 +56,7 @@
         const ch = G.char(id);
         this.players.push({ name: ch.name, human: false, hand: [], books: [], id, ch, team: teams ? (i === 1 ? 0 : 1) : i + 1, mem: { has: {}, lacks: {} }, grudge: null });
       });
-      this.turn = 0; this.q = []; this.qt = 0; this.log = []; this.bubbles = []; this.selRank = null; this.phase = 'deal'; this.over = false; this.result = null;
+      this.turn = 0; this.q = []; this.qt = 0; this.log = []; this.bubbles = []; this.act = null; this._logOpen = false; this.selRank = null; this.phase = 'deal'; this.over = false; this.result = null;
       // Bicycle rules: 7 cards each for 2-3 players, 5 each for 4 or more
       const per = this.players.length <= 3 ? 7 : 5;
       let d = 0;
@@ -77,6 +80,9 @@
       if (!this.q.length) this.qt = 0;
     },
     addLog(text, color = P.white) { this.log.push({ text, color }); if (this.log.length > 40) this.log.shift(); },
+    // the exchange shown in the middle of the portrait table: who asked whom for what, and the reply
+    setAct(a, t, ask) { this.act = { a, t, ask, reply: null, col: P.white }; },
+    reply(text, col) { if (this.act) { this.act.reply = text; this.act.col = col; } },
     say(pi, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.pi !== pi); this.bubbles.push({ pi, text, t: 2.7 }); },
     sortHand() { this.players[0].hand.sort((a, b) => a.rank - b.rank || a.suit - b.suit); },
     cur() { return this.players[this.turn]; },
@@ -165,6 +171,7 @@
       const a = this.players[ai], t = this.players[ti];
       this.phase = 'resolve'; this.selRank = null;
       this.say(ai, (t.human ? '' : t.name + ', ') + 'GOT ANY ' + plural(rank) + '?');
+      this.setAct(ai, ti, 'GOT ANY ' + plural(rank) + '?');
       this.addLog((a.human ? 'You' : a.name) + ' asked ' + (t.human ? 'YOU' : t.name) + ' for ' + plural(rank).toLowerCase() + '.', a.human ? P.gold : P.white);
       this.remember('has', ai, rank, true);
       G.audio.sfx('click');
@@ -176,19 +183,22 @@
           if (a.human) this.sortHand();
           if (!t.human) t.grudge = ai;
           this.say(ti, 'HERE, TAKE ' + matches.length + '.');
+          this.reply('HERE, TAKE ' + matches.length + '.', a.human || (this.teamMode && a.team === 0) ? P.lime : P.orange);
           this.addLog((t.human ? 'You gave ' : t.name + ' gave ') + matches.length + ' ' + (matches.length > 1 ? plural(rank).toLowerCase() : G.RANK_NAME[rank].toLowerCase()) + '. ' + (a.human ? 'Go again.' : a.name + ' goes again.'), a.human || (this.teamMode && a.team === 0) ? P.lime : P.orange);
           this.remember('has', ti, rank, false); this.remember('lacks', ti, rank, true);
           G.audio.sfx(a.human ? 'good' : 'chip');
           this.after(0.8, () => { this.checkBooks(a); this.startTurn(); });
         } else {
           this.say(ti, t.human ? 'GO FISH!' : G.say(t.ch, 'fish'));
+          this.reply('GO FISH!', P.sky);
           G.audio.sfx('fish');
           this.remember('lacks', ti, rank, true);
           this.after(0.8, () => {
-            if (!this.deck.length) { this.addLog('The pond is empty.', P.silver); return this.nextTurn(); }
+            if (!this.deck.length) { this.addLog('The pond is empty.', P.silver); this.reply('GO FISH! THE POND IS EMPTY.', P.silver); return this.nextTurn(); }
             const c = this.drawFor(a);
             if (c.rank === rank) {
               this.say(ai, 'FISHED MY WISH!');
+              this.reply('GO FISH! ... FISHED THE ' + G.RANK_NAME[rank].toUpperCase() + '!', P.cyan);
               this.addLog((a.human ? 'You' : a.name) + ' fished the ' + G.RANK_NAME[rank].toLowerCase() + '. Go again.', P.cyan);
               G.audio.sfx('good');
               this.after(0.8, () => { this.checkBooks(a); this.startTurn(); });
@@ -214,6 +224,7 @@
         made++;
         this.addLog((p.human ? 'You lay down' : p.name + ' lays down') + ' a book of ' + plural(rank).toLowerCase() + '.', P.gold);
         const pi = this.players.indexOf(p);
+        if (this.act && this.act.a === pi) this.act.book = plural(rank);
         this.say(pi, p.human ? 'BOOK OF ' + plural(rank) + '!' : G.say(p.ch, 'book') + ' ' + plural(rank) + '!');
         for (let i = 0; i < this.players.length; i++) this.remember('has', i, rank, false);
         G.audio.sfx('book');
@@ -289,6 +300,8 @@
       const n = me.hand.length;
       // a big hand splits into two rows so every card stays wide enough to tap
       const two = PT && n > 8, k1 = two ? Math.ceil(n / 2) : n, hy = two ? G.H - 160 : HAND_Y;
+      // your prompt, status and books ride just above the top row of your hand
+      if (PT) { BOOK.y = hy - 44; TAG_Y = hy - 74; this.statY = hy - 55; }
       const rowOff = (k) => (k > 1 ? Math.min(PT ? 46 : 32, Math.floor(((PT ? G.W - 12 : 560) - BW) / (k - 1))) : 0);
       const hov = this.hoverCard;
       me.hand.forEach((c, i) => {
@@ -342,10 +355,14 @@
       ui.felt();
       const DS = G.portrait ? 1.5 : 1;
       G.drawSlot(DECK.x, DECK.y, 'EMPTY', undefined, DS);
-      G.text('POND ' + this.deck.length, DECK.x + CW * DS / 2, DECK.y + CH * DS + 5, P.felt4, 'small', 'center');
+      G.text('POND ' + this.deck.length, DECK.x + CW * DS / 2, DECK.y + CH * DS + 5, G.portrait ? P.silver : P.felt4, 'small', 'center');
       // your book area
       const me = this.players[0];
-      G.text('YOUR BOOKS ' + me.books.length, BOOK.x, BOOK.y - 11, this.teamMode ? P.sky : P.felt4, 'small');
+      if (G.portrait) {
+        const yc = this.teamMode ? P.sky : P.felt4;
+        G.text('YOUR BOOKS ' + me.books.length, BOOK.x + 2, this.statY, me.books.length ? P.gold : yc, 'small');
+        G.text(me.hand.length + (me.hand.length === 1 ? ' CARD' : ' CARDS'), G.W - 6, this.statY, yc, 'small', 'right');
+      } else G.text('YOUR BOOKS ' + me.books.length, BOOK.x, BOOK.y - 11, this.teamMode ? P.sky : P.felt4, 'small');
       if (!me.books.length) { G.alpha(0.5, () => G.rect(BOOK.x, BOOK.y, 26, 20, P.felt0)); G.outline(BOOK.x, BOOK.y, 26, 20, P.felt4); }
       this.players.forEach((p, pi) => p.books.forEach((b, bi) => {
         if (!b.laid) return;
@@ -356,7 +373,8 @@
         G.drawMiniBook(b.rank, sp.x, sp.y - pop);
       }));
       this.drawOpponents();
-      G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
+      if (G.portrait) this.drawAction();
+      else G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
       G.drawCards(this.cards, (c) => (this.selRank === c.rank && me.hand.includes(c) ? { highlight: P.gold } : null));
       this.drawLog();
       this.drawPrompt();
@@ -434,7 +452,31 @@
       if (s && G.portrait && G.textWidth && G.textWidth(s, 'small') > G.W - 16) s = s.replace(/  \(.*\)$/, '');
       if (s) ui.tag(s, G.W / 2, TAG_Y, col, P.ink);
     },
+    // portrait: the current exchange in the middle of the table, the asker on the left and the reply on the right
+    drawAction() {
+      const { x, y, w, h } = ACT, a = this.act;
+      G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk });
+      const nm = (p) => (p.human ? 'YOU' : p.name);
+      const fit = (str, f, mw) => { while (str.length > 3 && G.textWidth(str, f) > mw) str = str.slice(0, -1); return str; };
+      if (!a) {
+        const p = this.cur();
+        const msg = this.phase === 'deal' ? 'DEALING...' : this.over ? 'GAME OVER' : p && p.human ? 'YOUR TURN' : p ? nm(p) + "'S TURN" : '';
+        G.text(msg, x + w / 2, y + h / 2 - 4, p && p.human ? P.gold : P.white, 'big', 'center');
+        return;
+      }
+      const A = this.players[a.a], T = this.players[a.t];
+      G.drawAvatar(A.id, x + 5, y + 5);
+      G.text(nm(A) + (A.human ? ' ASK ' : ' ASKS ') + nm(T), x + 34, y + 6, A.human ? P.gold : P.silver, 'small');
+      G.text(fit(a.ask, 'big', w - 40), x + 34, y + 15, P.white, 'big');
+      if (a.reply || a.book) {
+        G.drawAvatar(T.id, x + w - 29, y + h - 29);
+        const line = a.book ? (A.human ? 'BOOK OF ' : nm(A) + ': BOOK OF ') + a.book + '!' : a.reply;
+        G.text(a.book ? 'BOOK' : nm(T), x + w - 34, y + h - 28, a.book ? P.gold : P.silver, 'small', 'right');
+        G.text(fit(line, 'big', w - 40), x + w - 34, y + h - 19, a.book ? P.gold : a.col, 'big', 'right');
+      } else if (Math.floor(performance.now() / 300) % 2) G.text('...', x + w - 34, y + h - 19, P.slate, 'big', 'right');
+    },
     drawBubbles(dt) {
+      if (G.portrait) { for (const b of this.bubbles) b.t -= dt; this.bubbles = this.bubbles.filter((b) => b.t > 0); return; }
       for (const b of this.bubbles) {
         b.t -= dt;
         if (b.pi === 0) ui.bubble(b.text, 72, PLATE.y - 18);

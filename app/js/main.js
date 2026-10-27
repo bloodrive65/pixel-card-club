@@ -1,7 +1,7 @@
 // Pixel Card Club - scene manager, title menu, options, main loop
 (function () {
   'use strict';
-  G.VERSION = '1.7.5'; // keep in step with package.json and app/version.json
+  G.VERSION = '1.7.6'; // keep in step with package.json and app/version.json
   const P = G.P, ui = G.ui, CW = G.CW, CH = G.CH;
 
   G.saveSettings = () => G.store.set('settings', G.settings);

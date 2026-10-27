@@ -2,6 +2,12 @@
 
 Every version of Pixel Card Club, newest first. The current version is also summarized at the top of the [README](README.md). Downloads for each version are on the [Releases page](https://github.com/bloodrive65/pixel-card-club/releases).
 
+## 1.7.6
+
+- **Cleaner Go Fish table in portrait**: the table now has three clear areas. Opponents sit across the top. The middle shows the current exchange (who asked whom for what, and the reply) with the pond right below it. Your prompt, card count, books and hand sit together at the bottom.
+- The table talk box in Go Fish is now one compact line under the pond. Tap it for the full history.
+- In portrait Go Fish, your own name plate and speech bubble are gone. Your books are laid in one row just above your hand.
+
 ## 1.7.5
 
 - **Bigger cards in portrait**: your hand, the centre piles, the Hold'em board and the Blackjack dealer's cards are now 1.5x larger when the phone is held upright, so they are easier to see and to tap. The portrait screen is drawn at double resolution, so the bigger cards stay sharp.
