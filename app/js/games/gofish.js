@@ -6,14 +6,15 @@
   let DECK, HAND_Y, BOOK, LOG, PLATE, TAG_Y, BOOK_ROW;
   function lay() {
     if (G.portrait) {
-      // opponents on top; the current ask and the pond in the middle; your prompt, books and hand at the bottom
-      // the middle group (pond, talk line) is centred between the opponents' bubbles and your prompt
-      const grp = Math.round(CH * 1.5) + 20 + 30, top = 190, bot = G.H - 160 - 104;
-      DECK = { x: Math.round(G.W / 2 - (CW * 1.5) / 2), y: top + Math.max(0, Math.round((bot - top - grp) / 2)) };
-      LOG = { x: 8, y: DECK.y + Math.round(CH * 1.5) + 20, w: G.W - 16, h: 30, strip: true };
+      // opponents on top; the pond (left) and table talk (right) in the middle;
+      // your plate, books and hand at the bottom. The middle is centred between the opponents' bubbles and your bubble.
+      const BH = Math.round(CH * 1.5), BW = Math.round(CW * 1.5), top = 190, bot = G.H - 160 - 106;
+      DECK = { x: 14, y: top + Math.max(0, Math.round((bot - top - BH - 14) / 2)) };
+      const lx = DECK.x + BW + 16;
+      LOG = { x: lx, y: DECK.y, w: G.W - lx - 8, h: BH + 10, strip: true };
       HAND_Y = G.H - 112; BOOK_ROW = 13;
-      // these follow the hand (it moves up when it splits into two rows); see placeMine()
-      BOOK = { x: 4, y: HAND_Y - 40 }; TAG_Y = HAND_Y - 74; PLATE = null;
+      // these follow the hand (it moves up when it splits into two rows); see layout()
+      BOOK = { x: 4, y: HAND_Y - 40 }; TAG_Y = HAND_Y - 74; PLATE = { x: 4, y: HAND_Y - 80 };
     } else {
       DECK = { x: 298, y: 176 }; HAND_Y = 268; BOOK = { x: 14, y: 190 }; BOOK_ROW = 7;
       LOG = { x: 470, y: 172, w: 162, h: 88 }; PLATE = { x: 8, y: 312 }; TAG_Y = 340;
@@ -292,7 +293,7 @@
       // a big hand splits into two rows so every card stays wide enough to tap
       const two = PT && n > 8, k1 = two ? Math.ceil(n / 2) : n, hy = two ? G.H - 160 : HAND_Y;
       // your prompt, status and books ride just above the top row of your hand
-      if (PT) { BOOK.y = hy - 44; TAG_Y = hy - 94; this.statY = hy - 55; }
+      if (PT) { BOOK.y = hy - 44; PLATE.y = hy - 80; }
       const rowOff = (k) => (k > 1 ? Math.min(PT ? 46 : 32, Math.floor(((PT ? G.W - 12 : 560) - BW) / (k - 1))) : 0);
       const hov = this.hoverCard;
       me.hand.forEach((c, i) => {
@@ -349,11 +350,7 @@
       G.text('POND ' + this.deck.length, DECK.x + CW * DS / 2, DECK.y + CH * DS + 5, G.portrait ? P.silver : P.felt4, 'small', 'center');
       // your book area
       const me = this.players[0];
-      if (G.portrait) {
-        const yc = this.teamMode ? P.sky : P.felt4;
-        G.text('YOUR BOOKS ' + me.books.length, BOOK.x + 2, this.statY, me.books.length ? P.gold : yc, 'small');
-        G.text(me.hand.length + (me.hand.length === 1 ? ' CARD' : ' CARDS'), G.W - 6, this.statY, yc, 'small', 'right');
-      } else G.text('YOUR BOOKS ' + me.books.length, BOOK.x, BOOK.y - 11, this.teamMode ? P.sky : P.felt4, 'small');
+      if (!G.portrait) G.text('YOUR BOOKS ' + me.books.length, BOOK.x, BOOK.y - 11, this.teamMode ? P.sky : P.felt4, 'small');
       if (!me.books.length) { G.alpha(0.5, () => G.rect(BOOK.x, BOOK.y, 26, 20, P.felt0)); G.outline(BOOK.x, BOOK.y, 26, 20, P.felt4); }
       this.players.forEach((p, pi) => p.books.forEach((b, bi) => {
         if (!b.laid) return;
@@ -364,7 +361,13 @@
         G.drawMiniBook(b.rank, sp.x, sp.y - pop);
       }));
       this.drawOpponents();
-      if (!G.portrait) G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
+      if (G.portrait) {
+        // your plate: avatar, name, the turn prompt on its second line, counts on the right
+        const pr = this.promptText(), w = G.W - 8, turn = this.turn === 0 && !this.over;
+        G.youPlate(PLATE.x, PLATE.y, w, pr.s, pr.col, turn);
+        if (this.teamMode) G.text('TEAM BLUE', PLATE.x + w - 6, PLATE.y + 5, P.sky, 'small', 'right');
+        G.text(me.hand.length + 'C  ' + me.books.length + ' BK', PLATE.x + w - 6, PLATE.y + (this.teamMode ? 17 : 11), P.silver, 'small', 'right');
+      } else G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
       G.drawCards(this.cards, (c) => (this.selRank === c.rank && me.hand.includes(c) ? { highlight: P.gold } : null));
       this.drawLog();
       this.drawPrompt();
@@ -431,6 +434,11 @@
       lines.slice(-(G.portrait ? Math.floor((h - 20) / 9) : 8)).forEach((l, i) => G.text(l.t, x + 6, y + 16 + i * 9, l.color, 'small'));
     },
     drawPrompt() {
+      if (G.portrait) return; // shown inside your plate
+      const { s, col } = this.promptText();
+      if (s) ui.tag(s, G.W / 2, TAG_Y, col, P.ink);
+    },
+    promptText() {
       let s = '', col = P.white;
       const p = this.cur();
       if (this.phase === 'choose') {
@@ -439,15 +447,18 @@
         col = P.gold;
       } else if (this.phase === 'deal') s = 'DEALING...';
       else if (p && !p.human && !this.over) s = p.name + ' IS THINKING...';
-      if (s && G.portrait && G.textWidth && G.textWidth(s, 'small') > G.W - 16) s = s.replace(/  \(.*\)$/, '');
-      if (s) ui.tag(s, G.W / 2, TAG_Y, col, P.ink);
+      if (s && G.portrait) {
+        s = s.replace(/  \(.*\)$/, '').replace(/^YOUR TURN - /, '');
+        if (p && !p.human && !this.over) col = P.silver;
+      }
+      return { s, col };
     },
     drawBubbles(dt) {
       for (const b of this.bubbles) {
         b.t -= dt;
         if (G.portrait) {
           // yours points down at your books and hand; theirs hang under their cards (and books, if any)
-          if (b.pi === 0) ui.bubble(b.text, 64, this.statY - 24, false, 'big', G.W - 8);
+          if (b.pi === 0) ui.bubble(b.text, PLATE.x + 15, PLATE.y - 22, false, 'big', G.W - 8);
           else {
             const s = this.oppSlot(b.pi), nb = this.players[b.pi].books.length, per = Math.max(1, Math.floor((s.w + 1) / 27));
             ui.bubble(b.text, s.x + s.w / 2, s.y + 104 + (nb ? Math.ceil(nb / per) * 12 + 10 : 0), true, 'big', Math.floor(G.W / (this.players.length - 1)) - 6);

@@ -254,7 +254,7 @@ If your hand runs empty you draw a card. Once the pond is empty, a player with n
 - **Speech bubbles**: who asked whom for what, "Go Fish!", and each member's own lines.
 - **Table talk** (right): a running log of every ask, give, draw and book. Read it to work out who holds what.
 - **Pond** count (centre).
-- **In portrait**: speech bubbles appear under each opponent and just above your hand. The middle of the table holds the pond and one line of table talk; tap it for the full history. Your prompt, card count and books sit just above your hand.
+- **In portrait**: the pond is on the left of the middle with the table talk box beside it (tap it for the full history). Your plate above your hand shows your avatar, counts and what to do next, and your books sit between it and your hand. Speech bubbles appear under each opponent and above your avatar.
 
 ### Tips
 - When someone asks for a rank, they're holding at least one. Ask them for it on your next turn.

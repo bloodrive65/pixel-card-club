@@ -38,10 +38,11 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
-## What's new in 1.7.7
+## What's new in 1.7.8
 
-- **Speech bubbles are back in portrait Go Fish**: each player's words appear beside them. Opponents' bubbles hang under their cards, and yours sits just above your hand. Bubbles are bigger and wrap long lines, so three opponents can talk at once without overlapping.
-- The middle "current exchange" panel from 1.7.6 is gone. The middle of the table now holds just the pond and one line of table talk.
+- **Your own plate is back in portrait Go Fish**: a full-width bar above your hand shows your avatar and name, your card and book counts, and the turn prompt ("TAP A CARD TO ASK FOR ITS RANK"). It glows gold on your turn. Your speech bubble points at your avatar.
+- The floating prompt tag is gone. The prompt now sits inside your plate.
+- **Table talk moved to the right**: the pond sits on the left of the middle, and the table talk box fills the space beside it. Tap it for the full history.
 
 Older versions are listed in [**CHANGELOG.md**](CHANGELOG.md).
 
