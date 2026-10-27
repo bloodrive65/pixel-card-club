@@ -185,11 +185,28 @@
 
   // ---------- HUD top bar ----------
   // stats: [{label, value, color}]
+  // portrait: two rows (menu + title, then the stats spread across the screen), 33 px tall
+  ui.TOP = () => (G.portrait ? 33 : 21);
   ui.topBar = (title, stats = []) => {
-    G.rect(0, 0, G.W, 20, P.ink); G.rect(0, 20, G.W, 1, P.black); G.rect(0, 19, G.W, 1, P.dusk);
-    ui.block(0, 0, G.W, 21);
+    const P2 = G.portrait, bh = P2 ? 32 : 20;
+    G.rect(0, 0, G.W, bh, P.ink); G.rect(0, bh, G.W, 1, P.black); G.rect(0, bh - 1, G.W, 1, P.dusk);
+    ui.block(0, 0, G.W, bh + 1);
     const menu = ui.button('MENU', 3, 2, 46, 15, { key: 'Escape', keyLabel: 'ESC', theme: 'dark', font: 'small', showKey: false });
     G.text(title, 57, 6, P.gold, 'big');
+    if (P2) {
+      // the stats share the second row, spread evenly across it
+      const widthOf = (s) => G.textWidth(s.label, 'small') + 4 + G.textWidth(String(s.value), 'big');
+      const rest = stats;
+      if (rest.length) {
+        const total = rest.reduce((a, s) => a + widthOf(s), 0), gap = Math.max(8, Math.min(24, (G.W - 12 - total) / Math.max(1, rest.length - 1)));
+        let x = rest.length === 1 ? G.W / 2 - total / 2 : (G.W - (total + gap * (rest.length - 1))) / 2;
+        for (const s of rest) {
+          G.text(s.label, x, 22, P.silver, 'small'); x += G.textWidth(s.label, 'small') + 4;
+          G.text(String(s.value), x, 20, s.color || P.white, 'big'); x += G.textWidth(String(s.value), 'big') + gap;
+        }
+      }
+      return menu;
+    }
     let rx = G.W - 6;
     for (let i = stats.length - 1; i >= 0; i--) {
       const s = stats[i];
@@ -205,6 +222,10 @@
   // ---------- Message banner ----------
   ui.banner = (str, y, color = P.white, bg = P.ink) => {
     const w = G.textWidth(str, 'big') + 20;
+    if (w > G.W - 8 && G.portrait) { // too wide for a phone held upright: shrink to the small font
+      const ws = G.textWidth(str, 'small') + 16, xs = Math.round(G.W / 2 - ws / 2);
+      G.panel(xs, y, ws, 17, { fill: bg, hi: P.dusk }); G.text(str, G.W / 2, y + 6, color, 'small', 'center'); return;
+    }
     const x = Math.round(G.W / 2 - w / 2);
     G.panel(x, y, w, 17, { fill: bg, hi: P.dusk });
     G.text(str, G.W / 2, y + 5, color, 'big', 'center');
@@ -236,7 +257,7 @@
     G.alpha(0.7, () => G.rect(0, 0, G.W, G.H, P.ink));
     ui.block(0, 0, G.W, G.H);
     if (scene._showRules) return ui.rulesPanel(scene);
-    const w = 200, h = 150, x = G.W / 2 - w / 2, y = 90;
+    const w = 200, h = 150, x = G.W / 2 - w / 2, y = G.portrait ? Math.round(G.H / 2 - 75) : 90;
     G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
     G.text('PAUSED', G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
     let act = null;
@@ -247,7 +268,7 @@
     return act;
   };
   ui.rulesPanel = (scene) => {
-    const w = 440, h = 290, x = G.W / 2 - w / 2, y = 40;
+    const w = Math.min(440, G.W - 16), h = G.portrait ? 440 : 290, x = G.W / 2 - w / 2, y = G.portrait ? Math.round(G.H / 2 - 220) : 40;
     G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
     G.text('HOW TO PLAY ' + scene.title, G.W / 2, y + 12, P.gold, 'big', 'center', 1, P.black);
     let yy = y + 32;
@@ -266,7 +287,7 @@
     ui.modal = true;
     G.alpha(opt.dim === undefined ? 0.55 : opt.dim, () => G.rect(0, 0, G.W, G.H, P.ink));
     ui.block(0, 0, G.W, G.H);
-    const w = opt.w || 260, h = 54 + lines.length * 12 + 26, x = Math.round(G.W / 2 - w / 2), y = Math.round(opt.y || (G.H / 2 - h / 2));
+    const w = Math.min(G.W - 12, opt.w || 260), h = 54 + lines.length * 12 + 26, x = Math.round(G.W / 2 - w / 2), y = Math.round(opt.y || (G.H / 2 - h / 2));
     G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: opt.accent || P.gold });
     G.text(title, G.W / 2, y + 13, opt.titleColor || P.gold, 'big', 'center', 1, P.black);
     lines.forEach((l, i) => G.text(l.text, G.W / 2, y + 34 + i * 12, l.color || P.white, l.font || 'small', 'center'));

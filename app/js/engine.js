@@ -1,8 +1,11 @@
 // Pixel Card Club - core engine: canvas, scaling, input, drawing, bitmap text, audio, storage
 (function () {
   'use strict';
-  const W = 640, H = 360;
-  const G = (window.G = { W, H });
+  // The stage is 640x360 in landscape. On phones and tablets held upright it becomes a 360x640 portrait
+  // stage and every screen switches to its portrait layout (G.portrait). W / H always hold the current stage.
+  let W = 640, H = 360;
+  const G = (window.G = { W, H, portrait: false });
+  const forcePortrait = /[?&]portrait/.test(location.search);
 
   // ---------- Palette (Sweetie-16 based, plus felt tones) ----------
   G.P = {
@@ -30,6 +33,8 @@
   // The game is laid out on a 640x360 stage. On touch screens whose shape is not 16:9 (iPad is 4:3),
   // the canvas grows to fill the screen and the stage sits in the middle (offset G.ox, G.oy); the felt,
   // top bar, bottom panels and dim overlays stretch into the extra space so there are no black bars.
+  // portrait: how much taller than 640 the stage is on this phone (layouts push their lower half down by it)
+  G.EX = () => (G.portrait ? G.H - 640 : 0);
   G.ox = 0; G.oy = 0; G.SW = W; G.SH = H; G.sizeKey = W + 'x' + H;
   // while the on-screen keyboard is up, the screen size is frozen (so the game does not shrink) and the
   // canvas slides up just enough to keep the name box above the keyboard
@@ -70,13 +75,23 @@
   function resize() {
     let [vw, vh] = viewSize();
     if (frozen) { vw = frozen.vw; vh = frozen.vh; }
-    const r = Math.min(innerWidth / W, innerHeight / H);
+    // portrait when a touch screen is held upright (the keyboard freeze keeps the current shape)
+    const wantP = forcePortrait || (G.touch && vh > vw * 1.05);
+    if (!frozen && wantP !== G.portrait) {
+      G.portrait = wantP; W = G.W = wantP ? 360 : 640; H = G.H = wantP ? 640 : 360; G.SH = 0;
+      G.SW = 0; // force the canvas to be rebuilt
+      if (G.onOrient) G.onOrient();
+    }
+    const BW = G.portrait ? 360 : 640, BH = G.portrait ? 640 : 360; // the smallest stage for this orientation
+    const r = Math.min(innerWidth / BW, innerHeight / BH);
     // FILL WINDOW (default, and always on touch screens): smooth scaling + the stage stretches to fill the window.
     // PIXEL PERFECT: whole-number scaling only (crispest pixels), with a border around the game.
     const fill = G.touch || !G.settings.pixelPerfect;
-    let s = fill ? Math.min(vw / W, vh / H) : (r >= 1 ? Math.floor(r) : r);
-    let cw = W, ch = H;
-    if (fill && vw > 0 && vh > 0) { cw = Math.max(W, Math.min(Math.round(W * 1.5), Math.floor(vw / s))); ch = Math.max(H, Math.min(Math.round(H * 1.5), Math.floor(vh / s))); }
+    let s = fill ? Math.min(vw / BW, vh / BH) : (r >= 1 ? Math.floor(r) : r);
+    let cw = BW, ch = BH;
+    if (fill && vw > 0 && vh > 0) { cw = Math.max(BW, Math.min(Math.round(BW * 1.5), Math.floor(vw / s))); ch = Math.max(BH, Math.min(Math.round(BH * 1.5), Math.floor(vh / s))); }
+    // portrait: a taller phone gets a taller stage (G.H grows, up to 900) rather than empty bands
+    if (G.portrait) { H = G.H = Math.min(900, ch); }
     if (cw !== G.SW || ch !== G.SH) {
       G.SW = cw; G.SH = ch; G.ox = Math.floor((cw - W) / 2); G.oy = Math.floor((ch - H) / 2); G.sizeKey = cw + 'x' + ch;
       canvas.width = cw; canvas.height = ch; ctx.imageSmoothingEnabled = false;
@@ -265,8 +280,38 @@
 
   // ---------- Audio (chiptune synth, no files needed) ----------
   const audio = (G.audio = { ctx: null });
+  // iPhone / iPad: Safari treats game sound like a ringtone, so the Ring / Silent switch mutes it. Asking for a
+  // "playback" audio session (newer iOS), or keeping a silent media track running (older iOS), makes the game
+  // play like a video instead: it follows the volume buttons and ignores the silent switch.
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) {}
+  let keepAlive = null;
+  function silentTrack() {
+    // 0.5 s of silence as an 8 kHz mono WAV, built in memory
+    const n = 4000, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+    const str = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+    str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVE'); str(12, 'fmt '); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, n * 2, true);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  }
+  function startKeepAlive() {
+    if (!isIOS || navigator.audioSession || window.cardclubNative) return;
+    if (!keepAlive) {
+      keepAlive = document.createElement('audio');
+      keepAlive.setAttribute('x-webkit-airplay', 'deny'); keepAlive.setAttribute('playsinline', '');
+      keepAlive.preload = 'auto'; keepAlive.loop = true; keepAlive.src = silentTrack();
+    }
+    if (keepAlive.paused && !document.hidden) { const p = keepAlive.play(); if (p && p.catch) p.catch(() => {}); }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { if (keepAlive) keepAlive.pause(); if (audio.ctx && audio.ctx.state === 'running') audio.ctx.suspend(); }
+    else if (audio.ctx) audio.ctx.resume();
+  });
   audio.unlock = () => {
-    if (audio.ctx) { if (audio.ctx.state === 'suspended') audio.ctx.resume(); return; }
+    try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (_) {}
+    startKeepAlive();
+    if (audio.ctx) { if (audio.ctx.state !== 'running') audio.ctx.resume(); return; }
     try { audio.ctx = new (window.AudioContext || window.webkitAudioContext)(); audio.master = audio.ctx.createGain(); audio.master.gain.value = 0.22; audio.master.connect(audio.ctx.destination); } catch (_) {}
   };
   function tone(freq, dur, type = 'square', vol = 1, delay = 0, slide = 0) {

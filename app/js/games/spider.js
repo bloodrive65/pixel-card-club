@@ -4,9 +4,17 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
-  const COLW = 48, X0 = 146, TOP = 28, DOWN_OFF = 4;
+  const DOWN_OFF = 4;
+  // wide (landscape) table by default; lay() swaps in the upright (portrait) layout:
+  // ten overlapping columns across the screen, stock + completed runs above, buttons below
+  let COLW, X0, TOP, STOCK, BOTTOM, RUNS;
+  function lay() {
+    if (G.portrait) { COLW = 35; X0 = 1; TOP = 118; STOCK = { x: 6, y: 40 }; BOTTOM = 56; RUNS = { x: 100, y: 52, pitch: 30 }; }
+    else { COLW = 48; X0 = 146; TOP = 28; STOCK = { x: 14, y: 256 }; BOTTOM = 6; RUNS = null; }
+  }
+  lay();
   const colX = (i) => X0 + i * COLW;
-  const STOCK = { x: 14, y: 256 };
+  const FX = () => (G.portrait ? G.W / 2 : G.W / 2 + 70);
   const SUIT_OPTS = [1, 2, 4];
 
   const scene = (G.Spider = {
@@ -91,7 +99,7 @@
     canDeal() { return this.stock.cards.length > 0 && this.tab.every((t) => t.cards.length); },
     deal() {
       if (!this.stock.cards.length) { G.audio.sfx('error'); return; }
-      if (!this.canDeal()) { G.audio.sfx('error'); G.floatText('FILL EVERY COLUMN FIRST', G.W / 2 + 70, 200, P.orange, 'small'); return; }
+      if (!this.canDeal()) { G.audio.sfx('error'); G.floatText('FILL EVERY COLUMN FIRST', FX(), 200, P.orange, 'small'); return; }
       this.pushUndo();
       this.tab.forEach((t, i) => { const c = this.stock.cards.pop(); c.faceUp = true; t.cards.push(c); c.delay = i * 0.05; });
       this.moves++; this.score--; this.started = true; this.hintShow = null;
@@ -133,7 +141,7 @@
       const m = this.allMoves();
       if (m.length) { const h = m[this.hintIdx++ % m.length]; this.hintShow = { card: h.card, dest: h.dest, t: 1.6 }; return; }
       if (this.stock.cards.length) { this.hintShow = { stock: true, t: 1.6 }; return; }
-      G.audio.sfx('error'); G.floatText('NO MOVES LEFT - TRY UNDO', G.W / 2 + 70, 200, P.orange, 'small');
+      G.audio.sfx('error'); G.floatText('NO MOVES LEFT - TRY UNDO', FX(), 200, P.orange, 'small');
     },
     win() {
       this.won = true;
@@ -147,15 +155,15 @@
     // ---------- layout ----------
     upOff(t) {
       const down = t.cards.filter((c) => !c.faceUp).length, up = t.cards.length - down;
-      let off = 13;
-      const avail = G.H - 6 - TOP - CH - down * DOWN_OFF;
+      let off = G.portrait ? 18 : 13;
+      const avail = G.H - BOTTOM - TOP - CH - down * DOWN_OFF;
       if (up > 1 && (up - 1) * off > avail) off = Math.max(5, Math.floor(avail / (up - 1)));
       return off;
     },
     layout() {
       const deals = Math.ceil(this.stock.cards.length / 10);
       this.stock.cards.forEach((c, i) => { const d = Math.floor(i / 10); G.place(c, STOCK.x + d * 8, STOCK.y, i, false); });
-      this.done.cards.forEach((c, i) => { const r = Math.floor(i / 13); G.place(c, 8 + (r % 4) * 30 - 8, 186 + Math.floor(r / 4) * 0, 500 + i, true); if (c.delay <= 0 && Math.abs(c.x - c.tx) < 2 && Math.abs(c.y - c.ty) < 2) c.hidden = true; });
+      this.done.cards.forEach((c, i) => { const r = Math.floor(i / 13); G.place(c, RUNS ? RUNS.x + r * RUNS.pitch - 8 : 8 + (r % 4) * 30 - 8, RUNS ? RUNS.y - 20 : 186, 500 + i, true); if (c.delay <= 0 && Math.abs(c.x - c.tx) < 2 && Math.abs(c.y - c.ty) < 2) c.hidden = true; });
       this.tab.forEach((t) => {
         const off = this.upOff(t); let y = TOP;
         t.cards.forEach((c, i) => { if (!c._drag) G.place(c, colX(t.i), y, 100 + i); y += c.faceUp ? off : DOWN_OFF; });
@@ -200,6 +208,7 @@
       }
     },
     frame(dt) {
+      lay();
       if (this.paused) ui.modal = true;
       if (!this.paused && !this.won && this.started) this.time += dt;
       if (this.dealT > 0) { this.dealT -= dt; if (this.dealT <= 0) this.tab.forEach((t) => (this.top(t).faceUp = true)); }
@@ -255,7 +264,35 @@
         if (it.x < G.W + 10) G.ctx.drawImage(G.faceImg(it.c), Math.round(it.x), Math.round(it.y));
       }
     },
+    drawSidePortrait() {
+      const n = Math.ceil(this.stock.cards.length / 10);
+      G.text(n + (n === 1 ? ' DEAL LEFT' : ' DEALS LEFT'), STOCK.x, STOCK.y + CH + 4, this.canDeal() ? P.felt4 : P.orange, 'small');
+      if (!this.stock.cards.length) G.drawSlot(STOCK.x, STOCK.y, 'EMPTY');
+      const over = !ui.modal && G.inRect(input.x, input.y, STOCK.x, STOCK.y, CW + 40, CH) && this.stock.cards.length;
+      if (over) { ui.cursorHand = true; G.outline(STOCK.x - 2, STOCK.y - 2, CW + 4 + (this.deals - 1) * 8, CH + 4, P.gold, 1); }
+      G.text('COMPLETED ' + this.done.runs.length + '/8', RUNS.x, RUNS.y - 12, P.felt4, 'small');
+      for (let i = 0; i < 8; i++) {
+        const rx = RUNS.x + i * RUNS.pitch, ry = RUNS.y;
+        if (i < this.done.runs.length) { G.alpha(0.35, () => G.rect(rx + 1, ry + 2, 14, 20, P.black)); G.ctx.drawImage(G.miniCard(13, this.done.runs[i]), rx, ry); G.ctx.drawImage(G.miniCard(1, this.done.runs[i]), rx + 8, ry + 2); }
+        else { G.alpha(0.5, () => G.rect(rx, ry, 22, 22, P.felt0)); G.outline(rx, ry, 22, 22, P.felt4); }
+      }
+      G.text('WINS ' + G.store.get('spider_won', 0) + '/' + G.store.get('spider_played', 0) + '   BEST ' + G.store.get('spider_best' + this.suits, 0), RUNS.x, RUNS.y + 30, P.silver, 'small');
+      // bottom: next-game suits, then the four buttons
+      const y2 = G.H - 50, y1 = G.H - 26;
+      G.rect(0, y2 - 6, G.W, G.H - (y2 - 6), P.ink); G.rect(0, y2 - 6, G.W, 1, P.dusk); G.rect(0, y2 - 6 - 1, G.W, 1, P.black);
+      ui.block(0, y2 - 6, G.W, G.H - y2 + 6);
+      G.text('NEXT GAME SUITS', 8, y2 + 5, P.silver, 'small');
+      const cur = SUIT_OPTS.indexOf(G.settings.spiderSuits || 1);
+      const ch = ui.choice(['1', '2', '4'], cur < 0 ? 0 : cur, 100, y2, 120, 16, { id: 'suits' });
+      if (SUIT_OPTS[ch] !== (G.settings.spiderSuits || 1)) { G.settings.spiderSuits = SUIT_OPTS[ch]; G.saveSettings(); }
+      const bw = 84, bx = (i) => 6 + i * 88;
+      if (ui.button('NEW', bx(0), y1, bw, 20, { key: 'n', theme: 'gold' })) { this.newGame(); return; }
+      if (ui.button('UNDO', bx(1), y1, bw, 20, { key: 'z', theme: 'blue', enabled: this.undoStack.length > 0 && !this.won })) this.undo();
+      if (ui.button('HINT', bx(2), y1, bw, 20, { key: 'h', theme: 'dark', enabled: !this.won })) this.hint();
+      if (ui.button('DEAL ROW', bx(3), y1, bw, 20, { key: 'd', theme: 'green', enabled: this.stock.cards.length > 0 && !this.won })) this.deal();
+    },
     drawSide() {
+      if (G.portrait) return this.drawSidePortrait();
       const x = 10, w = 120;
       G.panel(x - 4, TOP - 4, w + 8, 150, { fill: P.ink, hi: P.dusk });
       ui.block(x - 4, TOP - 4, w + 8, 150);

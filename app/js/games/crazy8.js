@@ -4,10 +4,23 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
-  const STOCK = { x: 246, y: 150 }, DISC = { x: 336, y: 150 };
-  const HAND_Y = 268;
-  const LOG = { x: 470, y: 172, w: 162, h: 88 };
-  const BOARD = { x: 10, y: 150, w: 128, h: 92 };
+  // wide (landscape) table by default; lay() swaps in the upright (portrait) layout
+  let STOCK, DISC, HAND_Y, LOG, BOARD, PLATE, TAG_Y;
+  function lay() {
+    if (G.portrait) {
+      const E = G.EX(), m = Math.round(E / 2);
+      STOCK = { x: 92, y: 172 + Math.round(m / 2) }; DISC = { x: 178, y: STOCK.y };
+      HAND_Y = 330 + m; PLATE = { x: 8, y: HAND_Y + CH + 12 };
+      BOARD = { x: 142, y: PLATE.y, w: 210, h: 92 };
+      LOG = { x: 8, y: PLATE.y + 98, w: 344 }; LOG.h = G.H - 8 - LOG.y;
+      TAG_Y = STOCK.y + CH + 36;
+    } else {
+      STOCK = { x: 246, y: 150 }; DISC = { x: 336, y: 150 }; HAND_Y = 268;
+      LOG = { x: 470, y: 172, w: 162, h: 88 }; BOARD = { x: 10, y: 150, w: 128, h: 92 };
+      PLATE = { x: 8, y: 312 }; TAG_Y = 340;
+    }
+  }
+  lay();
   const TARGET = 100;
   const SUIT_WORD = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
   const pts = (c) => (c.rank === 8 ? 50 : c.rank >= 10 ? 10 : c.rank === 1 ? 1 : c.rank);
@@ -228,7 +241,7 @@
       this.stock.forEach((c, i) => G.place(c, STOCK.x - Math.floor(i / 6), STOCK.y - Math.floor(i / 6), i, false));
       this.disc.forEach((c, i) => { G.place(c, DISC.x + (c._dx || 0), DISC.y + (c._dy || 0), 60 + i, true); c.lift = 0; });
       const me = this.players[0], n = me.hand.length;
-      const off = n > 1 ? Math.min(32, Math.floor((560 - CW) / (n - 1))) : 0;
+      const off = n > 1 ? Math.min(32, Math.floor(((G.portrait ? G.W - 16 : 560) - CW) / (n - 1))) : 0;
       const hw = CW + (n - 1) * off;
       const myTurn = this.phase === 'you' && !this.pending8;
       me.hand.forEach((c, i) => {
@@ -257,6 +270,7 @@
       if (c) this.addLog('You drew ' + G.cardShort(c) + '.', P.silver);
     },
     frame(dt) {
+      lay();
       if (this.setup) return this.drawSetupScreen();
       if (this.paused || this.over || this.pending8 || (this.handOver && !this.handOver.matchWon && this.phase === 'handover')) ui.modal = true;
       if (!this.paused) this.runQueue(dt);
@@ -270,7 +284,7 @@
         if (this.hoverCard) {
           input.pressed = false;
           const c = this.hoverCard;
-          if (!this.legal(c)) { G.audio.sfx('error'); G.floatText('MATCH ' + SUIT_WORD[this.suit] + ' OR ' + G.RANK_LABEL[this.top().rank], G.W / 2, 250, P.orange, 'small'); }
+          if (!this.legal(c)) { G.audio.sfx('error'); G.floatText('MATCH ' + SUIT_WORD[this.suit] + ' OR ' + G.RANK_LABEL[this.top().rank], G.W / 2, HAND_Y - 18, P.orange, 'small'); }
           else if (c.rank === 8) { this.pending8 = c; G.audio.sfx('click'); }
           else this.play(0, c);
         } else if (overStock) { input.pressed = false; this.humanDraw(); }
@@ -294,10 +308,10 @@
       });
       if (overStock && this.canDraw()) G.outline(STOCK.x - 2, STOCK.y - 2, CW + 4, CH + 4, P.gold, 1);
       this.drawBoard();
-      G.youPlate(8, 312, 128, me.hand.length + ' CARDS' + (this.match ? '  ' + me.score + ' PTS' : ''), P.silver, this.turn === 0 && !this.handOver && !this.over);
-      this.drawLog(LOG);
+      G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS' + (this.match ? '  ' + me.score + ' PTS' : ''), P.silver, this.turn === 0 && !this.handOver && !this.over);
+      this.drawLog(LOG, G.portrait ? Math.floor((LOG.h - 20) / 9) : 8);
       this.drawControls();
-      this.drawBubbles(dt, [72, 294]);
+      this.drawBubbles(dt, [72, PLATE.y - 18], G.portrait ? 98 : 82);
       G.drawFloaters(dt);
       const stats = this.match
         ? [{ label: 'HAND', value: this.handNo }, { label: 'TARGET', value: TARGET }, { label: 'YOUR POINTS', value: me.score, color: P.gold }]
@@ -337,16 +351,16 @@
       if (myTurn && ui.button('DRAW', STOCK.x - 2, STOCK.y + CH + 14, CW + 4, 16, { key: 'd', theme: noPlay ? 'gold' : 'dark', font: 'small', enabled: this.canDraw(), showKey: false })) this.humanDraw();
       if (myTurn && noPlay && !this.canDraw() && ui.button('PASS', DISC.x - 2, DISC.y + CH + 14, CW + 4, 16, { key: 'p', theme: 'red', font: 'small', showKey: false })) this.pass(0);
       let s = '', col = P.gold;
-      if (myTurn) s = noPlay ? (this.canDraw() ? (G.touch ? 'NO MATCH - TAP THE STOCK TO DRAW' : 'NO MATCH - CLICK THE STOCK TO DRAW') : 'NO MATCH AND NO CARDS TO DRAW - PASS') : 'YOUR TURN - PLAY ' + SUIT_WORD[this.suit] + ', ' + (this.top().rank === 8 ? 'OR ANOTHER 8' : ([1, 8].includes(this.top().rank) ? 'AN ' : 'A ') + G.RANK_NAME[this.top().rank].toUpperCase() + ', OR AN 8') + '   (D DRAWS)';
+      if (myTurn) s = noPlay ? (this.canDraw() ? (G.touch ? 'NO MATCH - TAP THE STOCK TO DRAW' : 'NO MATCH - CLICK THE STOCK TO DRAW') : 'NO MATCH AND NO CARDS TO DRAW - PASS') : 'YOUR TURN - PLAY ' + SUIT_WORD[this.suit] + ', ' + (this.top().rank === 8 ? 'OR ANOTHER 8' : ([1, 8].includes(this.top().rank) ? 'AN ' : 'A ') + G.RANK_NAME[this.top().rank].toUpperCase() + ', OR AN 8') + (G.touch ? '' : '   (D DRAWS)');
       else if (this.phase === 'deal') { s = 'DEALING...'; col = P.white; }
       else if (this.phase === 'ai' || this.phase === 'wait') { const p = this.cur(); if (p && !p.human) { s = p.name + ' IS THINKING...'; col = P.white; } }
-      if (s) ui.tag(s, G.W / 2, 340, col, P.ink);
+      if (s) ui.tag(s, G.W / 2, TAG_Y, col, P.ink);
     },
     drawSuitPicker() {
       ui.modal = true;
       G.alpha(0.55, () => G.rect(0, 0, G.W, G.H, P.ink));
       ui.block(0, 0, G.W, G.H);
-      const w = 236, h = 112, x = G.W / 2 - w / 2, y = 116;
+      const w = 236, h = 112, x = G.W / 2 - w / 2, y = G.portrait ? Math.round(G.H / 2 - 56) : 116;
       G.panel(x, y, w, h, { fill: P.ink, hi: P.dusk, accent: P.gold });
       G.text('CRAZY EIGHT - NAME A SUIT', G.W / 2, y + 10, P.gold, 'big', 'center', 1, P.black);
       G.text('THE NEXT PLAYER MUST FOLLOW THIS SUIT', G.W / 2, y + 24, P.silver, 'small', 'center');

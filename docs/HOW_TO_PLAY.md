@@ -13,7 +13,8 @@ Every game shares the same layout:
 - Buttons do not show keyboard shortcuts on touch screens.
 - Go Fish: tap a card, then tap a player. Tap the same card again to cancel.
 - Your profile: tap your badge (top left) or the **PROFILE** button, then tap the name box to type with the on-screen keyboard.
-- Play in landscape. In portrait, the game asks you to turn the device sideways.
+- Play in portrait (upright) or landscape (sideways). Turn the device at any time; the table re-lays itself without losing your game. In portrait, the main buttons sit along the bottom of the screen.
+- Sound plays even when the Ring/Silent switch is set to silent. Use the volume buttons to change how loud it is, or turn sound off in Options.
 - See the README for how to add the game to your Home Screen.
 
 ## Main menu keys

@@ -38,10 +38,11 @@ A 16-bit pixel-art card game collection for Windows, the browser, and iPhone / i
 |---|---|---|
 | ![Rulebook](docs/screenshots/rulebook.png) | ![Club members](docs/screenshots/club_members.png) | ![Go Fish setup](docs/screenshots/gofish_setup.png) |
 
-## What's new in 1.7.2
+## What's new in 1.7.3
 
-- **Redrawn court cards**: the Jacks, Queens and Kings are new full-length, double-headed figures with real shading (3–4 tones per colour and a soft outline). The King has a sword and a golden orb, the Queen has a lace collar and fan, and the Jack carries a halberd and wears a feathered beret.
-- **Bigger aces**: every Ace now shows one large, clean suit symbol in the centre.
+- **Portrait and landscape on iPhone and iPad**: hold the device upright or sideways and the game re-lays itself to fit, even in the middle of a hand. In portrait, every game has its own tall table with the main buttons in easy thumb reach along the bottom. The menu, setup screens, profile, customize screen, options and rulebook have upright layouts too.
+- **Sound with the ringer off**: on iPhone and iPad the game's sound now plays even when the Ring/Silent switch is set to silent, the same way video audio does. Use the volume buttons, or turn sound off in Options.
+- Crazy Eights no longer shows the keyboard hint "(D DRAWS)" on touch screens.
 
 Older versions are listed in [**CHANGELOG.md**](CHANGELOG.md).
 
@@ -59,7 +60,7 @@ Your chips, wins, best scores and settings are saved automatically to `%APPDATA%
 
 1. Open **[https://bloodrive65.github.io/pixel-card-club/](https://bloodrive65.github.io/pixel-card-club/)** in **Safari**.
 2. Tap the **Share** button, then **Add to Home Screen**. Leave **Open as Web App** turned on, then tap **Add** ([Apple's guide](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios)).
-3. Open **Card Club** from your Home Screen and turn the device sideways. It runs full screen, with no Safari bars.
+3. Open **Card Club** from your Home Screen. It runs full screen, with no Safari bars, and you can hold it upright (portrait) or sideways (landscape).
 
 Tap anything you would click. In Solitaire and Spider you can drag cards with your finger or tap a card to move it. Progress is saved on the device. If you remove the Home Screen icon, that saved progress may be removed too. Updates arrive automatically the next time you open it with an internet connection.
 

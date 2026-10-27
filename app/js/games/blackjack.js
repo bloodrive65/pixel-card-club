@@ -2,8 +2,24 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui;
-  const SHOE = { x: 566, y: 30 }, DISCARD = { x: 30, y: 30 };
-  const DEALER_Y = 40, PLAYER_Y = 186, FAN = 15;
+  const FAN = 15;
+  // wide (landscape) table by default; lay() swaps in the upright (portrait) layout:
+  // dealer on top, table-mates in a row under the dealer, your hand below them, controls along the bottom
+  let SHOE, DISCARD, DEALER_Y, PLAYER_Y, M, CTRL_Y, PLATE, BANNER_Y, FELT_Y;
+  function lay() {
+    if (G.portrait) {
+      const E = G.EX(), m = Math.round(E / 2);
+      SHOE = { x: G.W - 62, y: 46 }; DISCARD = { x: 10, y: 46 }; DEALER_Y = 46;
+      M = { panel: 140 + Math.round(m / 2), seat: [244, 8], spread: 64 }; M.cards = M.panel + 48; M.bet = M.cards + CH + 16; M.tag = M.cards - 15; M.bubble = M.panel - 18;
+      PLAYER_Y = 312 + m; PLATE = { x: 8, y: PLAYER_Y + CH + 16, w: 112 };
+      CTRL_Y = G.H - 92; BANNER_Y = PLAYER_Y - 36; FELT_Y = 102;
+    } else {
+      SHOE = { x: 566, y: 30 }; DISCARD = { x: 30, y: 30 }; DEALER_Y = 40; PLAYER_Y = 186;
+      M = { panel: 138, seat: [520, 16], spread: 76, cards: 186, bet: 186 + CH + 30, tag: 186 - 15, bubble: 120 };
+      PLATE = { x: 128, y: 264, w: 112 }; CTRL_Y = 316; BANNER_Y = 150; FELT_Y = 122;
+    }
+  }
+  lay();
   const CHIP_VALUES = [5, 25, 100, 500];
   const CHIP_COLORS = { 5: [P.red, P.white], 25: [P.green, P.white], 100: [P.navy, P.sky], 500: [P.plum, P.gold] };
   const START_CHIPS = 1000;
@@ -135,7 +151,7 @@
       G.rollForms(this.mates.map((m) => Object.assign(m, { name: m.ch.name })));
       this.mates.forEach((m) => { const d = m.form - m.ch.skill; this.say(m, d > 0 ? G.pick(['FEELING SHARP TONIGHT.', 'I CAN SEE THE CARDS TONIGHT.']) : d < 0 ? G.pick(['NOT FEELING IT TONIGHT.', 'LONG DAY. GO EASY ON ME.']) : m.ch.quote.toUpperCase()); });
     },
-    seatX(m) { return m.seat === 0 ? 520 : 16; },
+    seatX(m) { return M.seat[m.seat === 0 ? 0 : 1]; },
     say(m, text) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.m !== m); this.bubbles.push({ m, text, t: 2.8 }); },
     // ---------- table-mate temper: mood, risk and betting change with the run of cards ----------
     // mood comes from the current streak (+ wins, - losses) and how the stack compares with when they sat down
@@ -234,7 +250,7 @@
     aiStep(m) {
       const t = handTotal(m.cards).total;
       const fx = this.seatX(m) + CW / 2;
-      if (t > 21) { m.done = true; m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y + 34, P.orange, 'big', 12); this.say(m, G.say(m.ch, 'bust')); this.after(0.6, () => this.nextSeat()); return; }
+      if (t > 21) { m.done = true; m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, M.cards + 34, P.orange, 'big', 12); this.say(m, G.say(m.ch, 'bust')); this.after(0.6, () => this.nextSeat()); return; }
       if (t === 21) { m.done = true; this.say(m, isNatural(m.cards) ? 'BLACKJACK!' : '21!'); this.after(0.6, () => this.nextSeat()); return; }
       const act = this.aiDecide(m);
       const mm = m.moodMove; m.moodMove = null;
@@ -243,7 +259,7 @@
       else if (act === 'DOUBLE') {
         m.chips -= m.bet; m.bet *= 2; m.doubled = true; G.audio.sfx('chip'); talk('DOUBLE DOWN!');
         m.cards.push(this.draw1());
-        this.after(0.7, () => { m.done = true; if (handTotal(m.cards).total > 21) { m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, PLAYER_Y + 34, P.orange, 'big', 12); this.say(m, G.say(m.ch, 'bust')); } this.after(0.5, () => this.nextSeat()); });
+        this.after(0.7, () => { m.done = true; if (handTotal(m.cards).total > 21) { m.result = 'BUST'; G.audio.sfx('error'); G.floatText('BUST', fx, M.cards + 34, P.orange, 'big', 12); this.say(m, G.say(m.ch, 'bust')); } this.after(0.5, () => this.nextSeat()); });
       } else { m.done = true; talk('STAND.'); this.after(0.55, () => this.nextSeat()); }
     },
     // turn order around the table: seat 1 (right), you, seat 2 (left), then the dealer
@@ -451,7 +467,7 @@
         else if (dt > 21 || pt > dt) { res = 'WIN'; pay = m.bet * 2; }
         else res = 'LOSE';
         pay = Math.floor(pay); m.result = res; m.chips += pay;
-        G.floatText(pay > m.bet ? '+' + (pay - m.bet) : pay === m.bet ? 'PUSH' : '-' + m.bet, this.seatX(m) + 37, PLAYER_Y + CH + 13, pay > m.bet ? P.lime : pay === m.bet ? P.white : P.orange, 'big', 7);
+        G.floatText(pay > m.bet ? '+' + (pay - m.bet) : pay === m.bet ? 'PUSH' : '-' + m.bet, this.seatX(m) + 37, M.cards + CH + 13, pay > m.bet ? P.lime : pay === m.bet ? P.white : P.orange, 'big', 7);
         const quip = this.mateResult(m, res);
         if (quip) this.say(m, quip);
         bank[m.id] = m.chips;
@@ -506,7 +522,7 @@
     // ---------- layout ----------
     handW(h) { return CW + Math.max(0, h.cards.length - 1) * FAN; },
     handX(i) {
-      const gap = 26; const widths = this.hands.map((h) => Math.max(this.handW(h), CW + 2 * FAN));
+      const gap = G.portrait ? 12 : 26; const widths = this.hands.map((h) => Math.max(this.handW(h), CW + 2 * FAN));
       const total = widths.reduce((a, b) => a + b, 0) + gap * (this.hands.length - 1);
       let x = G.W / 2 - total / 2;
       for (let k = 0; k < i; k++) x += widths[k] + gap;
@@ -515,11 +531,12 @@
     layout() {
       const dw = CW + Math.max(0, this.dealer.length - 1) * FAN;
       this.dealer.forEach((c, i) => G.place(c, G.W / 2 - dw / 2 + i * FAN, DEALER_Y, 100 + i));
-      this.mates.forEach((m) => { const n = m.cards.length, off = n > 1 ? Math.min(FAN, Math.floor(76 / (n - 1))) : 0; m.cards.forEach((c, i) => G.place(c, this.seatX(m) + i * off, PLAYER_Y, 300 + m.seat * 20 + i)); });
+      this.mates.forEach((m) => { const n = m.cards.length, off = n > 1 ? Math.min(FAN, Math.floor(M.spread / (n - 1))) : 0; m.cards.forEach((c, i) => G.place(c, this.seatX(m) + i * off, M.cards, 300 + m.seat * 20 + i)); });
       this.hands.forEach((h, hi) => { const x = this.handX(hi); h.cards.forEach((c, i) => G.place(c, x, PLAYER_Y, 200 + hi * 20 + i)); h.cards.forEach((c, i) => { c.tx = x + i * FAN; }); });
     },
     // ---------- frame ----------
     frame(dt) {
+      lay();
       if (this.setup) return this.drawSetup();
       if (this.paused) ui.modal = true;
       this.runQueue(this.paused ? 0 : dt);
@@ -531,12 +548,12 @@
       ui.felt();
       this.drawTable();
       this.drawMates();
-      if (this.hands.length <= 2) G.youPlate(128, 264, 112, this.watch ? 'SITTING OUT' : 'CHIPS ' + this.chips, this.watch ? P.slate : P.lime, this.phase === 'play');
+      if (this.hands.length <= 2) G.youPlate(PLATE.x, PLATE.y, PLATE.w, this.watch ? 'SITTING OUT' : 'CHIPS ' + this.chips, this.watch ? P.slate : P.lime, this.phase === 'play');
       G.drawCards(this.table);
       this.drawTotals();
       this.drawBubbles(dt);
       G.drawFloaters(dt);
-      if (this.msg) ui.banner(this.msg, 150, this.msg.startsWith('YOU WIN') || this.msg === 'BLACKJACK!' ? P.lime : this.msg.startsWith('DEALER WINS') || this.msg.startsWith('YOU LOSE') ? P.orange : P.white);
+      if (this.msg) ui.banner(this.msg, BANNER_Y, this.msg.startsWith('YOU WIN') || this.msg === 'BLACKJACK!' ? P.lime : this.msg.startsWith('DEALER WINS') || this.msg.startsWith('YOU LOSE') ? P.orange : P.white);
       this.drawControls();
       const menu = ui.topBar('BLACKJACK', [
         { label: 'W/L/P', value: this.stats.won + '/' + this.stats.lost + '/' + this.stats.push, color: P.cyan },
@@ -567,8 +584,8 @@
     },
     drawTable() {
       // felt printing (hidden once the dealer has cards so labels never sit on it)
-      if (!this.dealer.length) G.text('BLACKJACK PAYS 3 TO 2', G.W / 2, 122, P.felt4, 'big', 'center');
-      if (!this.dealer.length) G.text('DEALER MUST HIT 16 AND STAND ON ALL 17S', G.W / 2, 135, P.felt4, 'small', 'center');
+      if (!this.dealer.length) G.text('BLACKJACK PAYS 3 TO 2', G.W / 2, FELT_Y, P.felt4, 'big', 'center');
+      if (!this.dealer.length) G.text('DEALER MUST HIT 16 AND STAND ON ALL 17S', G.W / 2, FELT_Y + 13, P.felt4, 'small', 'center');
       // shoe
       const remain = this.shoe.length / this.shoeTotal;
       G.panel(SHOE.x - 6, SHOE.y - 6, CW + 18, CH + 14, { fill: P.wood1, hi: P.wood3, lo: P.wood0 });
@@ -595,26 +612,48 @@
       for (const m of this.mates) {
         const x = this.seatX(m), turn = this.aiTurn === m;
         // plate: name + form hearts on top, chips + mood (or streak) below
-        G.panel(x - 2, 138, 116, 30, { fill: turn ? P.navy : P.ink, hi: turn ? P.gold : P.dusk, border: turn ? P.gold : P.black });
-        G.drawAvatar(m.id, x + 1, 141);
-        G.text(m.ch.name, x + 29, 144, turn ? P.gold : P.white, 'small');
-        G.stars(m.form, x + 91, 144);
-        G.text(m.out ? 'BROKE' : String(m.chips), x + 29, 155, m.out ? P.orange : P.lime, 'small');
+        const py = M.panel;
+        G.panel(x - 2, py, 116, 30, { fill: turn ? P.navy : P.ink, hi: turn ? P.gold : P.dusk, border: turn ? P.gold : P.black });
+        G.drawAvatar(m.id, x + 1, py + 3);
+        G.text(m.ch.name, x + 29, py + 6, turn ? P.gold : P.white, 'small');
+        G.stars(m.form, x + 91, py + 6);
+        G.text(m.out ? 'BROKE' : String(m.chips), x + 29, py + 17, m.out ? P.orange : P.lime, 'small');
         const md = this.mood(m);
-        if (md && !m.out) G.text(md.label, x + 111, 155, md.col, 'small', 'right');
-        else if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 111, 155, m.streak > 0 ? P.lime : P.orange, 'small', 'right');
+        if (md && !m.out) G.text(md.label, x + 111, py + 17, md.col, 'small', 'right');
+        else if (m.streak) G.text((m.streak > 0 ? 'W' : 'L') + Math.abs(m.streak), x + 111, py + 17, m.streak > 0 ? P.lime : P.orange, 'small', 'right');
         const cx = x + 37;
-        if (m.bet > 0 && this.phase !== 'bet') this.drawBetSpot(cx, PLAYER_Y + CH + 30, m.bet, turn);
-        else this.drawBetSpot(cx, PLAYER_Y + CH + 30, 0, false);
-        if (this.phase === 'bet' && !m.cards.length) G.text(m.ch.name, cx, PLAYER_Y + 26, P.felt4, 'small', 'center');
+        if (m.bet > 0 && this.phase !== 'bet') this.drawBetSpot(cx, M.bet, m.bet, turn);
+        else this.drawBetSpot(cx, M.bet, 0, false);
+        if (this.phase === 'bet' && !m.cards.length) G.text(m.ch.name, cx, M.cards + 26, P.felt4, 'small', 'center');
       }
     },
     drawBubbles(dt) {
-      for (const b of this.bubbles) { b.t -= dt; ui.bubble(b.text, this.seatX(b.m) + 14, 120); }
+      for (const b of this.bubbles) { b.t -= dt; ui.bubble(b.text, this.seatX(b.m) + (G.portrait ? 56 : 14), M.bubble); }
       this.bubbles = this.bubbles.filter((b) => b.t > 0);
+    },
+    drawSetupPortrait() {
+      const S = G.settings, E = G.EX();
+      G.panel(8, 8, G.W - 16, G.H - 16, { fill: P.ink, hi: P.dusk, accent: P.gold });
+      ui.block(8, 8, G.W - 16, G.H - 16);
+      G.text('BLACKJACK', 22, 18, P.gold, 'big', 'left', 2, P.black);
+      const n = S.bjMates === undefined ? 1 : S.bjMates;
+      G.text('TABLE-MATES', 22, 40, P.silver, 'small');
+      const c = ui.choice(['NONE', '1', '2'], n, 22, 48, 150, 16, { id: 'mates' });
+      if (c !== n) { S.bjMates = c; G.saveSettings(); }
+      G.wrap('THEY PLAY THEIR OWN HANDS VS THE DEALER', 150, 'small').forEach((l, i) => G.text(l, 188, 46 + i * 9, P.cyan, 'small'));
+      const st = this.pick;
+      st.slots.forEach((sl, i) => (sl.color = i < c ? P.lime : P.slate));
+      const view = { slots: st.slots.slice(0, Math.max(1, c)), picks: st.picks.slice(0, Math.max(1, c)), focus: Math.min(st.focus, Math.max(0, c - 1)), seatY: 72, gridY: 206 + Math.round(E / 3), hoverChar: st.hoverChar };
+      if (c === 0) { G.alpha(0.4, () => G.rosterPicker(view)); G.text('JUST YOU AND THE DEALER', G.W / 2, 134, P.gold, 'small', 'center'); }
+      else { G.rosterPicker(view); st.picks.splice(0, view.picks.length, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar; }
+      G.wrap('Each member keeps their own chip stack. Their bets, mood and nerve shift with every win and loss.'.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, 506 + E + i * 9, P.cyan, 'small'));
+      if (ui.button('RANDOM PICKS', 22, 538 + E, 155, 20, { id: 'rnd', theme: 'dark', enabled: c > 0 })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, v.picks.length, ...v.picks); }
+      if (ui.button('BACK', 183, 538 + E, 155, 20, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
+      if (ui.button('TAKE A SEAT', 22, 566 + E, 316, 26, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.startTable();
     },
     drawSetup() {
       ui.felt();
+      if (G.portrait) return this.drawSetupPortrait();
       G.panel(10, 8, 620, 344, { fill: P.ink, hi: P.dusk, accent: P.gold });
       ui.block(10, 8, 620, 344);
       G.text('BLACKJACK', 22, 18, P.gold, 'big', 'left', 2, P.black);
@@ -655,8 +694,8 @@
         let lbl = t.total > 21 ? 'BUST' : isNatural(m.cards) ? 'BLACKJACK' : (t.soft && t.total < 21 ? 'SOFT ' : '') + t.total;
         if (m.result && this.phase === 'done') lbl = m.result === 'BUST' ? 'BUST' : lbl + ' - ' + m.result;
         const col = m.result === 'WIN' || m.result === 'BLACKJACK' ? P.lime : m.result === 'LOSE' || m.result === 'BUST' || t.total > 21 ? P.orange : P.white;
-        const w = CW + (m.cards.length - 1) * (m.cards.length > 1 ? Math.min(FAN, Math.floor(76 / (m.cards.length - 1))) : 0);
-        ui.tag(lbl, this.seatX(m) + w / 2, PLAYER_Y - 15, col, this.aiTurn === m ? P.navy : P.ink);
+        const w = CW + (m.cards.length - 1) * (m.cards.length > 1 ? Math.min(FAN, Math.floor(M.spread / (m.cards.length - 1))) : 0);
+        ui.tag(lbl, this.seatX(m) + w / 2, M.tag, col, this.aiTurn === m ? P.navy : P.ink);
       });
       this.hands.forEach((h, i) => {
         if (!h.cards.length) return;
@@ -671,7 +710,50 @@
         if (active && this.hands.length > 1) { const ax = this.handX(i) + this.handW(h) / 2; G.rect(ax - 3, PLAYER_Y - 22, 7, 2, P.gold); G.rect(ax - 2, PLAYER_Y - 20, 5, 1, P.gold); G.rect(ax - 1, PLAYER_Y - 19, 3, 1, P.gold); }
       });
     },
+    drawControlsPortrait() {
+      const y = CTRL_Y;
+      G.rect(0, y - 6, G.W, G.H - y + 6, P.ink); G.rect(0, y - 6, G.W, 1, P.dusk); G.rect(0, y - 7, G.W, 1, P.black);
+      ui.block(0, y - 7, G.W, G.H - y + 7);
+      if (this.watch && !this.watch.done) {
+        const left = this.mates.filter((m) => !m.out).length;
+        G.text('OUT OF CHIPS - WATCHING THE TABLE', 12, y + 6, P.cyan, 'small');
+        G.text('HAND ' + Math.max(1, this.watch.n) + ' OF ' + WATCH_HANDS + '   ' + left + ' STILL PLAYING', 12, y + 18, P.silver, 'small');
+        if (ui.button('SKIP TO RESULT', 8, y + 58, G.W - 16, 26, { key: 'k', theme: 'blue' })) this.endWatch();
+        return;
+      }
+      if (this.phase === 'bet' || this.phase === 'done') {
+        G.text('BET', 12, y + 10, P.silver, 'small');
+        CHIP_VALUES.forEach((v, i) => {
+          const cx = 62 + i * 52, cy = y + 11;
+          const enabled = this.bet + v <= this.chips;
+          const hover = enabled && !ui.modal && G.inRect(G.input.x, G.input.y, cx - 18, cy - 12, 36, 28);
+          ui.block(cx - 18, cy - 12, 36, 28);
+          if (hover) ui.cursorHand = true;
+          G.ctx.globalAlpha = enabled ? 1 : 0.35;
+          G.ctx.drawImage(chipSprite(v), cx - 8, cy - 8 - (hover ? 2 : 0), 16, 16);
+          G.ctx.globalAlpha = 1;
+          G.text(String(v), cx, cy + 11, enabled ? P.white : P.slate, 'small', 'center');
+          if (hover && G.input.pressed) { this.bet += v; G.audio.sfx('chip'); G.input.pressed = false; if (this.phase === 'done') this.msg = ''; }
+        });
+        if (ui.button('CLEAR', 8, y + 30, 110, 22, { key: 'c', theme: 'dark', enabled: this.bet > 0 })) this.bet = 0;
+        if (ui.button('ALL IN', 125, y + 30, 110, 22, { key: 'a', theme: 'red', enabled: this.chips >= 5 })) { this.bet = Math.floor(this.chips / 5) * 5; G.audio.sfx('chip'); }
+        if (ui.button('SEATS', 242, y + 30, 110, 22, { key: 't', theme: 'blue' })) this.setup = true;
+        if (ui.button('DEAL', 8, y + 58, G.W - 16, 26, { key: [' ', 'Enter'], keyLabel: 'SPACE', theme: 'green', enabled: this.bet >= 5 && this.bet <= this.chips })) this.deal();
+      } else {
+        const playing = this.phase === 'play', bw = 170;
+        if (ui.button('HIT', 8, y, bw, 26, { key: 'h', theme: 'green', enabled: playing })) this.hit();
+        if (ui.button('STAND', 182, y, bw, 26, { key: 's', theme: 'red', enabled: playing })) this.stand();
+        if (ui.button('DOUBLE', 8, y + 30, bw, 24, { key: 'd', theme: 'gold', enabled: playing && this.canDouble() })) this.double();
+        if (ui.button('SPLIT', 182, y + 30, bw, 24, { key: 'p', theme: 'blue', enabled: playing && this.canSplit() })) this.split();
+        if (ui.button('HINT', 8, y + 60, bw, 24, { key: ['?', '/'], keyLabel: '?', theme: 'dark', enabled: playing })) this.hint = basicStrategy(this.cur(), this.dealer[0], this.canDouble(), this.canSplit());
+        if (this.hint && playing) {
+          G.text('ADVISOR', 267, y + 60, P.silver, 'small', 'center');
+          G.text(this.hint, 267, y + 71, P.cyan, 'big', 'center');
+        }
+      }
+    },
     drawControls() {
+      if (G.portrait) return this.drawControlsPortrait();
       const y = 316;
       G.rect(0, y - 6, G.W, G.H - y + 6, P.ink); G.rect(0, y - 6, G.W, 1, P.dusk); G.rect(0, y - 7, G.W, 1, P.black);
       ui.block(0, y - 7, G.W, G.H - y + 7);

@@ -7,11 +7,27 @@
   const START = 1000;
   const LEVELS = [[10, 20], [15, 30], [25, 50], [50, 100], [75, 150], [100, 200], [150, 300], [200, 400], [300, 600], [500, 1000]];
   const HANDS_PER_LEVEL = 10;
-  const DECK = { x: 140, y: 148 }, BURN = { x: 128, y: 150 };
-  const BOARD_X = 202, BOARD_Y = 148, BOARD_STEP = 48;
-  const YOU = { x: 16, y: 240, w: 190, h: 28 }, YOU_CARDS = { x: 250, y: 228 };
-  const LOG = { x: 470, y: 140, w: 162, h: 160 };
-  const INFO = { x: 10, y: 196, w: 102, h: 34 };
+  const BOARD_STEP = 48;
+  // wide (landscape) table by default; lay() swaps in the upright (portrait) layout:
+  // seats on top, the board in the middle, your seat + cards under it, table talk, then the action buttons
+  let DECK, BURN, BOARD_X, BOARD_Y, YOU, YOU_CARDS, LOG, INFO, POT_Y, OPP_TAG, ACT_Y;
+  function lay() {
+    if (G.portrait) {
+      const E = G.EX(), m2 = Math.round(E / 3);
+      BOARD_X = 62; BOARD_Y = 176 + m2; POT_Y = BOARD_Y - 16;
+      DECK = { x: 14, y: BOARD_Y + 80 }; BURN = { x: 4, y: DECK.y + 2 };
+      YOU_CARDS = { x: 250, y: DECK.y }; INFO = { x: 70, y: DECK.y + 8, w: 102, h: 34 };
+      YOU = { x: 8, y: DECK.y + CH + 18, w: 190, h: 28 };
+      ACT_Y = G.H - 104;
+      LOG = { x: 8, y: YOU.y + 52, w: 344 }; LOG.h = ACT_Y - 8 - LOG.y;
+      OPP_TAG = 134;
+    } else {
+      DECK = { x: 140, y: 148 }; BURN = { x: 128, y: 150 }; BOARD_X = 202; BOARD_Y = 148; POT_Y = 134;
+      YOU = { x: 16, y: 240, w: 190, h: 28 }; YOU_CARDS = { x: 250, y: 228 };
+      LOG = { x: 470, y: 140, w: 162, h: 160 }; INFO = { x: 10, y: 196, w: 102, h: 34 }; OPP_TAG = 121; ACT_Y = 312;
+    }
+  }
+  lay();
   const STREET = ['PRE-FLOP', 'FLOP', 'TURN', 'RIVER'];
 
   // ---------- hand evaluation: best 5 of 7, cards as ints v*4+s with v 2..14 ----------
@@ -436,7 +452,7 @@
     holeXY(pi, k) {
       if (pi === 0) return { x: YOU_CARDS.x + k * 48, y: YOU_CARDS.y };
       const s = this.oppSlot(pi);
-      return { x: s.x + s.w / 2 - 34 + k * 24, y: 56 };
+      return { x: s.x + s.w / 2 - 34 + k * 24, y: G.portrait ? s.y + 32 : 56 };
     },
     layout() {
       if (!this.deck) return;
@@ -450,6 +466,7 @@
       }));
     },
     frame(dt) {
+      lay();
       if (this.setup) return this.drawSetupScreen();
       if (this.paused || this.over) ui.modal = true;
       if (!this.paused) this.runQueue(dt);
@@ -465,8 +482,8 @@
       if (pot) {
         const side = this.sidePotsPreview();
         const txt = 'POT ' + pot + (side > 1 ? '  (' + side + ' POTS)' : '');
-        ui.tag(txt, G.W / 2, 134, P.gold, P.ink);
-        this.drawChips(G.W / 2 - G.textWidth(txt, 'small') / 2 - 16, 134, pot);
+        ui.tag(txt, G.W / 2, POT_Y, P.gold, P.ink);
+        this.drawChips(G.W / 2 - G.textWidth(txt, 'small') / 2 - 16, POT_Y, pot);
       }
       this.drawInfo();
       // seats
@@ -476,7 +493,7 @@
         const line = p.out ? 'OUT - PLACE ' + p.place : p.folded ? 'FOLDED' : p.allin ? 'ALL IN' : this.moodWord(p);
         this.drawSeat(s, p, { turn, out: p.out || p.folded, line, lineColor: p.allin ? P.orange : p.mood <= -2 ? P.red : p.mood >= 2 ? P.lime : P.silver, value: p.chips });
         if (pi === this.button && !p.out) this.drawButton(s.x + s.w - 14, s.y + s.h + 4);
-        this.drawBetTag(p, s.x + s.w / 2, 121);
+        this.drawBetTag(p, s.x + s.w / 2, OPP_TAG);
       }
       this.drawYou();
       G.drawCards(this.cards, (c) => {
@@ -486,10 +503,10 @@
         return null;
       });
       // showdown hand names
-      if (this.handDone) for (let pi = 1; pi < this.players.length; pi++) { const p = this.players[pi]; if (p.show && p.hand) { const s = this.oppSlot(pi); ui.tag(p.hand, s.x + s.w / 2, 121, this.winners.includes(p) ? P.lime : P.white, P.ink); } }
-      this.drawLog(LOG, 15);
+      if (this.handDone) for (let pi = 1; pi < this.players.length; pi++) { const p = this.players[pi]; if (p.show && p.hand) { const s = this.oppSlot(pi); ui.tag(p.hand, s.x + s.w / 2, OPP_TAG, this.winners.includes(p) ? P.lime : P.white, P.ink); } }
+      this.drawLog(LOG, G.portrait ? Math.max(3, Math.floor((LOG.h - 20) / 9)) : 15);
       this.drawActions();
-      this.drawBubbles(dt, [110, 222], 82);
+      this.drawBubbles(dt, G.portrait ? [YOU.x + 100, YOU.y - 16] : [110, 222], G.portrait ? 112 : 82);
       G.drawFloaters(dt);
       const stats = [{ label: 'HAND', value: this.handNo }, { label: 'BLINDS', value: (this.sb || 10) + '/' + (this.bb || 20), color: P.cyan }, { label: 'CHIPS', value: this.players[0] ? this.players[0].chips : 0, color: P.gold }];
       if (this.handlePause("TEXAS HOLD'EM", stats, () => { this.setup = true; })) return;
@@ -530,13 +547,13 @@
       const turn = this.phase === 'you';
       this.drawSeat(YOU, me, { turn, out: me.out || me.folded, line: me.out ? 'OUT - PLACE ' + me.place : me.folded ? 'FOLDED' : me.allin ? 'ALL IN' : 'YOUR STACK', lineColor: me.allin ? P.orange : P.silver, value: me.chips });
       if (this.button === 0) this.drawButton(YOU.x + YOU.w + 6, YOU.y + 8);
-      if (me.bet > 0) { const w = ui.tag(String(me.bet), YOU_CARDS.x + 54, 214, P.gold, P.ink); this.drawChips(YOU_CARDS.x + 54 - w / 2 - 13, 215, me.bet); }
-      else if (me.act === 'CHECK') ui.tag('CHECK', YOU_CARDS.x + 46, 214, P.silver, P.ink);
+      if (me.bet > 0) { const w = ui.tag(String(me.bet), YOU_CARDS.x + 54, YOU_CARDS.y - 14, P.gold, P.ink); this.drawChips(YOU_CARDS.x + 54 - w / 2 - 13, YOU_CARDS.y - 13, me.bet); }
+      else if (me.act === 'CHECK') ui.tag('CHECK', YOU_CARDS.x + 46, YOU_CARDS.y - 14, P.silver, P.ink);
       // your best hand right now
       if (me.hole.length === 2 && !me.folded && me.hole.every((c) => c.shownFace)) {
         const sc = G.pokerEval(me.hole.concat(this.board));
         const nm = this.board.length ? handName(sc) : me.hole[0].rank === me.hole[1].rank ? 'POCKET ' + VPL[toInt(me.hole[0]) >> 2] : (me.hole[0].suit === me.hole[1].suit ? 'SUITED ' : '') + G.RANK_LABEL[me.hole[0].rank] + '-' + G.RANK_LABEL[me.hole[1].rank];
-        G.text(nm, YOU_CARDS.x + 46, 294, this.handDone && this.winners.includes(me) ? P.lime : P.white, 'small', 'center');
+        G.text(nm, YOU_CARDS.x + 46, YOU_CARDS.y + CH + 4, this.handDone && this.winners.includes(me) ? P.lime : P.white, 'small', 'center');
       }
       // odds helper
       if (ui.button(this.showOdds ? 'ODDS ON' : 'ODDS OFF', YOU.x, YOU.y + 32, 92, 15, { key: 'o', theme: this.showOdds ? 'blue' : 'dark', font: 'small', id: 'odds' })) { this.showOdds = !this.showOdds; G.settings.pokerOdds = this.showOdds; G.saveSettings(); }
@@ -550,7 +567,46 @@
         if (toCall) G.text('NEED ' + need + '%', YOU.x + 146, YOU.y + 36, this.oddsCache.eq * 100 >= need ? P.lime : P.orange, 'small');
       }
     },
+    drawActionsPortrait() {
+      const y = ACT_Y;
+      G.rect(0, y - 6, G.W, G.H - y + 6, P.ink); G.rect(0, y - 6, G.W, 1, P.dusk);
+      ui.block(0, y - 6, G.W, G.H - y + 6);
+      const me = this.players[0];
+      const my = this.phase === 'you' && !this.paused && !this.over;
+      const toCall = my ? this.toCall(me) : 0;
+      const maxTo = this.maxTo(me), minTo = Math.min(this.minRaiseTo(), maxTo);
+      const canRaise = my && me.canRaise && maxTo > this.curBet;
+      if (my) this.raiseTo = G.clamp(this.raiseTo || minTo, minTo, maxTo);
+      const step = this.bb || 20;
+      if (this.spectate && !this.over) {
+        G.text('YOU ARE OUT - WATCHING THE CLUB', G.W / 2, y + 8, P.cyan, 'small', 'center');
+        G.text(this.alive().length + ' PLAYERS LEFT', G.W / 2, y + 20, P.silver, 'small', 'center');
+        if (ui.button('SKIP TO RESULT', 8, y + 60, G.W - 16, 26, { key: 'k', theme: 'blue' })) this.skipWatch();
+        return;
+      }
+      if (ui.button('FOLD', 8, y, 84, 24, { key: 'f', theme: 'red', enabled: my && toCall > 0 })) this.act(0, 'fold');
+      const callLbl = toCall === 0 ? 'CHECK' : toCall >= me.chips ? 'ALL IN ' + me.chips : 'CALL ' + toCall;
+      if (ui.button(callLbl, 98, y, 140, 24, { key: 'c', theme: 'green', enabled: my })) this.act(0, toCall ? 'call' : 'check');
+      if (ui.button('ALL IN', 244, y, 108, 24, { key: 'a', theme: 'red', enabled: canRaise })) this.act(0, 'raise', maxTo);
+      if (ui.button('-', 8, y + 30, 34, 24, { key: '-', theme: 'dark', enabled: canRaise, showKey: false })) this.raiseTo = Math.max(minTo, this.raiseTo - step);
+      const lbl = (this.curBet === 0 ? 'BET ' : 'RAISE TO ') + (my ? this.raiseTo : '');
+      if (ui.button(lbl, 48, y + 30, 264, 24, { key: 'r', theme: 'gold', enabled: canRaise })) this.act(0, 'raise', this.raiseTo);
+      if (ui.button('+', 318, y + 30, 34, 24, { key: ['=', '+'], theme: 'dark', enabled: canRaise, showKey: false })) this.raiseTo = Math.min(maxTo, this.raiseTo + step);
+      const pot = this.pot();
+      const potTo = (f) => Math.round((this.curBet + (pot + toCall) * f) / (this.sb || 10)) * (this.sb || 10);
+      if (ui.button('MIN', 8, y + 60, 110, 20, { theme: 'blue', enabled: canRaise, font: 'small' })) this.raiseTo = minTo;
+      if (ui.button('1/2 POT', 125, y + 60, 110, 20, { theme: 'blue', enabled: canRaise, font: 'small' })) this.raiseTo = G.clamp(potTo(0.5), minTo, maxTo);
+      if (ui.button('POT', 242, y + 60, 110, 20, { theme: 'blue', enabled: canRaise, font: 'small' })) this.raiseTo = G.clamp(potTo(1), minTo, maxTo);
+      let s, col = P.silver;
+      if (my) { s = 'YOUR MOVE (' + STREET[this.street] + ')  TO CALL ' + toCall + '  POT ' + pot; col = P.gold; }
+      else if (this.handDone) s = 'HAND OVER';
+      else if (this.phase === 'ai') s = this.players[this.turn].name + ' IS THINKING...';
+      else if (me.folded && !me.out) s = 'YOU FOLDED - WATCHING THE HAND';
+      else s = STREET[this.street || 0];
+      G.text(s, G.W / 2, y + 88, col, 'small', 'center');
+    },
     drawActions() {
+      if (G.portrait) return this.drawActionsPortrait();
       const y = 312;
       G.rect(0, 306, G.W, 54, P.ink); G.rect(0, 306, G.W, 1, P.dusk);
       ui.block(0, 306, G.W, 54);

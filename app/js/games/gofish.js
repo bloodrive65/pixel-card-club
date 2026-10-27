@@ -2,10 +2,21 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
-  const DECK = { x: 298, y: 176 };
-  const HAND_Y = 268;
-  const BOOK = { x: 14, y: 190 };
-  const LOG = { x: 470, y: 172, w: 162, h: 88 };
+  // wide (landscape) table by default; lay() swaps in the upright (portrait) layout
+  let DECK, HAND_Y, BOOK, LOG, PLATE, TAG_Y, BOOK_ROW;
+  function lay() {
+    if (G.portrait) {
+      const E = G.EX(), m = Math.round(E / 2);
+      DECK = { x: 158, y: 196 + Math.round(m / 2) }; HAND_Y = 330 + m;
+      PLATE = { x: 8, y: HAND_Y + CH + 12 }; BOOK = { x: 146, y: PLATE.y + 12 }; BOOK_ROW = 7;
+      LOG = { x: 8, y: PLATE.y + 64, w: 344 }; LOG.h = G.H - 8 - LOG.y;
+      TAG_Y = DECK.y + CH + 22;
+    } else {
+      DECK = { x: 298, y: 176 }; HAND_Y = 268; BOOK = { x: 14, y: 190 }; BOOK_ROW = 7;
+      LOG = { x: 470, y: 172, w: 162, h: 88 }; PLATE = { x: 8, y: 312 }; TAG_Y = 340;
+    }
+  }
+  lay();
   const TEAM_COL = [P.sky, P.red];
   const TEAM_NAME = ['TEAM BLUE', 'TEAM RED'];
   const plural = (r) => G.RANK_PLURAL[r].toUpperCase();
@@ -254,20 +265,26 @@
     // ---------- layout ----------
     oppSlot(i) {
       const n = this.players.length - 1;
+      if (G.portrait) {
+        const w = n === 1 ? 200 : n === 2 ? 172 : 114;
+        const xs = n === 1 ? [G.W / 2 - w / 2] : n === 2 ? [6, G.W - 6 - w] : [4, 123, 242];
+        return { x: Math.round(xs[i - 1]), y: 36, w, h: 28, narrow: w < 150 };
+      }
       const w = 190;
       const xs = n === 1 ? [G.W / 2 - w / 2] : n === 2 ? [70, G.W - 70 - w] : [16, G.W / 2 - w / 2, G.W - 16 - w];
       return { x: Math.round(xs[i - 1]), y: 24, w, h: 28 };
     },
     bookSpot(pi, bi) {
-      if (pi === 0) return { x: BOOK.x + (bi % 7) * 27, y: BOOK.y + Math.floor(bi / 7) * 23 };
+      if (pi === 0) return { x: BOOK.x + (bi % BOOK_ROW) * 27, y: BOOK.y + Math.floor(bi / BOOK_ROW) * 23 };
       const s = this.oppSlot(pi);
-      return { x: s.x + 1 + (bi % 7) * 27, y: 122 + Math.floor(bi / 7) * 23 };
+      const per = Math.max(1, Math.floor((s.w + 1) / 27));
+      return { x: s.x + 1 + (bi % per) * 27, y: (G.portrait ? s.y + 104 : 122) + Math.floor(bi / per) * (G.portrait ? 12 : 23) };
     },
     layout() {
       this.deck.forEach((c, i) => G.place(c, DECK.x - Math.floor(i / 6), DECK.y - Math.floor(i / 6), i, false));
       const me = this.players[0];
       const n = me.hand.length;
-      const off = n > 1 ? Math.min(32, Math.floor((560 - CW) / (n - 1))) : 0;
+      const off = n > 1 ? Math.min(32, Math.floor(((G.portrait ? G.W - 16 : 560) - CW) / (n - 1))) : 0;
       const hw = CW + (n - 1) * off;
       const hov = this.hoverCard;
       me.hand.forEach((c, i) => {
@@ -297,6 +314,7 @@
       return hit;
     },
     frame(dt) {
+      lay();
       if (this.setup) return this.drawSetup();
       if (this.paused || this.over) ui.modal = true;
       if (!this.paused) this.runQueue(dt);
@@ -331,7 +349,7 @@
         G.drawMiniBook(b.rank, sp.x, sp.y - pop);
       }));
       this.drawOpponents();
-      G.youPlate(8, 312, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
+      G.youPlate(PLATE.x, PLATE.y, 128, me.hand.length + ' CARDS  ' + me.books.length + ' BOOKS', P.silver, this.turn === 0 && !this.over);
       G.drawCards(this.cards, (c) => (this.selRank === c.rank && me.hand.includes(c) ? { highlight: P.gold } : null));
       this.drawLog();
       this.drawPrompt();
@@ -375,9 +393,9 @@
         if (tcol) G.rect(s.x + 1, s.y + s.h - 3, s.w - 2, 2, tcol);
         G.drawAvatar(p.id, s.x + 2, s.y + 2);
         G.text(p.name, s.x + 30, s.y + 5, isTurn ? P.gold : P.white, 'big');
-        G.text(p.hand.length + ' CARDS' + (this.teamMode ? (p.team === 0 ? '  PARTNER' : '  RIVAL') : ''), s.x + 30, s.y + 17, tcol || P.silver, 'small');
-        G.stars(p.form, s.x + s.w - 26, s.y + 6);
-        G.text('BOOKS', s.x + s.w - 20, s.y + 17, P.silver, 'small', 'right');
+        G.text(p.hand.length + (s.narrow ? 'C' : ' CARDS') + (this.teamMode ? (p.team === 0 ? (s.narrow ? ' PTNR' : '  PARTNER') : s.narrow ? '' : '  RIVAL') : ''), s.x + 30, s.y + 17, tcol || P.silver, 'small');
+        if (!s.narrow || p.name.length <= 6) G.stars(p.form, s.x + s.w - 26, s.y + 6);
+        G.text(s.narrow ? 'BK' : 'BOOKS', s.x + s.w - 20, s.y + 17, P.silver, 'small', 'right');
         G.text(String(p.books.length), s.x + s.w - 6, s.y + 17, P.gold, 'small', 'right');
         if (canPick) {
           ui.block(s.x, s.y, s.w, s.h + 70);
@@ -393,7 +411,7 @@
       G.text('TABLE TALK', x + 6, y + 5, P.gold, 'small');
       const lines = [];
       for (const l of this.log) for (const t of G.wrap(l.text.toUpperCase(), w - 12, 'small')) lines.push({ t, color: l.color });
-      lines.slice(-8).forEach((l, i) => G.text(l.t, x + 6, y + 16 + i * 9, l.color, 'small'));
+      lines.slice(-(G.portrait ? Math.floor((h - 20) / 9) : 8)).forEach((l, i) => G.text(l.t, x + 6, y + 16 + i * 9, l.color, 'small'));
     },
     drawPrompt() {
       let s = '', col = P.white;
@@ -404,19 +422,21 @@
         col = P.gold;
       } else if (this.phase === 'deal') s = 'DEALING...';
       else if (p && !p.human && !this.over) s = p.name + ' IS THINKING...';
-      if (s) ui.tag(s, G.W / 2, 340, col, P.ink);
+      if (s && G.portrait && G.textWidth && G.textWidth(s, 'small') > G.W - 16) s = s.replace(/  \(.*\)$/, '');
+      if (s) ui.tag(s, G.W / 2, TAG_Y, col, P.ink);
     },
     drawBubbles(dt) {
       for (const b of this.bubbles) {
         b.t -= dt;
-        if (b.pi === 0) ui.bubble(b.text, 72, 294);
-        else { const s = this.oppSlot(b.pi); ui.bubble(b.text, s.x + s.w / 2, s.y + 82, true); }
+        if (b.pi === 0) ui.bubble(b.text, 72, PLATE.y - 18);
+        else { const s = this.oppSlot(b.pi); ui.bubble(b.text, s.x + s.w / 2, s.y + (G.portrait ? 98 : 82), true); }
       }
       this.bubbles = this.bubbles.filter((b) => b.t > 0);
     },
     drawSetup() {
       ui.felt();
       ui.modal = false;
+      if (G.portrait) return this.drawSetupPortrait();
       G.panel(10, 8, 620, 344, { fill: P.ink, hi: P.dusk, accent: P.gold });
       ui.block(10, 8, 620, 344);
       G.text('GO FISH', 22, 18, P.gold, 'big', 'left', 2, P.black);
@@ -441,6 +461,7 @@
       } else {
         st = this.teams;
         G.text('BLUE: YOU + PARTNER   VS   RED: 2 RIVALS', 22, 74, P.sky, 'small');
+        st.seatY = 84; st.gridY = undefined;
         G.rosterPicker(st);
         if (ui.button('RANDOM PICKS', 22, 210, 210, 18, { id: 'rnd', theme: 'dark' })) { st.picks = [null, null, null]; G.fillRandom(st); }
       }
@@ -450,6 +471,46 @@
       G.wrap(desc.toUpperCase(), 210, 'small').forEach((l, i) => G.text(l, 22, 258 + i * 9, P.cyan, 'small'));
       if (ui.button('START', 22, 294, 210, 22, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.start();
       if (ui.button('BACK', 22, 322, 210, 20, { theme: 'red', key: 'Escape', showKey: false })) G.go(G.Menu);
+    },
+    // portrait setup: mode + opponents on top, the seats, the Club grid, then the buttons
+    drawSetupPortrait() {
+      const S = G.settings, E = G.EX();
+      G.panel(8, 8, G.W - 16, G.H - 16, { fill: P.ink, hi: P.dusk, accent: P.gold });
+      ui.block(8, 8, G.W - 16, G.H - 16);
+      G.text('GO FISH', 22, 18, P.gold, 'big', 'left', 2, P.black);
+      G.text('MODE', 22, 40, P.silver, 'small');
+      const m = ui.choice(['FREE', 'TEAMS 2V2'], S.fishMode === 'teams' ? 1 : 0, 22, 48, 150, 16, { id: 'mode', font: 'small' });
+      if ((m === 1 ? 'teams' : 'ffa') !== this.mode()) { S.fishMode = m === 1 ? 'teams' : 'ffa'; G.saveSettings(); }
+      let st, view;
+      const gridY = 206 + Math.round(E / 3);
+      if (this.mode() === 'ffa') {
+        G.text('OPPONENTS', 188, 40, P.silver, 'small');
+        const o = ui.choice(['1', '2', '3'], S.fishOpponents - 1, 188, 48, 150, 16, { id: 'opp' });
+        if (o !== S.fishOpponents - 1) { S.fishOpponents = o + 1; G.saveSettings(); }
+        st = this.ffa;
+        const labels = S.fishOpponents === 1 ? ['OPPONENT - ACROSS'] : S.fishOpponents === 2 ? ['OPPONENT 1 - LEFT', 'OPPONENT 2 - RIGHT'] : ['OPPONENT 1 - LEFT', 'OPPONENT 2 - ACROSS', 'OPPONENT 3 - RIGHT'];
+        st.slots = labels.map((l) => ({ label: l, color: P.orange }));
+        st.focus = Math.min(st.focus, st.slots.length - 1);
+        view = { slots: st.slots, picks: st.picks.slice(0, st.slots.length), focus: st.focus, seatY: 72, gridY, hoverChar: st.hoverChar };
+        G.rosterPicker(view);
+        st.picks.splice(0, view.picks.length, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar;
+      } else {
+        st = this.teams;
+        G.text('BLUE: YOU + PARTNER', 188, 44, P.sky, 'small');
+        G.text('RED: 2 RIVALS', 188, 54, P.red, 'small');
+        st.seatY = 72; st.gridY = gridY;
+        G.rosterPicker(st);
+      }
+      const desc = this.mode() === 'teams'
+        ? 'Partners sit across. Ask only the rival team. Team books are added together.'
+        : 'Everyone plays for themselves. Most books wins.';
+      G.wrap(desc.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, 506 + E + i * 9, P.cyan, 'small'));
+      if (ui.button('RANDOM PICKS', 22, 538 + E, 155, 20, { id: 'rnd', theme: 'dark' })) {
+        if (view) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, v.picks.length, ...v.picks); }
+        else { st.picks = [null, null, null]; G.fillRandom(st); }
+      }
+      if (ui.button('BACK', 183, 538 + E, 155, 20, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
+      if (ui.button('START', 22, 566 + E, 316, 26, { theme: 'green', key: ['Enter', ' '], showKey: false })) this.start();
     }
   });
 })();

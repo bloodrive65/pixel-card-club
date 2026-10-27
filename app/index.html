@@ -18,15 +18,9 @@
   canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; touch-action: none; outline: none; }
   html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; touch-action: none; }
   html.touch, html.touch body { position: fixed; inset: 0; width: 100%; }
-  #rotate { display: none; position: fixed; inset: 0; background: #0b0c14; color: #ffcd75; font: bold 18px monospace; text-align: center;
-    align-items: center; justify-content: center; flex-direction: column; gap: 14px; z-index: 5; padding: 24px; letter-spacing: 1px; }
-  #rotate .phone { width: 34px; height: 56px; border: 4px solid #ffcd75; border-radius: 6px; animation: turn 1.6s ease-in-out infinite; }
-  @keyframes turn { 0%, 30% { transform: rotate(0deg); } 60%, 100% { transform: rotate(-90deg); } }
-  @media (orientation: portrait) { html.touch #rotate { display: flex; } }
 </style>
 </head>
 <body>
-<div id="rotate"><div class="phone"></div><div>TURN YOUR DEVICE SIDEWAYS</div><div style="color:#94b0c2;font-size:13px">Pixel Card Club plays in landscape</div></div>
 <canvas id="game" tabindex="0" aria-label="Pixel Card Club game"></canvas>
 <script src="js/font.js"></script>
 <script src="assets/cards/deck.js" onerror="this.remove()"></script>

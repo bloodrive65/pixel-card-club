@@ -4,9 +4,19 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
-  const YOU_PILE = { x: 196, y: 224 }, YOU_BAT = { x: 256, y: 224 }, YOU_WON = { x: 136, y: 224 };
-  const LOG = { x: 470, y: 134, w: 162, h: 168 };
-  const BOARD = { x: 10, y: 134, w: 120, h: 168 };
+  // positions for the wide (landscape) table; portrait() swaps in the upright layout
+  let YOU_PILE, YOU_BAT, YOU_WON, LOG, BOARD;
+  function lay() {
+    if (G.portrait) {
+      const E = G.EX(), m = Math.round(E / 2);
+      YOU_PILE = { x: 158, y: 376 + m }; YOU_BAT = { x: 80, y: 290 + m }; YOU_WON = { x: 92, y: 376 + m };
+      LOG = { x: 154, y: 462 + E, w: 198, h: 144 }; BOARD = { x: 8, y: 462 + E, w: 140, h: 144 };
+    } else {
+      YOU_PILE = { x: 196, y: 224 }; YOU_BAT = { x: 256, y: 224 }; YOU_WON = { x: 136, y: 224 };
+      LOG = { x: 470, y: 134, w: 162, h: 168 }; BOARD = { x: 10, y: 134, w: 120, h: 168 };
+    }
+  }
+  lay();
   const val = (c) => (c.rank === 1 ? 14 : c.rank);
   const LINES = {
     war: ['WAR!', 'I DECLARE WAR!', 'THIS MEANS WAR!', 'TO ARMS!'],
@@ -174,9 +184,15 @@
       G.audio.sfx(youWin ? 'win' : 'lose');
     },
     // ---------- layout ----------
-    pileXY(pi) { if (pi === 0) return YOU_PILE; const s = this.oppSlot(pi); return { x: s.x + 4, y: 58 }; },
-    wonXY(pi) { if (pi === 0) return YOU_WON; const s = this.oppSlot(pi); return { x: s.x + s.w - CW - 4, y: 58 }; },
-    batXY(pi) { if (pi === 0) return { ...YOU_BAT, w: 200 }; const s = this.oppSlot(pi); return { x: s.x + 54, y: 58, w: this.onePass ? s.w - 54 - CW - 8 : s.w - 54 }; },
+    pileXY(pi) { if (pi === 0) return YOU_PILE; const s = this.oppSlot(pi); return { x: s.x + 4, y: s.y + (G.portrait ? 32 : 34) }; },
+    wonXY(pi) { if (pi === 0) return YOU_WON; const s = this.oppSlot(pi); return { x: s.x + s.w - CW - 4, y: s.y + (G.portrait ? 32 : 34) }; },
+    batXY(pi) {
+      if (pi === 0) return { ...YOU_BAT, w: 200 };
+      const s = this.oppSlot(pi);
+      // narrow portrait seats put the battle cards on a second row under the deck
+      if (s.narrow) return { x: s.x + 4, y: s.y + 100, w: s.w - 8 };
+      return { x: s.x + 54, y: s.y + (G.portrait ? 32 : 34), w: this.onePass ? s.w - 54 - CW - 8 : s.w - 54 };
+    },
     layout() {
       this.players.forEach((p, pi) => {
         const pp = this.pileXY(pi), wp = this.wonXY(pi), bp = this.batXY(pi);
@@ -188,6 +204,7 @@
       });
     },
     frame(dt) {
+      lay();
       if (this.setup) return this.drawSetupScreen();
       if (this.paused || this.over) ui.modal = true;
       if (!this.paused) this.runQueue(dt);
@@ -218,15 +235,16 @@
       }
       G.drawCards(this.cards, (c) => (this.phase === 'ready' && overPile && me.pile.includes(c) && c === me.pile[me.pile.length - 1] ? { highlight: P.gold } : null));
       this.drawBoard();
-      this.drawLog(LOG, 16);
+      this.drawLog(LOG, Math.floor((LOG.h - 20) / 9));
       if (this.banner) {
         this.banner.t += dt;
         const b = Math.round(Math.sin(this.banner.t * 10) * 2);
-        G.text('WAR!', 360, 150 + b, P.black, 'big', 'center', 3);
-        G.text('WAR!', 358, 148 + b, P.orange, 'big', 'center', 3);
+        const wx = G.portrait ? G.W / 2 + 2 : 360, wy = G.portrait ? YOU_BAT.y - 50 : 150;
+        G.text('WAR!', wx, wy + b, P.black, 'big', 'center', 3);
+        G.text('WAR!', wx - 2, wy - 2 + b, P.orange, 'big', 'center', 3);
       }
       this.drawControls();
-      this.drawBubbles(dt, [YOU_PILE.x + CW / 2, YOU_PILE.y - 20], 98);
+      this.drawBubbles(dt, [YOU_PILE.x + CW / 2, YOU_PILE.y - 20], G.portrait ? 30 : 98);
       G.drawFloaters(dt);
       const stats = [{ label: 'BATTLES', value: this.battles }, { label: 'WARS', value: this.wars, color: P.orange }, { label: 'YOUR CARDS', value: this.count(me), color: P.gold }];
       if (this.handlePause(this.onePass ? 'WAR - ONE PASS' : 'WAR', stats, () => { this.setup = true; })) return;
@@ -249,8 +267,21 @@
       G.text('WAR WINS ' + G.store.get('war_won', 0) + '/' + G.store.get('war_played', 0), x + 6, y + h - 12, P.slate, 'small');
     },
     drawControls() {
-      const y = 318;
       const can = this.phase === 'ready' && !this.over;
+      if (G.portrait) {
+        const y = G.H - 26;
+        if (this.spectate) { if (ui.button(this.skipReq ? 'SKIPPING...' : 'SKIP TO RESULT', 8, y, 130, 22, { key: 'k', theme: 'gold', font: 'small' })) { if (can) this.endGame(); else this.skipReq = true; } }
+        else if (ui.button('FLIP', 8, y, 130, 22, { theme: 'gold', keyLabel: 'SPACE', enabled: can && !this.auto })) this.flip();
+        if (ui.button(this.auto ? 'AUTO ON' : 'AUTO OFF', 144, y, 100, 22, { key: 'a', theme: this.auto ? 'green' : 'dark', font: 'small' })) { this.auto = !this.auto; this.autoT = 0; }
+        const sp = [1, 3, 8];
+        if (ui.button('SPEED X' + this.speed, 250, y, 102, 22, { key: 's', theme: 'blue', font: 'small' })) this.speed = sp[(sp.indexOf(this.speed) + 1) % sp.length];
+        let s = '';
+        if (this.spectate && !this.over) s = 'YOU ARE OUT - WATCHING (' + this.active().length + ' LEFT)';
+        else if (this.phase === 'ready' && !this.auto) s = 'TAP YOUR DECK TO FLIP';
+        if (s) ui.tag(s, G.W / 2, YOU_BAT.y - 18, P.gold, P.ink);
+        return;
+      }
+      const y = 318;
       if (this.spectate) { if (ui.button(this.skipReq ? 'SKIPPING...' : 'SKIP TO RESULT', 196, y, 104, 22, { key: 'k', theme: 'gold', font: 'small' })) { if (can) this.endGame(); else this.skipReq = true; } }
       else if (ui.button('FLIP', 196, y, 104, 22, { theme: 'gold', keyLabel: 'SPACE', enabled: can && !this.auto })) this.flip();
       if (ui.button(this.auto ? 'AUTO ON' : 'AUTO OFF', 306, y, 80, 22, { key: 'a', theme: this.auto ? 'green' : 'dark', font: 'small' })) { this.auto = !this.auto; this.autoT = 0; }

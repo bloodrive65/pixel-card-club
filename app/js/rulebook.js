@@ -429,6 +429,7 @@
       this.build();
       const ch = CHAPTERS.find((c) => c.key === key);
       this.spread = ch ? Math.floor(ch.page / 2) : 0;
+      this.pidx = G.portrait ? (ch ? ch.page : 0) : undefined; this.pturn = null;
       this.turn = null;
       G.scene = this;
       G.audio.sfx('page');
@@ -449,7 +450,70 @@
       this.turn = { from: this.spread, to: spread, dir: spread > this.spread ? 1 : -1, t: 0 };
       G.audio.sfx('page');
     },
+    // portrait: one page at a time, with the chapter tabs down the right-hand side
+    framePortrait(dt) {
+      const BX = 18, BY = 140 + Math.round(G.EX() / 2);
+      if (this.pidx === undefined) this.pidx = (this.spread || 0) * 2;
+      const n = this.pages.length;
+      const goP = (i) => { i = G.clamp(i, 0, n - 1); if (i === this.pidx || this.pturn) return; this.pturn = { from: this.pidx, to: i, dir: i > this.pidx ? 1 : -1, t: 0 }; G.audio.sfx('page'); };
+      if (this.pturn) { this.pturn.t += dt / TURN_TIME; if (this.pturn.t >= 1) { this.pidx = this.pturn.to; this.spread = Math.floor(this.pidx / 2); this.pturn = null; } }
+      if (!this.pturn) {
+        if (G.key('ArrowRight') || G.key('d') || G.key('PageDown')) goP(this.pidx + 1);
+        else if (G.key('ArrowLeft') || G.key('a') || G.key('PageUp')) goP(this.pidx - 1);
+      }
+      this.goP = goP;
+      drawDesk();
+      const cur = this.pturn ? this.pturn.to : this.pidx;
+      // cover
+      G.alpha(0.45, () => G.rect(BX - 10, BY - 6, PW + 26, PH + 20, P.black));
+      G.rect(BX - 12, BY - 12, PW + 24, PH + 24, '#3a1418'); G.rect(BX - 10, BY - 10, PW + 20, PH + 20, '#6b2a2a');
+      G.outline(BX - 7, BY - 7, PW + 14, PH + 14, '#8e4038');
+      const depth = Math.min(5, 1 + Math.round(((n - 1 - cur) / n) * 5));
+      for (let i = depth; i > 0; i--) G.rect(BX + i, BY + i, PW, PH, i % 2 ? PAPER_DD : PAPER_D);
+      this.drawTabs(BX + PW + 12, BY - 4, Math.floor(cur / 2), 27, cur);
+      if (!this.pturn) { G.ctx.drawImage(this.pages[this.pidx], BX, BY); this.pageInputP(BX, BY); }
+      else {
+        const { from, to, dir } = this.pturn, t = this.pturn.t, e = t * t * (3 - 2 * t);
+        // the page underneath, then the turning page folding toward the left edge
+        G.ctx.drawImage(this.pages[dir > 0 ? to : from], BX, BY);
+        const top = this.pages[dir > 0 ? from : to], frac = dir > 0 ? 1 - e : e;
+        const w = Math.max(1, Math.round(PW * frac));
+        G.alpha(0.3, () => G.rect(BX + w, BY + 2, 5, PH - 2, P.black));
+        G.ctx.drawImage(top, BX, BY, w, PH);
+        G.alpha(0.4 * (1 - frac), () => G.rect(BX, BY, w, PH, '#3a2a1a'));
+      }
+      // turn buttons under the book
+      const by = BY + PH + 22;
+      if (ui.button('< BACK', BX - 4, by, 110, 22, { theme: 'dark', id: 'pbk', enabled: cur > 0 })) goP(this.pidx - 1);
+      if (ui.button('NEXT >', BX + PW - 106, by, 110, 22, { theme: 'gold', id: 'pnx', enabled: cur < n - 1 })) goP(this.pidx + 1);
+      G.text('PAGE ' + cur + ' OF ' + (n - 1), G.W / 2, by + 32, P.gold, 'small', 'center');
+      G.text('TAP THE PAGE EDGES OR SWIPE TO TURN', G.W / 2, by + 44, P.wood3, 'small', 'center');
+      // swipe
+      const inp = input;
+      if (inp.pressed && G.inRect(inp.x, inp.y, BX, BY, PW, PH)) this.sw = { x: inp.x, y: inp.y };
+      if (this.sw && inp.down) { const dx = inp.x - this.sw.x; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(inp.y - this.sw.y) * 1.5) { goP(this.pidx + (dx < 0 ? 1 : -1)); this.sw = null; } }
+      if (!inp.down) this.sw = null;
+      G.rect(0, 0, G.W, 22, P.ink); G.rect(0, 22, G.W, 1, P.black);
+      G.text('RULEBOOK', G.W / 2, 7, P.gold, 'big', 'center');
+      if (ui.button('CLOSE', 3, 3, 46, 15, { key: 'Escape', theme: 'dark', font: 'small', showKey: false, id: 'bookclose' })) this.close();
+    },
+    pageInputP(BX, BY) {
+      if (ui.modal) return;
+      const mx = input.x, my = input.y;
+      for (const l of this.links[this.pidx] || []) {
+        if (G.inRect(mx, my, BX + l.x, BY + l.y, l.w, l.h)) {
+          ui.cursorHand = true; ui.hoverId = 'link' + l.page;
+          G.alpha(0.18, () => G.rect(BX + l.x - 2, BY + l.y, l.w + 4, l.h, HEAD));
+          if (input.pressed) { input.pressed = false; this.goP(l.page); return; }
+        }
+      }
+      const onLeft = G.inRect(mx, my, BX, BY, 60, PH) && this.pidx > 0;
+      const onRight = G.inRect(mx, my, BX + PW - 60, BY, 60, PH) && this.pidx < this.pages.length - 1;
+      if ((onLeft || onRight) && input.released && !input.moved) this.goP(this.pidx + (onLeft ? -1 : 1));
+    },
     frame(dt) {
+      if (G.portrait) return this.framePortrait(dt);
+      if (this.pidx !== undefined && !this.pturn) { this.spread = Math.floor(this.pidx / 2); this.pidx = undefined; }
       if (this.turn) { this.turn.t += dt / TURN_TIME; if (this.turn.t >= 1) { this.spread = this.turn.to; this.turn = null; } }
       const busy = !!this.turn;
       if (!busy) {
@@ -522,17 +586,17 @@
         if (input.pressed) { input.pressed = false; this.goTo(this.spread + (onLeft ? -1 : 1)); }
       }
     },
-    drawTabs() {
-      const shown = this.turn ? this.turn.to : this.spread;
+    drawTabs(tx = 598, ty = 34, shownP, pitch = 27, curPage) {
+      const shown = shownP !== undefined ? shownP : this.turn ? this.turn.to : this.spread;
       CHAPTERS.forEach((ch, i) => {
-        const y = 34 + i * 27, active = Math.floor(ch.page / 2) === shown || (chapterOf(shown * 2 + 1) === ch && chapterOf(shown * 2) === ch);
-        const x = 598, w = active ? 40 : 35, h = 23;
+        const y = ty + i * pitch, active = curPage !== undefined ? chapterOf(curPage) === ch : Math.floor(ch.page / 2) === shown || (chapterOf(shown * 2 + 1) === ch && chapterOf(shown * 2) === ch);
+        const x = tx, w = active ? 40 : 35, h = Math.min(23, pitch - 3);
         const hover = !ui.modal && G.inRect(input.x, input.y, x, y, w, h);
         G.rect(x, y, w, h, P.black); G.rect(x, y + 1, w - 1, h - 2, ch.color);
         G.rect(x, y + 1, w - 1, 1, P.white + '60');
         G.text(ch.tab, x + (w + 2) / 2, y + 9, ch.color === P.gold || ch.color === P.silver || ch.color === P.sky || ch.color === P.orange ? P.ink : P.white, 'small', 'center');
         ui.block(x, y, w, h);
-        if (hover) { ui.cursorHand = true; ui.hoverId = 'tab' + i; if (input.pressed) { input.pressed = false; this.goTo(Math.floor(ch.page / 2)); } }
+        if (hover) { ui.cursorHand = true; ui.hoverId = 'tab' + i; if (input.pressed) { input.pressed = false; if (G.portrait) this.goP(ch.page); else this.goTo(Math.floor(ch.page / 2)); } }
       });
     }
   });

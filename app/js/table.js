@@ -28,7 +28,14 @@
     say(pi, text, t = 2.8) { if (!text) return; this.bubbles = this.bubbles.filter((b) => b.pi !== pi); this.bubbles.push({ pi, text: String(text).toUpperCase(), t }); },
     // ---------- layout ----------
     oppSlot(i) {
-      const n = this.players.length - 1, w = 190;
+      const n = this.players.length - 1;
+      if (G.portrait) {
+        // phone held upright: one wide seat, two side by side, or three narrow ones
+        const w = n === 1 ? 200 : n === 2 ? 172 : 114;
+        const xs = n === 1 ? [G.W / 2 - w / 2] : n === 2 ? [6, G.W - 6 - w] : [4, 123, 242];
+        return { x: Math.round(xs[i - 1]), y: 36, w, h: 28, narrow: w < 150 };
+      }
+      const w = 190;
       const xs = n === 1 ? [G.W / 2 - w / 2] : n === 2 ? [70, G.W - 70 - w] : [16, G.W / 2 - w / 2, G.W - 16 - w];
       return { x: Math.round(xs[i - 1]), y: 24, w, h: 28 };
     },
@@ -56,7 +63,7 @@
       G.alpha(o.out ? 0.45 : 1, () => {
         G.drawAvatar(p.id, s.x + 2, s.y + 2);
         G.text(G.dn(p), s.x + 30, s.y + 5, o.turn ? P.gold : P.white, 'big');
-        if (p.ch && p.form !== undefined) G.stars(p.form, s.x + s.w - 26, s.y + 6);
+        if (p.ch && p.form !== undefined && (!s.narrow || G.textWidth(G.dn(p), 'big') < s.w - 60)) G.stars(p.form, s.x + s.w - 26, s.y + 6);
         if (o.line) G.text(o.line, s.x + 30, s.y + 17, o.lineColor || P.silver, 'small');
         if (o.value !== undefined) G.text(String(o.value), s.x + s.w - 6, s.y + 17, o.valueColor || P.gold, 'small', 'right');
       });
@@ -88,6 +95,7 @@
       ui.felt();
       ui.modal = false;
       const cfg = this.cfg, S = G.settings;
+      if (G.portrait) return this.drawSetupPortrait();
       G.panel(10, 8, 620, 344, { fill: P.ink, hi: P.dusk, accent: P.gold });
       ui.block(10, 8, 620, 344);
       G.text(cfg.title, 22, 18, P.gold, 'big', 'left', 2, P.black);
@@ -111,6 +119,34 @@
       G.wrap(desc.toUpperCase(), 210, 'small').slice(0, 4).forEach((l, i) => G.text(l, 22, 254 + i * 9, P.cyan, 'small'));
       if (ui.button('START', 22, 294, 210, 22, { theme: 'green', key: ['Enter', ' '], showKey: false })) { this.start(); return; }
       if (ui.button('BACK', 22, 322, 210, 20, { theme: 'red', key: 'Escape', showKey: false })) G.go(G.Menu);
+    },
+    // portrait setup: options on top, the three seats, the Club grid, the member card, then the buttons
+    drawSetupPortrait() {
+      const cfg = this.cfg, S = G.settings, E = G.EX();
+      G.panel(8, 8, G.W - 16, G.H - 16, { fill: P.ink, hi: P.dusk, accent: P.gold });
+      ui.block(8, 8, G.W - 16, G.H - 16);
+      G.text(cfg.title, 22, 18, P.gold, 'big', 'left', 2, P.black);
+      const half = cfg.option ? 150 : 316;
+      G.text('OPPONENTS', 22, 40, P.silver, 'small');
+      const o = ui.choice(['1', '2', '3'], this.nOpp() - 1, 22, 48, half, 16, { id: 'opp' });
+      if (o !== this.nOpp() - 1) { S[cfg.prefix + 'Opp'] = o + 1; G.saveSettings(); }
+      if (cfg.option) {
+        G.text(cfg.option.label, 188, 40, P.silver, 'small');
+        const v = ui.choice(cfg.option.items, this.opt(), 188, 48, 150, 16, { id: 'opt', font: 'small' });
+        if (v !== this.opt()) { S[cfg.prefix + 'Opt'] = v; G.saveSettings(); }
+      }
+      const st = this.pickState, n = this.nOpp();
+      const labels = n === 1 ? ['OPPONENT - ACROSS'] : n === 2 ? ['OPPONENT 1 - LEFT', 'OPPONENT 2 - RIGHT'] : ['OPPONENT 1 - LEFT', 'OPPONENT 2 - ACROSS', 'OPPONENT 3 - RIGHT'];
+      st.slots = labels.map((l) => ({ label: l, color: P.orange }));
+      st.focus = Math.min(st.focus, n - 1);
+      const view = { slots: st.slots, picks: st.picks.slice(0, n), focus: st.focus, seatY: 72, gridY: 206 + Math.round(E / 3), hoverChar: st.hoverChar };
+      G.rosterPicker(view);
+      st.picks.splice(0, n, ...view.picks); st.focus = view.focus; st.hoverChar = view.hoverChar;
+      const desc = typeof cfg.desc === 'function' ? cfg.desc(this.opt()) : cfg.desc;
+      G.wrap(desc.toUpperCase(), 316, 'small').slice(0, 3).forEach((l, i) => G.text(l, 22, 506 + E + i * 9, P.cyan, 'small'));
+      if (ui.button('RANDOM PICKS', 22, 538 + E, 155, 20, { id: 'rnd', theme: 'dark' })) { const v = { picks: view.picks.map(() => null) }; G.fillRandom(v); st.picks.splice(0, n, ...v.picks); }
+      if (ui.button('BACK', 183, 538 + E, 155, 20, { theme: 'red', key: 'Escape', showKey: false })) { G.go(G.Menu); return; }
+      if (ui.button('START', 22, 566 + E, 316, 26, { theme: 'green', key: ['Enter', ' '], showKey: false })) { this.start(); return; }
     },
     // shared pause handling; returns true while paused
     handlePause(title, stats, restartFn) {

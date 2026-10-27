@@ -2,7 +2,14 @@
 (function () {
   'use strict';
   const P = G.P, CW = G.CW, CH = G.CH, ui = G.ui, input = G.input;
-  const COLW = 56, X0 = 150, TOP = 32, TAB_Y = 106, DOWN_OFF = 4;
+  const DOWN_OFF = 4;
+  // wide (landscape) table by default; lay() swaps in the upright (portrait) layout with the buttons along the bottom
+  let COLW, X0, TOP, TAB_Y, BOTTOM;
+  function lay() {
+    if (G.portrait) { COLW = 51; X0 = 5; TOP = 42; TAB_Y = 118; BOTTOM = 56; }
+    else { COLW = 56; X0 = 150; TOP = 32; TAB_Y = 106; BOTTOM = 6; }
+  }
+  lay();
   const colX = (i) => X0 + i * COLW;
 
   const scene = (G.Solitaire = {
@@ -180,8 +187,8 @@
     },
     tabOffsets(t) {
       const down = t.cards.filter((c) => !c.faceUp).length, up = t.cards.length - down;
-      let upOff = 13;
-      const avail = G.H - 6 - TAB_Y - CH - down * DOWN_OFF;
+      let upOff = G.portrait ? 18 : 13;
+      const avail = G.H - BOTTOM - TAB_Y - CH - down * DOWN_OFF;
       if (up > 1 && (up - 1) * upOff > avail) upOff = Math.max(6, Math.floor(avail / (up - 1)));
       return upOff;
     },
@@ -255,6 +262,7 @@
       }
     },
     frame(dt) {
+      lay();
       if (this.paused) ui.modal = true;
       if (!this.paused && !this.won && this.started) this.time += dt;
       if (this.dealT > 0) {
@@ -312,7 +320,24 @@
         if (act === 'menu') G.go(G.Menu);
       }
     },
+    drawSidePortrait() {
+      const y2 = G.H - 48, y1 = G.H - 26;
+      G.rect(0, y2 - 8, G.W, G.H - (y2 - 8), P.ink); G.rect(0, y2 - 8, G.W, 1, P.dusk); G.rect(0, y2 - 8 - 1, G.W, 1, P.black);
+      ui.block(0, y2 - 8, G.W, G.H - y2 + 8);
+      const stats = [['STOCK', String(this.stock.cards.length), P.white], ['FOUND', this.found.reduce((a, f) => a + f.cards.length, 0) + '/52', P.white], ['WINS', G.store.get('sol_won', 0) + '/' + G.store.get('sol_played', 0), P.white], ['BEST', String(G.store.get('sol_best', 0)), P.gold]];
+      stats.forEach(([l, v, c], i) => { const x = 8 + i * 88; G.text(l, x, y2 + 2, P.silver, 'small'); G.text(v, x + G.textWidth(l, 'small') + 4, y2 + 2, c, 'small'); });
+      const bw = 84, bx = (i) => 6 + i * 88;
+      if (ui.button('NEW', bx(0), y1, bw, 20, { key: 'n', theme: 'gold' })) { this.newGame(); return; }
+      if (ui.button('UNDO', bx(1), y1, bw, 20, { key: 'z', theme: 'blue', enabled: this.undoStack.length > 0 && !this.won && !this.auto })) this.undo();
+      if (ui.button('HINT', bx(2), y1, bw, 20, { key: 'h', theme: 'dark', enabled: !this.won && !this.auto })) {
+        const h = this.findHint();
+        if (h) this.hintShow = { ...h, t: 1.6 }; else { G.audio.sfx('error'); G.floatText('NO MOVES LEFT', G.W / 2, 180, P.orange); }
+      }
+      const canAuto = this.canAutoFinish();
+      if (ui.button('AUTO', bx(3), y1, bw, 20, { key: 'a', theme: 'green', enabled: canAuto && !this.auto })) { this.auto = true; this.autoT = 0; }
+    },
     drawSide() {
+      if (G.portrait) return this.drawSidePortrait();
       // left side panel with buttons
       const x = 10, w = 120;
       G.panel(x - 4, TOP - 4, w + 8, 162, { fill: P.ink, hi: P.dusk });

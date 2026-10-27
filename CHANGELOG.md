@@ -2,6 +2,12 @@
 
 Every version of Pixel Card Club, newest first. The current version is also summarized at the top of the [README](README.md). Downloads for each version are on the [Releases page](https://github.com/bloodrive65/pixel-card-club/releases).
 
+## 1.7.3
+
+- **Portrait and landscape on iPhone and iPad**: hold the device upright or sideways and the game re-lays itself to fit, even in the middle of a hand. In portrait, every game has its own tall table with the main buttons in easy thumb reach along the bottom. The menu, setup screens, profile, customize screen, options and rulebook have upright layouts too.
+- **Sound with the ringer off**: on iPhone and iPad the game's sound now plays even when the Ring/Silent switch is set to silent, the same way video audio does. Use the volume buttons, or turn sound off in Options.
+- Crazy Eights no longer shows the keyboard hint "(D DRAWS)" on touch screens.
+
 ## 1.7.2
 
 - **Redrawn court cards**: the Jacks, Queens and Kings are new full-length, double-headed figures with real shading (3–4 tones per colour and a soft outline). The King has a sword and a golden orb, the Queen has a lace collar and fan, and the Jack carries a halberd and wears a feathered beret.

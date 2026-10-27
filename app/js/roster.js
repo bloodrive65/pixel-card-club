@@ -266,7 +266,7 @@
   G.stars = (n, x, y, col = P.gold) => { for (let i = 0; i < 3; i++) G.drawSuit(1, x + i * 7, y, 'small', i <= n ? col : P.dusk); };
   G.rosterPicker = (st) => {
     // seats (left column) drawn by caller-provided y
-    const sx = 22, sw = 210;
+    const PT = G.portrait, sx = 22, sw = PT ? 316 : 210;
     st.slots.forEach((slot, i) => {
       const y = st.seatY + i * 40;
       const id = st.picks[i];
@@ -282,8 +282,8 @@
       if (hover && input.pressed && !ui.modal) { st.focus = i; input.pressed = false; G.audio.sfx('click'); }
     });
     // club grid
-    const gx = 248, gy = 58, tw = 58, th = 62, gap = 4;
-    G.text(G.touch ? 'THE CLUB - TAP A MEMBER TO SEAT THEM' : 'THE CLUB - CLICK A MEMBER TO SEAT THEM', gx, 46, P.gold, 'small');
+    const gx = PT ? 22 : 248, gy = PT ? st.gridY || 230 : 58, tw = PT ? 50 : 58, th = PT ? 60 : 62, gap = PT ? 3 : 4;
+    G.text(G.touch ? 'THE CLUB - TAP A MEMBER TO SEAT THEM' : 'THE CLUB - CLICK A MEMBER TO SEAT THEM', gx, gy - 12, P.gold, 'small');
     let hov = null;
     R.forEach((c, i) => {
       const x = gx + (i % 6) * (tw + gap), y = gy + Math.floor(i / 6) * (th + gap);
@@ -292,7 +292,7 @@
       if (hover) { hov = c; ui.cursorHand = true; ui.hoverId = 'tile' + c.id; }
       const border = seatIdx >= 0 ? st.slots[seatIdx].color || P.gold : hover ? P.white : P.black;
       G.rect(x, y, tw, th, border); G.rect(x + 1, y + 1, tw - 2, th - 2, P.ink);
-      G.drawAvatar(c.id, x + 5, y + 2, 2);
+      G.drawAvatar(c.id, x + (tw - 48) / 2, y + 2, 2);
       G.rect(x + 1, y + th - 12, tw - 2, 11, seatIdx >= 0 ? border : P.dusk);
       G.text(c.name.length > 9 ? c.name.replace('THE ', '').replace('CAPT ', '') : c.name, x + tw / 2, y + th - 9, seatIdx >= 0 ? P.ink : P.white, 'small', 'center');
       if (seatIdx >= 0) { G.rect(x + 2, y + 2, 11, 11, border); G.text(String(seatIdx + 1), x + 8, y + 5, P.ink, 'small', 'center'); }
@@ -308,19 +308,20 @@
     });
     // info panel
     const show = hov || G.char(st.picks[st.focus] || st.hoverChar || R[0].id);
-    const iy = 262, ix = 248, iw = 370;
-    G.panel(ix, iy, iw, 82, { fill: P.ink, hi: P.dusk });
+    const iy = PT ? gy + 3 * (th + gap) + 4 : 262, ix = PT ? 22 : 248, iw = PT ? 316 : 370, ih = PT ? 92 : 82, d = PT ? 10 : 0;
+    G.panel(ix, iy, iw, ih, { fill: P.ink, hi: P.dusk });
     G.drawAvatar(show.id, ix + 8, iy + 8, 2);
     G.text(show.name, ix + 64, iy + 9, P.gold, 'big');
-    G.text('USUALLY ' + G.SKILL_NAMES[show.skill] + ' - FORM IS DEALT EACH GAME', ix + 64 + G.textWidth(show.name, 'big') + 8, iy + 10, P.silver, 'small');
-    G.text('"' + show.quote.toUpperCase() + '"', ix + 64, iy + 21, P.cyan, 'small');
-    G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 29, P.white, 'small');
-    G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 37, P.white, 'small');
-    G.text('POKER: ' + G.POKER_STYLE[show.poker].toUpperCase(), ix + 64, iy + 45, P.white, 'small');
-    G.text('BETS: ' + show.temper.bets.toUpperCase(), ix + 64, iy + 53, P.white, 'small');
-    G.text('NERVE: ' + G.NERVE[show.temper.nerve].toUpperCase(), ix + 64, iy + 61, P.white, 'small');
+    if (PT) G.text('USUALLY ' + G.SKILL_NAMES[show.skill] + ' - FORM DEALT EACH GAME', ix + 64, iy + 20, P.silver, 'small');
+    else G.text('USUALLY ' + G.SKILL_NAMES[show.skill] + ' - FORM IS DEALT EACH GAME', ix + 64 + G.textWidth(show.name, 'big') + 8, iy + 10, P.silver, 'small');
+    G.text('"' + show.quote.toUpperCase() + '"', ix + 64, iy + 21 + d, P.cyan, 'small');
+    G.text('GO FISH: ' + G.FISH_STYLE(show).toUpperCase(), ix + 64, iy + 29 + d, P.white, 'small');
+    G.text('BLACKJACK: ' + G.BJ_STYLE[show.bj].toUpperCase(), ix + 64, iy + 37 + d, P.white, 'small');
+    G.text('POKER: ' + G.POKER_STYLE[show.poker].toUpperCase(), ix + 64, iy + 45 + d, P.white, 'small');
+    G.text('BETS: ' + show.temper.bets.toUpperCase(), ix + 64, iy + 53 + d, P.white, 'small');
+    G.text('NERVE: ' + G.NERVE[show.temper.nerve].toUpperCase(), ix + 64, iy + 61 + d, P.white, 'small');
     const rec = G.record(show.id);
-    G.text('YOUR RECORD VS ' + show.name + ':  ' + rec.w + ' W - ' + rec.l + ' L', ix + 64, iy + 71, P.silver, 'small');
+    G.text('YOUR RECORD VS ' + show.name + ':  ' + rec.w + ' W - ' + rec.l + ' L', ix + 64, iy + 71 + d, P.silver, 'small');
   };
   // fill empty slots with random members not already picked
   G.fillRandom = (st, all) => {
